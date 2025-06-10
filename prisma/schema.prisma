@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  fullname     String
+  username     String   @unique
+  passwordHash String
+  email        String
+  phoneNumber  String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  queues Queue[]
+}
+
+model Queue {
+  id            String    @id @default(uuid()) @db.Uuid
+  user          User      @relation(fields: [userId], references: [id])
+  userId        String    @db.Uuid
+  branchId      Int
+  loketId       Int
+  bookingDate   DateTime
+  ticketNumber  String
+  estimatedTime DateTime
+  calledAt      DateTime?
+  status        String
+  createdAt     DateTime  @default(now())
+  createdBy     String
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String
+
+  queueLogs QueueLog[]
+}
+
+model QueueLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  queue     Queue    @relation(fields: [queueId], references: [id])
+  queueId   String   @db.Uuid
+  status    String
+  createdAt DateTime @default(now())
+  createdBy String
+  updatedAt DateTime @updatedAt
+  updatedBy String
+}
+
+model Branch {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  branchCode String   @unique
+  regionCode String
+  longitude  Float
+  latitude   Float
+  holiday    Boolean  @default(false)
+  status     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  createdBy  String
+  updatedAt  DateTime @updatedAt
+  updatedBy  String
+
+  lokets Loket[]
+  admins Admin[]
+}
+
+model Loket {
+  id        String   @id @default(uuid()) @db.Uuid
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  branchId  String   @db.Uuid
+  name      String
+  status    String
+  createdAt DateTime @default(now())
+  createdBy String
+  updatedAt DateTime @updatedAt
+  updatedBy String
+}
+
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  branch       Branch   @relation(fields: [branchId], references: [id])
+  branchId     String   @db.Uuid
+  name         String
+  username     String   @unique
+  passwordHash String
+  role         String
+  createdAt    DateTime @default(now())
+  createdBy    String
+  updatedAt    DateTime @updatedAt
+  updatedBy    String
+}
+
+model Holiday {
+  id          String   @id @default(uuid()) @db.Uuid
+  holidayName String
+  date        DateTime @db.Date
+  createdAt   DateTime @default(now())
+  createdBy   String
+  updatedAt   DateTime @updatedAt
+  updatedBy   String
+}
