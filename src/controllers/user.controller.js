@@ -51,16 +51,12 @@ const login = async (req, res) => {
     });
 
     if (!user)
-      return res
-        .status(401)
-        .json({ message: "Invalid phone number or password" });
+      return res.status(401).json({ message: "Invalid username or password" });
 
     const isMatch = await comparePassword(password, user.passwordHash);
 
     if (!isMatch)
-      return res
-        .status(401)
-        .json({ message: "Invalid phone number or password" });
+      return res.status(401).json({ message: "Invalid username or password" });
 
     const token = generateToken({ userId: user.id, role: "user" });
 
