@@ -6,7 +6,7 @@ const {
   generateToken,
 } = require("../helpers/user.auth");
 
-exports.register = async (req, res) => {
+const register = async (req, res) => {
   const { fullname, username, email, password, phoneNumber } = req.body;
 
   try {
@@ -42,12 +42,12 @@ exports.register = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
-  const { phoneNumber, password } = req.body;
+const login = async (req, res) => {
+  const { username, password } = req.body;
 
   try {
     const user = await prisma.user.findUnique({
-      where: { phoneNumber },
+      where: { username },
     });
 
     if (!user)
@@ -70,3 +70,5 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+module.exports = { register, login };

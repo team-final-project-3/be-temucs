@@ -15,7 +15,7 @@ const verifyUserToken = (req, res, next) => {
       return res.status(403).json({ message: "Forbidden: Not a user" });
     }
 
-    req.user = decoded; // decoded contains userId and role
+    req.user = decoded;
     next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid token" });

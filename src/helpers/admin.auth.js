@@ -1,8 +1,7 @@
-// middlewares/auth.js
 const jwt = require("jsonwebtoken");
 const secret = process.env.JWT_SECRET || "secret_key";
 
-exports.verifyRole = (allowedRoles = []) => {
+const verifyRole = (allowedRoles = []) => {
   return (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader)
@@ -23,3 +22,5 @@ exports.verifyRole = (allowedRoles = []) => {
     }
   };
 };
+
+module.exports = { verifyRole };
