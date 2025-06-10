@@ -44,7 +44,7 @@ const userController = require("../controllers/user.controller");
  *       400:
  *         description: Validation error
  */
-router.post("/register", userController.register);
+router.post("/users/register", userController.register);
 
 /**
  * @swagger
@@ -72,6 +72,6 @@ router.post("/register", userController.register);
  *       401:
  *         description: Invalid credentials
  */
-router.post("/login", userController.login);
+router.post("/users/login", userController.login);
 
 module.exports = router;

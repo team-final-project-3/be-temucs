@@ -35,6 +35,6 @@ const adminController = require("../controllers/admin.controller");
  *       401:
  *         description: Invalid credentials
  */
-router.post("/login", adminController.login);
+router.post("/admin/login", adminController.login);
 
 module.exports = router;

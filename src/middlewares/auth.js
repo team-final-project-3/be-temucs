@@ -1,6 +1,12 @@
 const jwt = require("jsonwebtoken");
 
-const unprotectedRoutes = ["/api/register", "/api/login"];
+const unprotectedRoutes = [
+  "/register",
+  "/login",
+  "/admin/login",
+  "/users/login",
+  "/users/register",
+];
 
 module.exports = (req, res, next) => {
   // Allow unprotected routes

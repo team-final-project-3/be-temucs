@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const secret = process.env.JWT_SECRET || "secret_key";
 
 const verifyRole = (allowedRoles = []) => {
@@ -23,4 +24,12 @@ const verifyRole = (allowedRoles = []) => {
   };
 };
 
-module.exports = { verifyRole };
+const comparePassword = async (password, hash) => {
+  return await bcrypt.compare(password, hash);
+};
+
+const generateToken = (payload) => {
+  return jwt.sign(payload, secret);
+};
+
+module.exports = { verifyRole, generateToken, comparePassword };

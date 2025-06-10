@@ -22,4 +22,21 @@ const verifyUserToken = (req, res, next) => {
   }
 };
 
-module.exports = { verifyUserToken };
+const hashPassword = async (password) => {
+  return await bcrypt.hash(password, 10);
+};
+
+const comparePassword = async (password, hash) => {
+  return await bcrypt.compare(password, hash);
+};
+
+const generateToken = (payload) => {
+  return jwt.sign(payload, secret);
+};
+
+module.exports = {
+  verifyUserToken,
+  hashPassword,
+  comparePassword,
+  generateToken,
+};
