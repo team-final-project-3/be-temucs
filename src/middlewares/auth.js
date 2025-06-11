@@ -6,6 +6,8 @@ const unprotectedRoutes = [
   "/admin/login",
   "/users/login",
   "/users/register",
+  "/cs/login",
+  "/loket/login",
 ];
 
 module.exports = (req, res, next) => {

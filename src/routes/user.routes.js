@@ -59,10 +59,10 @@ router.post("/users/register", userController.register);
  *           schema:
  *             type: object
  *             required:
- *               - phoneNumber
+ *               - username
  *               - password
  *             properties:
- *               phoneNumber:
+ *               username:
  *                 type: string
  *               password:
  *                 type: string

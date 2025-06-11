@@ -1,7 +1,8 @@
 const express = require("express");
 const authMiddleware = require("./middlewares/auth");
 const userRoutes = require("./routes/user.routes");
-const adminRoutes = require("./routes/admin.routes");
+const csRoutes = require("./routes/cs.routes");
+const loketRoutes = require("./routes/loket.routes");
 const dummyRoutes = require("./routes/dummy.routes");
 const branchRoutes = require("./routes/branch.routes");
 const swaggerUi = require("swagger-ui-express");
@@ -14,7 +15,8 @@ app.use(
   "/api",
   authMiddleware,
   userRoutes,
-  adminRoutes,
+  csRoutes,
+  loketRoutes,
   dummyRoutes,
   branchRoutes
 );

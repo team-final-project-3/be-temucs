@@ -8,10 +8,11 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid()) @db.Uuid
+  id           Int      @id @default(autoincrement())
   fullname     String
   username     String   @unique
   passwordHash String
+  role         String
   email        String
   phoneNumber  String   @unique
   createdAt    DateTime @default(now())
@@ -20,41 +21,12 @@ model User {
   queues Queue[]
 }
 
-model Queue {
-  id            String    @id @default(uuid()) @db.Uuid
-  user          User      @relation(fields: [userId], references: [id])
-  userId        String    @db.Uuid
-  branchId      Int
-  loketId       Int
-  bookingDate   DateTime
-  ticketNumber  String
-  estimatedTime DateTime
-  calledAt      DateTime?
-  status        String
-  createdAt     DateTime  @default(now())
-  createdBy     String
-  updatedAt     DateTime  @updatedAt
-  updatedBy     String
-
-  queueLogs QueueLog[]
-}
-
-model QueueLog {
-  id        String   @id @default(uuid()) @db.Uuid
-  queue     Queue    @relation(fields: [queueId], references: [id])
-  queueId   String   @db.Uuid
-  status    String
-  createdAt DateTime @default(now())
-  createdBy String
-  updatedAt DateTime @updatedAt
-  updatedBy String
-}
-
 model Branch {
-  id         String   @id @default(uuid()) @db.Uuid
+  id         Int      @id @default(autoincrement())
   name       String
   branchCode String   @unique
   regionCode String
+  address    String
   longitude  Float
   latitude   Float
   holiday    Boolean  @default(false)
@@ -65,14 +37,72 @@ model Branch {
   updatedBy  String
 
   lokets Loket[]
-  admins Admin[]
+  cs     CS[]
+  queues Queue[]
 }
 
 model Loket {
-  id        String   @id @default(uuid()) @db.Uuid
-  branch    Branch   @relation(fields: [branchId], references: [id])
-  branchId  String   @db.Uuid
-  name      String
+  id           Int      @id @default(autoincrement())
+  branch       Branch   @relation(fields: [branchId], references: [id])
+  branchId     Int
+  name         String
+  username     String   @unique
+  passwordHash String
+  status       String
+  createdAt    DateTime @default(now())
+  createdBy    String
+  updatedAt    DateTime @updatedAt
+  updatedBy    String
+
+  queues Queue[]
+}
+
+model CS {
+  id           Int      @id @default(autoincrement())
+  branch       Branch   @relation(fields: [branchId], references: [id])
+  branchId     Int
+  name         String
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  createdBy    String
+  updatedAt    DateTime @updatedAt
+  updatedBy    String
+
+  queues Queue[]
+}
+
+model Queue {
+  id            Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [id])
+  userId        Int
+  branch        Branch    @relation(fields: [branchId], references: [id])
+  branchId      Int
+  cs            CS?       @relation(fields: [csId], references: [id])
+  csId          Int?
+  loket         Loket?    @relation(fields: [loketId], references: [id])
+  loketId       Int?
+  bookingDate   DateTime
+  ticketNumber  String
+  email         String
+  phoneNumber   String
+  estimatedTime DateTime
+  calledAt      DateTime?
+  status        String
+  notification  Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  createdBy     String
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String
+
+  queueLogs         QueueLog[]
+  servicesDocuments ServicesDocuments[]
+}
+
+model QueueLog {
+  id        Int      @id @default(autoincrement())
+  queue     Queue    @relation(fields: [queueId], references: [id])
+  queueId   Int
   status    String
   createdAt DateTime @default(now())
   createdBy String
@@ -80,26 +110,48 @@ model Loket {
   updatedBy String
 }
 
-model Admin {
-  id           String   @id @default(uuid()) @db.Uuid
-  branch       Branch?  @relation(fields: [branchId], references: [id])
-  branchId     String?  @db.Uuid
-  name         String
-  username     String   @unique
-  passwordHash String
-  role         String
-  createdAt    DateTime @default(now())
-  createdBy    String
-  updatedAt    DateTime @updatedAt
-  updatedBy    String
-}
-
 model Holiday {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          Int      @id @default(autoincrement())
   holidayName String
   date        DateTime @db.Date
   createdAt   DateTime @default(now())
   createdBy   String
   updatedAt   DateTime @updatedAt
   updatedBy   String
+}
+
+model Service {
+  id          Int      @id @default(autoincrement())
+  serviceName String
+  createdAt   DateTime @default(now())
+  createdBy   String
+  updatedAt   DateTime @updatedAt
+  updatedBy   String
+
+  servicesDocuments ServicesDocuments[]
+}
+
+model Document {
+  id           Int      @id @default(autoincrement())
+  documentName String
+  createdAt    DateTime @default(now())
+  createdBy    String
+  updatedAt    DateTime @updatedAt
+  updatedBy    String
+
+  servicesDocuments ServicesDocuments[]
+}
+
+model ServicesDocuments {
+  id         Int      @id @default(autoincrement())
+  queue      Queue    @relation(fields: [queueId], references: [id])
+  queueId    Int
+  service    Service  @relation(fields: [serviceId], references: [id])
+  serviceId  Int
+  document   Document @relation(fields: [documentId], references: [id])
+  documentId Int
+  createdAt  DateTime @default(now())
+  createdBy  String
+  updatedAt  DateTime @updatedAt
+  updatedBy  String
 }

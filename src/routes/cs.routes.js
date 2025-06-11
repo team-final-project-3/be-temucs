@@ -1,20 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const adminController = require("../controllers/admin.controller");
+const csController = require("../controllers/cs.controller");
 
 /**
  * @swagger
- * tags:
- *   name: Admin
- *   description: Admin, CS, and Loket Authentication
- */
-
-/**
- * @swagger
- * /api/admin/login:
+ * /api/cs/login:
  *   post:
- *     summary: Login for admin/cs/loket
- *     tags: [Admin]
+ *     summary: Login CS
+ *     tags: [CS]
  *     requestBody:
  *       required: true
  *       content:
@@ -31,10 +24,10 @@ const adminController = require("../controllers/admin.controller");
  *                 type: string
  *     responses:
  *       200:
- *         description: Login success
+ *         description: Successful login
  *       401:
  *         description: Invalid credentials
  */
-router.post("/admin/login", adminController.login);
+router.post("/cs/login", csController.login);
 
 module.exports = router;

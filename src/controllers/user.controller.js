@@ -4,10 +4,17 @@ const {
   hashPassword,
   comparePassword,
   generateToken,
-} = require("../helpers/user.auth");
+} = require("../auth/user.auth");
 
 const register = async (req, res) => {
-  const { fullname, username, email, password, phoneNumber } = req.body;
+  const {
+    fullname,
+    username,
+    email,
+    password,
+    phoneNumber,
+    role = "nasabah",
+  } = req.body;
 
   try {
     const existingUser = await prisma.user.findFirst({
@@ -29,12 +36,13 @@ const register = async (req, res) => {
         email,
         phoneNumber,
         passwordHash,
+        role,
       },
     });
 
     res.status(201).json({
       message: "User registered",
-      user: { id: user.id, fullname: user.fullname },
+      user: { id: user.id, fullname: user.fullname, role: user.role },
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -58,9 +66,9 @@ const login = async (req, res) => {
     if (!isMatch)
       return res.status(401).json({ message: "Invalid username or password" });
 
-    const token = generateToken({ userId: user.id, role: "user" });
+    const token = generateToken({ userId: user.id, role: user.role });
 
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Login successful", role: user.role, token });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Internal server error" });
