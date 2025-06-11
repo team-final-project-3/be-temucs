@@ -11,6 +11,11 @@ const swaggerSpec = require("./configs/swagger");
 
 const app = express();
 
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
+  next();
+});
+
 app.use(cors());
 app.use(express.json());
 app.use(
