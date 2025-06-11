@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const authMiddleware = require("./middlewares/auth");
 const userRoutes = require("./routes/user.routes");
 const csRoutes = require("./routes/cs.routes");
@@ -10,6 +11,7 @@ const swaggerSpec = require("./configs/swagger");
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use(
   "/api",

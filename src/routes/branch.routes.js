@@ -18,6 +18,7 @@ const branchController = require("../controllers/branch.controller");
  *               name: { type: string }
  *               branchCode: { type: string }
  *               regionCode: { type: string }
+ *               address: { type: string }
  *               longitude: { type: number }
  *               latitude: { type: number }
  *               holiday: { type: boolean }
@@ -52,6 +53,7 @@ router.post("/branch", branchController.addBranch);
  *               name: { type: string }
  *               branchCode: { type: string }
  *               regionCode: { type: string }
+ *               address: { type: string }
  *               longitude: { type: number }
  *               latitude: { type: number }
  *               holiday: { type: boolean }
