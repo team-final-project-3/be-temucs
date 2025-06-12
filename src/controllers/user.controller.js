@@ -89,9 +89,9 @@ const register = async (req, res) => {
 };
 
 const verifyOtp = async (req, res) => {
-  const { userId, otp } = req.body;
+  const { email, otp } = req.body;
   try {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(404).json({ message: "User not found" });
     if (user.isVerified)
       return res.status(400).json({ message: "Already verified" });
@@ -101,7 +101,7 @@ const verifyOtp = async (req, res) => {
       return res.status(400).json({ message: "OTP expired" });
 
     await prisma.user.update({
-      where: { id: userId },
+      where: { email },
       data: { isVerified: true, otp: null, otpExpiresAt: null },
     });
 
@@ -190,14 +190,10 @@ const forgotPassword = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  const { email, otp, newPassword } = req.body;
+  const { email, newPassword } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.otp !== otp)
-      return res.status(400).json({ message: "Invalid OTP" });
-    if (user.otpExpiresAt < new Date())
-      return res.status(400).json({ message: "OTP expired" });
 
     const passwordHash = await hashPassword(newPassword);
 

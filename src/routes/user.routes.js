@@ -59,12 +59,12 @@ router.post("/users/register", userController.register);
  *           schema:
  *             type: object
  *             required:
- *               - userId
+ *               - email
  *               - otp
  *             properties:
- *               userId:
- *                 type: integer
- *                 description: ID user yang didapat dari proses register
+ *               email:
+ *                 type: string
+ *                 description: email yang didapat dari proses register
  *               otp:
  *                 type: string
  *                 description: Kode OTP yang dikirim ke email
@@ -172,20 +172,15 @@ router.post("/users/forgot-password", userController.forgotPassword);
  *             type: object
  *             required:
  *               - email
- *               - otp
  *               - newPassword
  *             properties:
  *               email:
- *                 type: string
- *               otp:
  *                 type: string
  *               newPassword:
  *                 type: string
  *     responses:
  *       200:
  *         description: Password reset successful.
- *       400:
- *         description: Invalid OTP or OTP expired
  *       404:
  *         description: User not found
  */
