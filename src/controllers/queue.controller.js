@@ -2,11 +2,9 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function generateTicketNumber(branchId, bookingDate) {
-  // Ambil branchCode
   const branch = await prisma.branch.findUnique({ where: { id: branchId } });
   if (!branch) throw new Error("Branch not found");
 
-  // Hitung jumlah antrian pada hari bookingDate di branch tersebut
   const startOfDay = new Date(bookingDate);
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date(bookingDate);
@@ -32,6 +30,23 @@ const bookQueueOnline = async (req, res) => {
   try {
     const ticketNumber = await generateTicketNumber(branchId, bookingDate);
 
+    const startOfDay = new Date(bookingDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bookingDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const count = await prisma.queue.count({
+      where: {
+        branchId,
+        bookingDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+
+    const notification = count < 5;
+
     const queue = await prisma.queue.create({
       data: {
         userId,
@@ -42,6 +57,7 @@ const bookQueueOnline = async (req, res) => {
         phoneNumber,
         ticketNumber,
         status: "waiting",
+        notification,
       },
     });
     res.status(201).json({ message: "Queue booked (online)", queue });
@@ -56,6 +72,23 @@ const bookQueueOffline = async (req, res) => {
   try {
     const ticketNumber = await generateTicketNumber(branchId, bookingDate);
 
+    const startOfDay = new Date(bookingDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bookingDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const count = await prisma.queue.count({
+      where: {
+        branchId,
+        bookingDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+
+    const notification = count < 5;
+
     const queue = await prisma.queue.create({
       data: {
         loketId,
@@ -66,6 +99,7 @@ const bookQueueOffline = async (req, res) => {
         phoneNumber,
         ticketNumber,
         status: "waiting",
+        notification,
       },
     });
     res.status(201).json({ message: "Queue booked (offline)", queue });
@@ -82,6 +116,29 @@ const updateStatus = (newStatus) => async (req, res) => {
       where: { id: Number(id) },
       data: { status: newStatus },
     });
+
+    if (["done", "skipped", "canceled"].includes(newStatus)) {
+      const nextQueues = await prisma.queue.findMany({
+        where: {
+          branchId: queue.branchId,
+          bookingDate: queue.bookingDate,
+          status: "waiting",
+          id: { gt: queue.id },
+        },
+        orderBy: { id: "asc" },
+        take: 5,
+      });
+
+      const nextIds = nextQueues.map((q) => q.id);
+
+      if (nextIds.length > 0) {
+        await prisma.queue.updateMany({
+          where: { id: { in: nextIds } },
+          data: { notification: true },
+        });
+      }
+    }
+
     res.json({ message: `Queue status updated to ${newStatus}`, queue });
   } catch (error) {
     console.error(`Update queue status to ${newStatus} error:`, error);

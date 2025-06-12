@@ -156,7 +156,7 @@ router.patch("/queue/:id/take", queueController.takeQueue);
  * @swagger
  * /api/queue/{id}/done:
  *   patch:
- *     summary: Mark a queue as done change
+ *     summary: Mark a queue as done change status to done
  *     tags:
  *       - Queue
  *     parameters:
