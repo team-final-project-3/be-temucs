@@ -10,7 +10,7 @@ const addService = async (req, res) => {
             updatedBy,
         } = req.body;
 
-        const branch = await prisma.branch.create({
+        const service = await prisma.service.create({
             data: {
                 serviceName,
                 createdBy,
@@ -18,7 +18,7 @@ const addService = async (req, res) => {
             },
         });
 
-        res.status(201).json({ message: "Service created", branch });
+        res.status(201).json({ message: "Service created", service });
     } catch (error) {
         console.error("Add Service Error:", error);
         res.status(500).json({ message: "Internal server error" });
@@ -29,7 +29,7 @@ const addService = async (req, res) => {
 const getService = async (req, res) => {
     try {
         const { id } = req.params;
-        const service = await prisma.branch.findUnique({ where: { id: Number(id) } });
+        const service = await prisma.service.findUnique({ where: { id: Number(id) } });
 
         if (!service) return res.status(404).json({ message: "Service not found" });
 
@@ -44,7 +44,7 @@ const getService = async (req, res) => {
 //ambil semua data service
 const getAllService = async (req, res) => {
     try {
-        const services = await prisma.branch.findMany();
+        const services = await prisma.service.findMany();
         res.status(200).json(services);
     } catch (error) {
         console.error("Get All Services Error:", error);
@@ -59,7 +59,7 @@ const editService = async (req, res) => {
         const { id } = req.params;
         const { serviceName, updatedBy } = req.body;
 
-        const updatedService = await prisma.branch.update({
+        const updatedService = await prisma.service.update({
             where: { id: Number(id) },
             data: { serviceName, updatedBy },
         });
@@ -77,7 +77,7 @@ const deleteService = async (req, res) => {
     try {
         const { id } = req.params;
 
-        await prisma.branch.delete({ where: { id: Number(id) } });
+        await prisma.service.delete({ where: { id: Number(id) } });
 
         res.status(200).json({ message: "Service deleted" });
     } catch (error) {
