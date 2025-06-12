@@ -25,12 +25,31 @@ const register = async (req, res) => {
     });
 
     if (existingUser) {
+      if (!existingUser.isVerified) {
+        // Resend OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 menit
+
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: { otp, otpExpiresAt },
+        });
+
+        await sendOtpEmail(existingUser.email, otp);
+
+        return res.status(200).json({
+          message:
+            "OTP resent to email. Please verify to complete registration.",
+          userId: existingUser.id,
+        });
+      }
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // User benar-benar baru
     const passwordHash = await hashPassword(password);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 menit
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     const user = await prisma.user.create({
       data: {
@@ -81,6 +100,31 @@ const verifyOtp = async (req, res) => {
   }
 };
 
+const resendOtp = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.isVerified)
+      return res.status(400).json({ message: "User already verified" });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { email },
+      data: { otp, otpExpiresAt },
+    });
+
+    await sendOtpEmail(email, otp);
+
+    res.json({ message: "OTP resent to email." });
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const login = async (req, res) => {
   const { username, password } = req.body;
 
@@ -111,4 +155,58 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, verifyOtp, login };
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 menit
+
+    await prisma.user.update({
+      where: { email },
+      data: { otp, otpExpiresAt },
+    });
+
+    await sendOtpEmail(email, otp);
+
+    res.json({ message: "OTP sent to email for password reset." });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.otp !== otp)
+      return res.status(400).json({ message: "Invalid OTP" });
+    if (user.otpExpiresAt < new Date())
+      return res.status(400).json({ message: "OTP expired" });
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await prisma.user.update({
+      where: { email },
+      data: { passwordHash, otp: null, otpExpiresAt: null },
+    });
+
+    res.json({ message: "Password reset successful." });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports = {
+  register,
+  verifyOtp,
+  resendOtp,
+  login,
+  forgotPassword,
+  resetPassword,
+};
