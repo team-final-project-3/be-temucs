@@ -18,6 +18,17 @@ const register = async (req, res) => {
   } = req.body;
 
   try {
+    // Cek apakah email ada di CoreBanking
+    const coreBanking = await prisma.coreBanking.findUnique({
+      where: { email },
+    });
+    if (!coreBanking) {
+      return res.status(403).json({
+        message:
+          "Nasabah tidak terdaftar. Daftarkan diri Anda di Cabang terdekat.",
+      });
+    }
+
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ phoneNumber }, { username }, { email }],
