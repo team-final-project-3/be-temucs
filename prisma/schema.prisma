@@ -97,7 +97,7 @@ model Queue {
   name          String
   email         String
   phoneNumber   String
-  estimatedTime DateTime
+  estimatedTime Int?
   calledAt      DateTime?
   status        String
   notification  Boolean   @default(false)
@@ -132,12 +132,13 @@ model Holiday {
 }
 
 model Service {
-  id          Int      @id @default(autoincrement())
-  serviceName String
-  createdAt   DateTime @default(now())
-  createdBy   String
-  updatedAt   DateTime @updatedAt
-  updatedBy   String
+  id            Int      @id @default(autoincrement())
+  serviceName   String
+  estimatedTime Int?
+  createdAt     DateTime @default(now())
+  createdBy     String
+  updatedAt     DateTime @updatedAt
+  updatedBy     String
 
   // Relasi many-to-many ke Document
   documents ServiceDocument[]

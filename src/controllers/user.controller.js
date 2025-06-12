@@ -116,8 +116,6 @@ const resendOtp = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.isVerified)
-      return res.status(400).json({ message: "User already verified" });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
