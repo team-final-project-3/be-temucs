@@ -144,13 +144,13 @@ const login = async (req, res) => {
       where: { username },
     });
 
+    if (!user)
+      return res.status(401).json({ message: "Invalid username or password" });
+
     if (!user.isVerified)
       return res
         .status(403)
         .json({ message: "Please verify your email first" });
-
-    if (!user)
-      return res.status(401).json({ message: "Invalid username or password" });
 
     const isMatch = await comparePassword(password, user.passwordHash);
 
