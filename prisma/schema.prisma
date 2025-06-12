@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model CoreBanking {
+  CIF         String @id @unique
+  fullname    String
+  email       String
+  phoneNumber String
+}
+
 model User {
   id           Int       @id @default(autoincrement())
   fullname     String

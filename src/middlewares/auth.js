@@ -6,6 +6,10 @@ const unprotectedRoutes = [
   "/admin/login",
   "/users/login",
   "/users/register",
+  "/users/verify-otp",
+  "/users/forgot-password",
+  "/users/reset-password",
+  "/users/resend-otp",
   "/cs/login",
   "/loket/login",
 ];
