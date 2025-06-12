@@ -106,8 +106,8 @@ model Queue {
   updatedAt     DateTime  @updatedAt
   updatedBy     String
 
-  queueLogs         QueueLog[]
-  servicesDocuments ServicesDocuments[]
+  queueLogs QueueLog[]
+  services  QueueService[]
 }
 
 model QueueLog {
@@ -139,7 +139,9 @@ model Service {
   updatedAt   DateTime @updatedAt
   updatedBy   String
 
-  servicesDocuments ServicesDocuments[]
+  // Relasi many-to-many ke Document
+  documents ServiceDocument[]
+  queues    QueueService[]
 }
 
 model Document {
@@ -150,13 +152,12 @@ model Document {
   updatedAt    DateTime @updatedAt
   updatedBy    String
 
-  servicesDocuments ServicesDocuments[]
+  // Relasi many-to-many ke Service
+  services ServiceDocument[]
 }
 
-model ServicesDocuments {
+model ServiceDocument {
   id         Int      @id @default(autoincrement())
-  queue      Queue    @relation(fields: [queueId], references: [id])
-  queueId    Int
   service    Service  @relation(fields: [serviceId], references: [id])
   serviceId  Int
   document   Document @relation(fields: [documentId], references: [id])
@@ -165,4 +166,16 @@ model ServicesDocuments {
   createdBy  String
   updatedAt  DateTime @updatedAt
   updatedBy  String
+}
+
+model QueueService {
+  id        Int      @id @default(autoincrement())
+  queue     Queue    @relation(fields: [queueId], references: [id])
+  queueId   Int
+  service   Service  @relation(fields: [serviceId], references: [id])
+  serviceId Int
+  createdAt DateTime @default(now())
+  createdBy String
+  updatedAt DateTime @updatedAt
+  updatedBy String
 }
