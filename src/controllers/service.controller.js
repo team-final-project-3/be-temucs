@@ -1,0 +1,90 @@
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+
+//Tambah service baru
+const addService = async (req, res) => {
+    try {
+        const {
+            serviceName,
+            createdBy,
+            updatedBy,
+        } = req.body;
+
+        const branch = await prisma.branch.create({
+            data: {
+                serviceName,
+                createdBy,
+                updatedBy,
+            },
+        });
+
+        res.status(201).json({ message: "Service created", branch });
+    } catch (error) {
+        console.error("Add Service Error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+//Ambil data service by id
+const getService = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const service = await prisma.branch.findUnique({ where: { id: Number(id) } });
+
+        if (!service) return res.status(404).json({ message: "Service not found" });
+
+        res.status(200).json(service);
+    } catch (error) {
+        console.error("Get Service Error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+//ambil semua data service
+const getAllService = async (req, res) => {
+    try {
+        const services = await prisma.branch.findMany();
+        res.status(200).json(services);
+    } catch (error) {
+        console.error("Get All Services Error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+//edit service
+const editService = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { serviceName, updatedBy } = req.body;
+
+        const updatedService = await prisma.branch.update({
+            where: { id: Number(id) },
+            data: { serviceName, updatedBy },
+        });
+
+        res.status(200).json({ message: "Service updated", updatedService });
+    } catch (error) {
+        console.error("Edit Service Error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+//Delete service
+const deleteService = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        await prisma.branch.delete({ where: { id: Number(id) } });
+
+        res.status(200).json({ message: "Service deleted" });
+    } catch (error) {
+        console.error("Delete Service Error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+module.exports = { addService, getService, getAllService, editService, deleteService };
