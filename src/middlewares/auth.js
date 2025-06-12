@@ -9,6 +9,7 @@ const unprotectedRoutes = [
   "/users/verify-otp",
   "/users/forgot-password",
   "/users/reset-password",
+  "/users/verify-otp-forgot",
   "/users/resend-otp",
   "/cs/login",
   "/loket/login",

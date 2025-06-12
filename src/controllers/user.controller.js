@@ -209,6 +209,23 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const verifyOtpForgotPassword = async (req, res) => {
+  const { email, otp } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.otp !== otp)
+      return res.status(400).json({ message: "Invalid OTP" });
+    if (user.otpExpiresAt < new Date())
+      return res.status(400).json({ message: "OTP expired" });
+
+    // OTP valid, bisa lanjut reset password
+    res.json({ message: "OTP verified. You can now reset your password." });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   register,
   verifyOtp,
@@ -216,4 +233,5 @@ module.exports = {
   login,
   forgotPassword,
   resetPassword,
+  verifyOtpForgotPassword,
 };

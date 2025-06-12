@@ -186,4 +186,34 @@ router.post("/users/forgot-password", userController.forgotPassword);
  */
 router.post("/users/reset-password", userController.resetPassword);
 
+/**
+ * @swagger
+ * /api/users/verify-otp-forgot:
+ *   post:
+ *     summary: Verifikasi OTP untuk reset password
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *             properties:
+ *               email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP verified. You can now reset your password.
+ *       400:
+ *         description: Invalid OTP or OTP expired
+ *       404:
+ *         description: User not found
+ */
+router.post("/users/verify-otp-forgot", userController.verifyOtpForgotPassword);
+
 module.exports = router;
