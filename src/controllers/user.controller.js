@@ -91,9 +91,6 @@ const register = async (req, res) => {
 const verifyOtp = async (req, res) => {
   const { userId, otp } = req.body;
   try {
-    console.log("Verify OTP");
-    console.log("User ID: ", userId);
-    console.log("OTP: ", otp);
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ message: "User not found" });
     if (user.isVerified)

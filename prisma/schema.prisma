@@ -10,8 +10,8 @@ datasource db {
 model CoreBanking {
   CIF         String @id @unique
   fullname    String
-  email       String
-  phoneNumber String
+  email       String @unique
+  phoneNumber String @unique
 }
 
 model User {
