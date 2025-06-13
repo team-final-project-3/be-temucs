@@ -35,7 +35,6 @@ model Branch {
   id         Int      @id @default(autoincrement())
   name       String
   branchCode String   @unique
-  regionCode String
   address    String
   longitude  Float
   latitude   Float
@@ -97,7 +96,7 @@ model Queue {
   name          String
   email         String
   phoneNumber   String
-  estimatedTime Int?
+  estimatedTime DateTime?
   calledAt      DateTime?
   status        String
   notification  Boolean   @default(false)
@@ -140,7 +139,6 @@ model Service {
   updatedAt     DateTime @updatedAt
   updatedBy     String
 
-  // Relasi many-to-many ke Document
   documents ServiceDocument[]
   queues    QueueService[]
 }
@@ -153,7 +151,6 @@ model Document {
   updatedAt    DateTime @updatedAt
   updatedBy    String
 
-  // Relasi many-to-many ke Service
   services ServiceDocument[]
 }
 

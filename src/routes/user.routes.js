@@ -216,4 +216,47 @@ router.post("/users/reset-password", userController.resetPassword);
  */
 router.post("/users/verify-otp-forgot", userController.verifyOtpForgotPassword);
 
+/**
+ * @swagger
+ * /api/users/profile:
+ *   get:
+ *     summary: Get profile of the logged-in user
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     fullname:
+ *                       type: string
+ *                     username:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     phoneNumber:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/users/profile", userController.getProfile);
+
 module.exports = router;

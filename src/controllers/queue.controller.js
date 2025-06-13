@@ -26,27 +26,62 @@ async function generateTicketNumber(branchId, bookingDate) {
 }
 
 const bookQueueOnline = async (req, res) => {
-  const { userId, branchId, bookingDate, name, email, phoneNumber } = req.body;
+  const {
+    userId,
+    branchId,
+    bookingDate,
+    name,
+    email,
+    phoneNumber,
+    serviceIds,
+    createdBy,
+    updatedBy,
+  } = req.body;
   try {
     const ticketNumber = await generateTicketNumber(branchId, bookingDate);
 
-    const startOfDay = new Date(bookingDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(bookingDate);
+    // Tentukan hari booking
+    const bookingDateObj = new Date(bookingDate);
+    bookingDateObj.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bookingDateObj);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const count = await prisma.queue.count({
+    // Ambil semua antrian di branch & hari yang statusnya BUKAN done/skipped/canceled
+    const activeQueues = await prisma.queue.findMany({
       where: {
         branchId,
         bookingDate: {
-          gte: startOfDay,
+          gte: bookingDateObj,
           lte: endOfDay,
+        },
+        status: { notIn: ["done", "skipped", "canceled"] },
+      },
+      orderBy: { id: "asc" },
+      include: {
+        services: {
+          include: { service: { select: { estimatedTime: true } } },
         },
       },
     });
 
+    // Hitung total waktu layanan dari semua antrian aktif sebelum antrian baru ini
+    let totalMinutes = 0;
+    for (const q of activeQueues) {
+      for (const s of q.services) {
+        totalMinutes += s.service.estimatedTime || 0;
+      }
+    }
+
+    // estimatedTime = bookingDate + totalMinutes (antrian aktif sebelum ini)
+    const estimatedTimeDate = new Date(
+      new Date(bookingDate).getTime() + totalMinutes * 60000
+    );
+
+    // Notifikasi 5 antrian pertama
+    const count = activeQueues.length;
     const notification = count < 5;
 
+    // Buat queue
     const queue = await prisma.queue.create({
       data: {
         userId,
@@ -58,6 +93,19 @@ const bookQueueOnline = async (req, res) => {
         ticketNumber,
         status: "waiting",
         notification,
+        estimatedTime: estimatedTimeDate,
+        createdBy,
+        updatedBy,
+        services: {
+          create: serviceIds.map((serviceId) => ({
+            serviceId,
+            createdBy,
+            updatedBy,
+          })),
+        },
+      },
+      include: {
+        services: true,
       },
     });
     res.status(201).json({ message: "Queue booked (online)", queue });
@@ -68,27 +116,62 @@ const bookQueueOnline = async (req, res) => {
 };
 
 const bookQueueOffline = async (req, res) => {
-  const { loketId, branchId, bookingDate, name, email, phoneNumber } = req.body;
+  const {
+    loketId,
+    branchId,
+    bookingDate,
+    name,
+    email,
+    phoneNumber,
+    serviceIds,
+    createdBy,
+    updatedBy,
+  } = req.body;
   try {
     const ticketNumber = await generateTicketNumber(branchId, bookingDate);
 
-    const startOfDay = new Date(bookingDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(bookingDate);
+    // Tentukan hari booking
+    const bookingDateObj = new Date(bookingDate);
+    bookingDateObj.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bookingDateObj);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const count = await prisma.queue.count({
+    // Ambil semua antrian di branch & hari yang statusnya BUKAN done/skipped/canceled
+    const activeQueues = await prisma.queue.findMany({
       where: {
         branchId,
         bookingDate: {
-          gte: startOfDay,
+          gte: bookingDateObj,
           lte: endOfDay,
+        },
+        status: { notIn: ["done", "skipped", "canceled"] },
+      },
+      orderBy: { id: "asc" },
+      include: {
+        services: {
+          include: { service: { select: { estimatedTime: true } } },
         },
       },
     });
 
+    // Hitung total waktu layanan dari semua antrian aktif sebelum antrian baru ini
+    let totalMinutes = 0;
+    for (const q of activeQueues) {
+      for (const s of q.services) {
+        totalMinutes += s.service.estimatedTime || 0;
+      }
+    }
+
+    // estimatedTime = bookingDate + totalMinutes (antrian aktif sebelum ini)
+    const estimatedTimeDate = new Date(
+      new Date(bookingDate).getTime() + totalMinutes * 60000
+    );
+
+    // Notifikasi 5 antrian pertama
+    const count = activeQueues.length;
     const notification = count < 5;
 
+    // Buat queue
     const queue = await prisma.queue.create({
       data: {
         loketId,
@@ -100,6 +183,19 @@ const bookQueueOffline = async (req, res) => {
         ticketNumber,
         status: "waiting",
         notification,
+        estimatedTime: estimatedTimeDate,
+        createdBy,
+        updatedBy,
+        services: {
+          create: serviceIds.map((serviceId) => ({
+            serviceId,
+            createdBy,
+            updatedBy,
+          })),
+        },
+      },
+      include: {
+        services: true,
       },
     });
     res.status(201).json({ message: "Queue booked (offline)", queue });
@@ -161,26 +257,29 @@ const takeQueue = async (req, res) => {
   }
 };
 
-
 const updateQueueEstimatedTime = async (req, res) => {
   try {
     const { queueId, updatedBy } = req.body;
 
     if (!queueId || !updatedBy) {
-      return res.status(400).json({ message: "queueId and updatedBy are required" });
+      return res
+        .status(400)
+        .json({ message: "queueId and updatedBy are required" });
     }
 
     const queueServices = await prisma.queueService.findMany({
       where: { queueId: Number(queueId) },
       select: {
         service: {
-          select: { estimatedTime: true }
-        }
-      }
+          select: { estimatedTime: true },
+        },
+      },
     });
 
     if (queueServices.length === 0) {
-      return res.status(404).json({ message: "No services found for this queue" });
+      return res
+        .status(404)
+        .json({ message: "No services found for this queue" });
     }
 
     const totalEstimatedTime = queueServices.reduce((sum, q) => {
@@ -191,24 +290,21 @@ const updateQueueEstimatedTime = async (req, res) => {
       where: { id: Number(queueId) },
       data: {
         estimatedTime: totalEstimatedTime,
-        updatedBy
-      }
+        updatedBy,
+      },
     });
 
     res.status(200).json({
       message: "Estimated time updated",
       queueId,
       estimatedTime: totalEstimatedTime,
-      updatedQueue
+      updatedQueue,
     });
-
   } catch (error) {
     console.error("Update Queue Estimated Time Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
 
 module.exports = {
   bookQueueOnline,
@@ -217,6 +313,4 @@ module.exports = {
   skipQueue: updateStatus("skipped"),
   takeQueue,
   doneQueue: updateStatus("done"),
-
-  updateQueueEstimatedTime,
 };

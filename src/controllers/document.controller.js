@@ -1,91 +1,86 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-//Tambah document baru
 const addDocument = async (req, res) => {
-    try {
-        const {
-            documentName,
-            createdBy,
-            updatedBy,
-        } = req.body;
+  try {
+    const { documentName, createdBy, updatedBy } = req.body;
 
-        const document = await prisma.document.create({
-            data: {
-                documentName,
-                createdBy,
-                updatedBy,
-            },
-        });
+    const document = await prisma.document.create({
+      data: {
+        documentName,
+        createdBy,
+        updatedBy,
+      },
+    });
 
-        res.status(201).json({ message: "Document created", document });
-    } catch (error) {
-        console.error("Add Document Error:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+    res.status(201).json({ message: "Document created", document });
+  } catch (error) {
+    console.error("Add Document Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-//Ambil data document by id
 const getDocument = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const document = await prisma.document.findUnique({ where: { id: Number(id) } });
+  try {
+    const { id } = req.params;
+    const document = await prisma.document.findUnique({
+      where: { id: Number(id) },
+    });
 
-        if (!document) return res.status(404).json({ message: "Document not found" });
+    if (!document)
+      return res.status(404).json({ message: "Document not found" });
 
-        res.status(200).json(document);
-    } catch (error) {
-        console.error("Get Document Error:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+    res.status(200).json(document);
+  } catch (error) {
+    console.error("Get Document Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-
-//ambil semua data Document
 const getAllDocument = async (req, res) => {
-    try {
-        const document = await prisma.document.findMany();
-        res.status(200).json(document);
-    } catch (error) {
-        console.error("Get All Document Error:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+  try {
+    const document = await prisma.document.findMany();
+    res.status(200).json(document);
+  } catch (error) {
+    console.error("Get All Document Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-
-//edit document
 const editDocument = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { documentName, updatedBy } = req.body;
+  try {
+    const { id } = req.params;
+    const { documentName, updatedBy } = req.body;
 
-        const updatedDocument = await prisma.document.update({
-            where: { id: Number(id) },
-            data: { DocumentName, updatedBy },
-        });
+    const updatedDocument = await prisma.document.update({
+      where: { id: Number(id) },
+      data: { DocumentName, updatedBy },
+    });
 
-        res.status(200).json({ message: "Document updated", updatedDocument });
-    } catch (error) {
-        console.error("Edit Document Error:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+    res.status(200).json({ message: "Document updated", updatedDocument });
+  } catch (error) {
+    console.error("Edit Document Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-
-//Delete document
 const deleteDocument = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        await prisma.document.delete({ where: { id: Number(id) } });
+    await prisma.document.delete({ where: { id: Number(id) } });
 
-        res.status(200).json({ message: "Document deleted" });
-    } catch (error) {
-        console.error("Delete Document Error:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+    res.status(200).json({ message: "Document deleted" });
+  } catch (error) {
+    console.error("Delete Document Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-
-
-module.exports = { addDocument, getDocument, getAllDocument, editDocument, deleteDocument };
+module.exports = {
+  addDocument,
+  getDocument,
+  getAllDocument,
+  editDocument,
+  deleteDocument,
+};
