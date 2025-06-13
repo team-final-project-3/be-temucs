@@ -260,5 +260,34 @@ router.get("/queue/remaining/:queueId", queueController.getRemainingQueue);
  */
 router.get("/queue/latest-inprogress", queueController.getLatestInProgressQueue);
 
+/**
+ * @swagger
+ * /api/queue/waiting/{branchId}:
+ *   get:
+ *     summary: Get all waiting queues in a specific branch For CS
+ *     tags: [Queue]
+ *     parameters:
+ *       - in: path
+ *         name: branchId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the branch
+ *     responses:
+ *       200:
+ *         description: List of waiting queues
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: branchId is required
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/queue/waiting/:branchId", queueController.getWaitingQueuesByBranchId);
+
 
 module.exports = router;

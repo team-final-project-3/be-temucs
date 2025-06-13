@@ -331,7 +331,7 @@ const getLatestInProgressQueue = async (req, res) => {
         status: "in progress",
       },
       orderBy: {
-        calledAt: 'desc', 
+        calledAt: 'desc',
       },
     });
 
@@ -346,6 +346,30 @@ const getLatestInProgressQueue = async (req, res) => {
   }
 };
 
+const getWaitingQueuesByBranchId = async (req, res) => {
+  try {
+    const { branchId } = req.params;
+
+    if (!branchId) {
+      return res.status(400).json({ message: "branchId is required" });
+    }
+
+    const queues = await prisma.queue.findMany({
+      where: {
+        branchId: Number(branchId),
+        status: "waiting",
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    res.status(200).json(queues);
+  } catch (error) {
+    console.error("Get Waiting Queues Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 module.exports = {
   bookQueueOnline,
@@ -357,4 +381,5 @@ module.exports = {
   getQueueCountByBranchId,
   getRemainingQueue,
   getLatestInProgressQueue,
+  getWaitingQueuesByBranchId,
 };
