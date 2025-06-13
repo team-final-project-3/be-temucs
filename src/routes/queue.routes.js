@@ -204,5 +204,41 @@ router.patch("/queue/:id/done", queueController.doneQueue);
  */
 router.get("/queue/count/:branchId", queueController.getQueueCountByBranchId);
 
+/**
+ * @swagger
+ * /api/queue/remaining/{queueId}:
+ *   get:
+ *     summary: Get number of active queues in front of specific queue
+ *     tags: [Queue]
+ *     parameters:
+ *       - in: path
+ *         name: queueId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the current queue
+ *     responses:
+ *       200:
+ *         description: Number of active queues before this queue
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 queueId:
+ *                   type: integer
+ *                 branchId:
+ *                   type: integer
+ *                 remainingInFront:
+ *                   type: integer
+ *       400:
+ *         description: queueId is missing or invalid
+ *       404:
+ *         description: Queue not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/queue/remaining/:queueId", queueController.getRemainingQueue);
+
 
 module.exports = router;

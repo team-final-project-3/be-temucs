@@ -257,55 +257,6 @@ const takeQueue = async (req, res) => {
   }
 };
 
-const updateQueueEstimatedTime = async (req, res) => {
-  try {
-    const { queueId, updatedBy } = req.body;
-
-    if (!queueId || !updatedBy) {
-      return res
-        .status(400)
-        .json({ message: "queueId and updatedBy are required" });
-    }
-
-    const queueServices = await prisma.queueService.findMany({
-      where: { queueId: Number(queueId) },
-      select: {
-        service: {
-          select: { estimatedTime: true },
-        },
-      },
-    });
-
-    if (queueServices.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No services found for this queue" });
-    }
-
-    const totalEstimatedTime = queueServices.reduce((sum, q) => {
-      return sum + (q.service.estimatedTime || 0);
-    }, 0);
-
-    const updatedQueue = await prisma.queue.update({
-      where: { id: Number(queueId) },
-      data: {
-        estimatedTime: totalEstimatedTime,
-        updatedBy,
-      },
-    });
-
-    res.status(200).json({
-      message: "Estimated time updated",
-      queueId,
-      estimatedTime: totalEstimatedTime,
-      updatedQueue,
-    });
-  } catch (error) {
-    console.error("Update Queue Estimated Time Error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
 const getQueueCountByBranchId = async (req, res) => {
   try {
     const { branchId } = req.params;
@@ -333,8 +284,45 @@ const getQueueCountByBranchId = async (req, res) => {
   }
 };
 
-module.exports = { getQueueCountByBranchId };
+const getRemainingQueue = async (req, res) => {
+  try {
+    const { queueId } = req.params;
 
+    if (!queueId) {
+      return res.status(400).json({ message: "queueId is required" });
+    }
+
+    const myQueue = await prisma.queue.findUnique({
+      where: { id: Number(queueId) },
+      select: {
+        id: true,
+        branchId: true
+      }
+    });
+
+    if (!myQueue) {
+      return res.status(404).json({ message: "Queue not found" });
+    }
+
+    const remaining = await prisma.queue.count({
+      where: {
+        branchId: myQueue.branchId,
+        id: { lt: myQueue.id },
+        status: { notIn: ["done", "skipped", "canceled"] }
+      }
+    });
+
+    res.status(200).json({
+      queueId: myQueue.id,
+      branchId: myQueue.branchId,
+      remainingInFront: remaining
+    });
+
+  } catch (error) {
+    console.error("Get Remaining Queue Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 module.exports = {
   bookQueueOnline,
@@ -344,4 +332,5 @@ module.exports = {
   takeQueue,
   doneQueue: updateStatus("done"),
   getQueueCountByBranchId,
+  getRemainingQueue,
 };
