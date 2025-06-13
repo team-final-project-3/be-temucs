@@ -172,4 +172,52 @@ router.patch("/queue/:id/take", queueController.takeQueue);
  */
 router.patch("/queue/:id/done", queueController.doneQueue);
 
+/**
+ * @swagger
+ * /api/queue/update-estimated-time:
+ *   post:
+ *     summary: Update total estimated time pada antrean (Queue) berdasarkan layanan (Service) yang dipilih
+ *     tags: [Queue]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - queueId
+ *               - updatedBy
+ *             properties:
+ *               queueId:
+ *                 type: integer
+ *                 example: 5
+ *               updatedBy:
+ *                 type: string
+ *                 example: "admin"
+ *     responses:
+ *       200:
+ *         description: Estimated time berhasil dihitung dan disimpan ke antrean
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 queueId:
+ *                   type: integer
+ *                 estimatedTime:
+ *                   type: integer
+ *                 updatedQueue:
+ *                   type: object
+ *       400:
+ *         description: Request tidak valid
+ *       404:
+ *         description: Tidak ditemukan layanan untuk antrean
+ *       500:
+ *         description: Internal server error
+ */
+
+router.post("/queue/update-estimated-time", queueController.updateQueueEstimatedTime);
+
 module.exports = router;

@@ -161,6 +161,55 @@ const takeQueue = async (req, res) => {
   }
 };
 
+
+const updateQueueEstimatedTime = async (req, res) => {
+  try {
+    const { queueId, updatedBy } = req.body;
+
+    if (!queueId || !updatedBy) {
+      return res.status(400).json({ message: "queueId and updatedBy are required" });
+    }
+
+    const queueServices = await prisma.queueService.findMany({
+      where: { queueId: Number(queueId) },
+      select: {
+        service: {
+          select: { estimatedTime: true }
+        }
+      }
+    });
+
+    if (queueServices.length === 0) {
+      return res.status(404).json({ message: "No services found for this queue" });
+    }
+
+    const totalEstimatedTime = queueServices.reduce((sum, q) => {
+      return sum + (q.service.estimatedTime || 0);
+    }, 0);
+
+    const updatedQueue = await prisma.queue.update({
+      where: { id: Number(queueId) },
+      data: {
+        estimatedTime: totalEstimatedTime,
+        updatedBy
+      }
+    });
+
+    res.status(200).json({
+      message: "Estimated time updated",
+      queueId,
+      estimatedTime: totalEstimatedTime,
+      updatedQueue
+    });
+
+  } catch (error) {
+    console.error("Update Queue Estimated Time Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
 module.exports = {
   bookQueueOnline,
   bookQueueOffline,
@@ -168,4 +217,6 @@ module.exports = {
   skipQueue: updateStatus("skipped"),
   takeQueue,
   doneQueue: updateStatus("done"),
+
+  updateQueueEstimatedTime,
 };
