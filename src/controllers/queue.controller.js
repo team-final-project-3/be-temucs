@@ -306,6 +306,28 @@ const updateQueueEstimatedTime = async (req, res) => {
   }
 };
 
+const getQueueCountByBranchId = async (req, res) => {
+  try {
+    const { branchId } = req.params;
+
+    if (!branchId) {
+      return res.status(400).json({ message: "branchId is required" });
+    }
+
+    const count = await prisma.queue.count({
+      where: { branchId: Number(branchId) }
+    });
+
+    res.status(200).json({
+      branchId: Number(branchId),
+      totalQueue: count
+    });
+  } catch (error) {
+    console.error("Get Queue Count Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   bookQueueOnline,
   bookQueueOffline,
