@@ -217,7 +217,40 @@ router.patch("/queue/:id/done", queueController.doneQueue);
  *       500:
  *         description: Internal server error
  */
-
 router.post("/queue/update-estimated-time", queueController.updateQueueEstimatedTime);
+
+/**
+ * @swagger
+ * /api/queue/count/{branchId}:
+ *   get:
+ *     summary: Get total number of queues in a specific branch
+ *     tags: [Queue]
+ *     parameters:
+ *       - in: path
+ *         name: branchId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the branch
+ *     responses:
+ *       200:
+ *         description: Total number of queues
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 branchId:
+ *                   type: integer
+ *                 totalQueue:
+ *                   type: integer
+ *       400:
+ *         description: Missing or invalid branchId
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/queue/count/:branchId", queueController.getQueueCountByBranchId);
+
+
 
 module.exports = router;
