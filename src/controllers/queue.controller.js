@@ -324,6 +324,29 @@ const getRemainingQueue = async (req, res) => {
   }
 };
 
+const getLatestInProgressQueue = async (req, res) => {
+  try {
+    const queue = await prisma.queue.findFirst({
+      where: {
+        status: "in progress",
+      },
+      orderBy: {
+        calledAt: 'desc', 
+      },
+    });
+
+    if (!queue) {
+      return res.status(404).json({ message: "No in-progress queue found" });
+    }
+
+    res.status(200).json(queue);
+  } catch (error) {
+    console.error("Get Latest In-Progress Queue Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 module.exports = {
   bookQueueOnline,
   bookQueueOffline,
@@ -333,4 +356,5 @@ module.exports = {
   doneQueue: updateStatus("done"),
   getQueueCountByBranchId,
   getRemainingQueue,
+  getLatestInProgressQueue,
 };

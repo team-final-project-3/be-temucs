@@ -240,5 +240,25 @@ router.get("/queue/count/:branchId", queueController.getQueueCountByBranchId);
  */
 router.get("/queue/remaining/:queueId", queueController.getRemainingQueue);
 
+/**
+ * @swagger
+ * /api/queue/latest-inprogress:
+ *   get:
+ *     summary: Get the latest queue that is currently in progress
+ *     tags: [Queue]
+ *     responses:
+ *       200:
+ *         description: Latest in-progress queue
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       404:
+ *         description: No in-progress queue found
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/queue/latest-inprogress", queueController.getLatestInProgressQueue);
+
 
 module.exports = router;
