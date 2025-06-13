@@ -289,5 +289,38 @@ router.get("/queue/latest-inprogress", queueController.getLatestInProgressQueue)
  */
 router.get("/queue/waiting/:branchId", queueController.getWaitingQueuesByBranchId);
 
+/**
+ * @swagger
+ * /api/queue/next-to-serve:
+ *   get:
+ *     summary: Get the next customer queue to be served for CS
+ *     tags: [Queue]
+ *     description: Returns the earliest queue entry with status 'waiting'. Used by CS to call the next customer.
+ *     responses:
+ *       200:
+ *         description: The next waiting queue found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 ticketNumber:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 status:
+ *                   type: string
+ *       404:
+ *         description: No waiting queue available
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/queue/waiting-oldest", queueController.getOldestWaitingQueue);
+
 
 module.exports = router;

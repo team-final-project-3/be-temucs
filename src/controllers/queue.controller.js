@@ -371,6 +371,29 @@ const getWaitingQueuesByBranchId = async (req, res) => {
   }
 };
 
+const getOldestWaitingQueue = async (req, res) => {
+  try {
+    const queue = await prisma.queue.findFirst({
+      where: {
+        status: "waiting",
+      },
+      orderBy: {
+        createdAt: "asc", // paling lama
+      },
+    });
+
+    if (!queue) {
+      return res.status(404).json({ message: "No waiting queue found" });
+    }
+
+    res.status(200).json(queue);
+  } catch (error) {
+    console.error("Get Oldest Waiting Queue Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 module.exports = {
   bookQueueOnline,
   bookQueueOffline,
@@ -382,4 +405,5 @@ module.exports = {
   getRemainingQueue,
   getLatestInProgressQueue,
   getWaitingQueuesByBranchId,
+  getOldestWaitingQueue,
 };
