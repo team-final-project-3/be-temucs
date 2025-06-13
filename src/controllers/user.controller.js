@@ -217,8 +217,30 @@ const verifyOtpForgotPassword = async (req, res) => {
     if (user.otpExpiresAt < new Date())
       return res.status(400).json({ message: "OTP expired" });
 
-    // OTP valid, bisa lanjut reset password
     res.json({ message: "OTP verified. You can now reset your password." });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId; // Ambil dari JWT (middleware harus set req.user)
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        fullname: true,
+        username: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ user });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -232,4 +254,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyOtpForgotPassword,
+  getProfile,
 };

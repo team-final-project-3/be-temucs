@@ -10,13 +10,27 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendOtpEmail = async (to, otp) => {
+const sendOtpEmail = async (to, otp, name = "") => {
   await transporter.sendMail({
     from: `"TemuCS" <${process.env.SMTP_USER}>`,
     to,
-    subject: "Kode OTP Registrasi TemuCS",
-    text: `Kode OTP Anda: ${otp}`,
-    html: `<b>Kode OTP Anda: ${otp}</b>`,
+    subject: "Your One Time Password (OTP)",
+    html: `
+      <div style="max-width:500px;margin:auto;border:1px solid #e5e7eb;border-radius:8px;padding:32px;font-family:sans-serif;background:#fff;">
+        <div style="margin-top:24px;">
+          <p>Hi <b>${name || ""}</b>,<br>
+          Please copy the One Time Password (OTP) below and paste it in the verification page on the TemuCS App.</p>
+        </div>
+        <hr style="margin:24px 0;">
+        <div style="text-align:center;font-size:36px;letter-spacing:4px;font-weight:bold;color:#FF800A;">
+          ${otp}
+        </div>
+        <hr style="margin:24px 0;">
+        <div style="font-size:15px;">
+          This code <b>expires in 10 minutes</b>. Please, <b>DO NOT SHARE OR SEND THIS CODE TO ANYONE!</b>
+        </div>
+      </div>
+    `,
   });
 };
 
