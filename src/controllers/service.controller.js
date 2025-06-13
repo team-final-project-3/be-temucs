@@ -1,9 +1,15 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const addService = async (req, res) => {
+const addService = async (req, res, next) => {
   try {
     const { serviceName, estimatedTime, createdBy, updatedBy } = req.body;
+
+    if (!serviceName || !estimatedTime || !createdBy || !updatedBy) {
+      const error = new Error("All fields are required");
+      error.status = 400;
+      throw error;
+    }
 
     const service = await prisma.service.create({
       data: {
@@ -16,41 +22,53 @@ const addService = async (req, res) => {
 
     res.status(201).json({ message: "Service created", service });
   } catch (error) {
-    console.error("Add Service Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getService = async (req, res) => {
+const getService = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const service = await prisma.service.findUnique({
       where: { id: Number(id) },
     });
 
-    if (!service) return res.status(404).json({ message: "Service not found" });
+    if (!service) {
+      const error = new Error("Service not found");
+      error.status = 404;
+      throw error;
+    }
 
     res.status(200).json(service);
   } catch (error) {
-    console.error("Get Service Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getAllService = async (req, res) => {
+const getAllService = async (req, res, next) => {
   try {
     const services = await prisma.service.findMany();
     res.status(200).json(services);
   } catch (error) {
-    console.error("Get All Services Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const editService = async (req, res) => {
+const editService = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { serviceName, estimatedTime, updatedBy } = req.body;
+
+    if (
+      serviceName == null ||
+      estimatedTime == null ||
+      createdBy == null ||
+      updatedBy == null
+    ) {
+      const error = new Error("All fields are required");
+      error.status = 400;
+      throw error;
+    }
 
     const updatedService = await prisma.service.update({
       where: { id: Number(id) },
@@ -59,12 +77,11 @@ const editService = async (req, res) => {
 
     res.status(200).json({ message: "Service updated", updatedService });
   } catch (error) {
-    console.error("Edit Service Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const deleteService = async (req, res) => {
+const deleteService = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
 
@@ -72,8 +89,7 @@ const deleteService = async (req, res) => {
 
     res.status(200).json({ message: "Service deleted" });
   } catch (error) {
-    console.error("Delete Service Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 

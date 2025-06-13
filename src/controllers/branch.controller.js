@@ -1,7 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const addBranch = async (req, res) => {
+const addBranch = async (req, res, next) => {
   try {
     const {
       name,
@@ -15,6 +15,21 @@ const addBranch = async (req, res) => {
       createdBy,
       updatedBy,
     } = req.body;
+
+    if (
+      !name ||
+      !branchCode ||
+      !regionCode ||
+      !address ||
+      longitude == null ||
+      latitude == null ||
+      !createdBy ||
+      !updatedBy
+    ) {
+      const error = new Error("All required fields must be provided.");
+      error.status = 400;
+      throw error;
+    }
 
     const branch = await prisma.branch.create({
       data: {
@@ -33,12 +48,11 @@ const addBranch = async (req, res) => {
 
     res.status(201).json({ message: "Branch created", branch });
   } catch (error) {
-    console.error("Add Branch Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const editBranch = async (req, res) => {
+const editBranch = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const {
@@ -52,6 +66,20 @@ const editBranch = async (req, res) => {
       status,
       updatedBy,
     } = req.body;
+
+    if (
+      !name ||
+      !branchCode ||
+      !regionCode ||
+      !address ||
+      longitude == null ||
+      latitude == null ||
+      !updatedBy
+    ) {
+      const error = new Error("All required fields must be provided.");
+      error.status = 400;
+      throw error;
+    }
 
     const branch = await prisma.branch.update({
       where: { id },
@@ -70,34 +98,33 @@ const editBranch = async (req, res) => {
 
     res.json({ message: "Branch updated", branch });
   } catch (error) {
-    console.error("Edit Branch Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getAllBranch = async (req, res) => {
+const getAllBranch = async (req, res, next) => {
   try {
     const branches = await prisma.branch.findMany();
     res.json({ branches });
   } catch (error) {
-    console.error("Get All Branch Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getBranch = async (req, res) => {
+const getBranch = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const branch = await prisma.branch.findUnique({
       where: { id },
     });
     if (!branch) {
-      return res.status(404).json({ message: "Branch not found" });
+      const error = new Error("Branch not found");
+      error.status = 404;
+      throw error;
     }
     res.json({ branch });
   } catch (error) {
-    console.error("Get Branch Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 

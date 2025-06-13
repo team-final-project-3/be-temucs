@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const { z } = require("zod");
 const {
   hashPassword,
   comparePassword,
@@ -7,28 +8,42 @@ const {
 } = require("../auth/user.auth");
 const { sendOtpEmail } = require("../utils/email");
 
-const register = async (req, res) => {
-  const {
-    fullname,
-    username,
-    email,
-    password,
-    phoneNumber,
-    role = "nasabah",
-  } = req.body;
+const registerSchema = z.object({
+  fullname: z.string().min(1, "Fullname is required"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  phoneNumber: z
+    .string()
+    .regex(/^\d{10,15}$/, "Phone number must be 10-15 digits"),
+  role: z.enum(["nasabah", "admin"]).optional(),
+});
 
+const register = async (req, res, next) => {
   try {
-    // Cek apakah email ada di CoreBanking
+    // ✅ Validasi input
+    const {
+      fullname,
+      username,
+      email,
+      password,
+      phoneNumber,
+      role = "nasabah",
+    } = registerSchema.parse(req.body);
+
+    // 🔍 Cek apakah email ada di coreBanking
     const coreBanking = await prisma.coreBanking.findUnique({
       where: { email },
     });
     if (!coreBanking) {
-      return res.status(403).json({
-        message:
-          "Nasabah tidak terdaftar. Daftarkan diri Anda di Cabang terdekat.",
-      });
+      const error = new Error(
+        "Nasabah tidak terdaftar. Daftarkan diri Anda di Cabang terdekat."
+      );
+      error.status = 403;
+      throw error;
     }
 
+    // 🔍 Cek apakah user sudah pernah mendaftar
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ phoneNumber }, { username }, { email }],
@@ -37,9 +52,8 @@ const register = async (req, res) => {
 
     if (existingUser) {
       if (!existingUser.isVerified) {
-        // Resend OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 menit
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
         await prisma.user.update({
           where: { id: existingUser.id },
@@ -54,10 +68,12 @@ const register = async (req, res) => {
           userId: existingUser.id,
         });
       }
-      return res.status(400).json({ message: "User already exists" });
+      const error = new Error("User already exists");
+      error.status = 400;
+      throw error;
     }
 
-    // User benar-benar baru
+    // 🔐 Hash password & generate OTP
     const passwordHash = await hashPassword(password);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -83,22 +99,41 @@ const register = async (req, res) => {
       userId: user.id,
     });
   } catch (error) {
-    console.error("Register error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    // 🛑 Tangani error dari zod
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        message: "Validation error",
+        errors: error.errors.map((e) => e.message),
+      });
+    }
+    next(error);
   }
 };
 
-const verifyOtp = async (req, res) => {
+const verifyOtp = async (req, res, next) => {
   const { email, otp } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.isVerified)
-      return res.status(400).json({ message: "Already verified" });
-    if (user.otp !== otp)
-      return res.status(400).json({ message: "Invalid OTP" });
-    if (user.otpExpiresAt < new Date())
-      return res.status(400).json({ message: "OTP expired" });
+    if (!user) {
+      const error = new Error("User not found");
+      error.status = 404;
+      throw error;
+    }
+    if (user.isVerified) {
+      const error = new Error("Already verified");
+      error.status = 400;
+      throw error;
+    }
+    if (user.otp !== otp) {
+      const error = new Error("Invalid OTP");
+      error.status = 400;
+      throw error;
+    }
+    if (user.otpExpiresAt < new Date()) {
+      const error = new Error("OTP expired");
+      error.status = 400;
+      throw error;
+    }
 
     await prisma.user.update({
       where: { email },
@@ -107,15 +142,19 @@ const verifyOtp = async (req, res) => {
 
     res.json({ message: "Email verified, registration complete." });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const resendOtp = async (req, res) => {
+const resendOtp = async (req, res, next) => {
   const { email } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      const error = new Error("User not found");
+      error.status = 404;
+      throw error;
+    }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -129,12 +168,11 @@ const resendOtp = async (req, res) => {
 
     res.json({ message: "OTP resent to email." });
   } catch (error) {
-    console.error("Resend OTP error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { username, password } = req.body;
 
   try {
@@ -142,18 +180,25 @@ const login = async (req, res) => {
       where: { username },
     });
 
-    if (!user)
-      return res.status(401).json({ message: "Invalid username or password" });
+    if (!user) {
+      const error = new Error("Invalid username or password");
+      error.status = 401;
+      throw error;
+    }
 
-    if (!user.isVerified)
-      return res
-        .status(403)
-        .json({ message: "Please verify your email first" });
+    if (!user.isVerified) {
+      const error = new Error("Please verify your email first");
+      error.status = 403;
+      throw error;
+    }
 
     const isMatch = await comparePassword(password, user.passwordHash);
 
-    if (!isMatch)
-      return res.status(401).json({ message: "Invalid username or password" });
+    if (!isMatch) {
+      const error = new Error("Invalid username or password");
+      error.status = 401;
+      throw error;
+    }
 
     const token = generateToken({ userId: user.id, role: user.role });
 
@@ -165,19 +210,22 @@ const login = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const forgotPassword = async (req, res) => {
+const forgotPassword = async (req, res, next) => {
   const { email } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      const error = new Error("User not found");
+      error.status = 404;
+      throw error;
+    }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 menit
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await prisma.user.update({
       where: { email },
@@ -188,16 +236,19 @@ const forgotPassword = async (req, res) => {
 
     res.json({ message: "OTP sent to email for password reset." });
   } catch (error) {
-    console.error("Forgot password error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const resetPassword = async (req, res) => {
+const resetPassword = async (req, res, next) => {
   const { email, newPassword } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      const error = new Error("User not found");
+      error.status = 404;
+      throw error;
+    }
 
     const passwordHash = await hashPassword(newPassword);
 
@@ -208,30 +259,39 @@ const resetPassword = async (req, res) => {
 
     res.json({ message: "Password reset successful." });
   } catch (error) {
-    console.error("Reset password error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const verifyOtpForgotPassword = async (req, res) => {
+const verifyOtpForgotPassword = async (req, res, next) => {
   const { email, otp } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.otp !== otp)
-      return res.status(400).json({ message: "Invalid OTP" });
-    if (user.otpExpiresAt < new Date())
-      return res.status(400).json({ message: "OTP expired" });
+    if (!user) {
+      const error = new Error("User not found");
+      error.status = 404;
+      throw error;
+    }
+    if (user.otp !== otp) {
+      const error = new Error("Invalid OTP");
+      error.status = 400;
+      throw error;
+    }
+    if (user.otpExpiresAt < new Date()) {
+      const error = new Error("OTP expired");
+      error.status = 400;
+      throw error;
+    }
 
     res.json({ message: "OTP verified. You can now reset your password." });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getProfile = async (req, res) => {
+const getProfile = async (req, res, next) => {
   try {
-    const userId = req.user.userId; // Ambil dari JWT (middleware harus set req.user)
+    const userId = req.user.userId;
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -245,10 +305,14 @@ const getProfile = async (req, res) => {
         updatedAt: true,
       },
     });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      const error = new Error("User not found");
+      error.status = 404;
+      throw error;
+    }
     res.json({ user });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 

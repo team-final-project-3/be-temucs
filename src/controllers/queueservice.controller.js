@@ -1,14 +1,14 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const createQueueService = async (req, res) => {
+const createQueueService = async (req, res, next) => {
   try {
     const { queueId, serviceIds, createdBy, updatedBy } = req.body;
 
     if (!queueId || !Array.isArray(serviceIds)) {
-      return res
-        .status(400)
-        .json({ message: "queueId and serviceIds are required" });
+      const error = new Error("queueId and serviceIds are required");
+      error.status = 400;
+      throw error;
     }
 
     const dataToInsert = serviceIds.map((serviceId) => ({
@@ -26,12 +26,11 @@ const createQueueService = async (req, res) => {
       .status(201)
       .json({ message: "QueueService created", count: result.count });
   } catch (error) {
-    console.error("Create QueueService Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getDocumentsByQueueId = async (req, res) => {
+const getDocumentsByQueueId = async (req, res, next) => {
   try {
     const queueId = parseInt(req.params.queueId, 10);
     const queueServices = await prisma.queueService.findMany({
@@ -42,9 +41,9 @@ const getDocumentsByQueueId = async (req, res) => {
     const serviceIds = queueServices.map((q) => q.serviceId);
 
     if (serviceIds.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No services found for this queue" });
+      const error = new Error("No services found for this queue");
+      error.status = 404;
+      throw error;
     }
 
     const documents = await prisma.document.findMany({
@@ -60,8 +59,7 @@ const getDocumentsByQueueId = async (req, res) => {
 
     res.status(200).json({ queueId: Number(queueId), documents });
   } catch (error) {
-    console.error("Get Documents Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 

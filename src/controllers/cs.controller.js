@@ -2,12 +2,21 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { comparePassword, generateToken } = require("../auth/cs.auth");
 
-const addCS = async (req, res) => {
+const addCS = async (req, res, next) => {
   const { branchId, name, username, password, createdBy } = req.body;
   try {
+    if (branchId == null || !name || !username || !password || !createdBy) {
+      const error = new Error("All fields are required.");
+      error.status = 400;
+      throw error;
+    }
+
     const existing = await prisma.cS.findUnique({ where: { username } });
-    if (existing)
-      return res.status(400).json({ message: "Username already exists" });
+    if (existing) {
+      const error = new Error("Username already exists");
+      error.status = 400;
+      throw error;
+    }
 
     const passwordHash = await hashPassword(password);
     const cs = await prisma.cS.create({
@@ -25,25 +34,37 @@ const addCS = async (req, res) => {
       cs: { id: cs.id, name: cs.name, username: cs.username },
     });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { username, password } = req.body;
   try {
+    if (!username || !password) {
+      const error = new Error("Username and password are required.");
+      error.status = 400;
+      throw error;
+    }
+
     const cs = await prisma.cS.findUnique({ where: { username } });
-    if (!cs)
-      return res.status(401).json({ message: "Invalid username or password" });
+    if (!cs) {
+      const error = new Error("Invalid username or password");
+      error.status = 401;
+      throw error;
+    }
 
     const isMatch = await comparePassword(password, cs.passwordHash);
-    if (!isMatch)
-      return res.status(401).json({ message: "Invalid username or password" });
+    if (!isMatch) {
+      const error = new Error("Invalid username or password");
+      error.status = 401;
+      throw error;
+    }
 
     const token = generateToken({ csId: cs.id, role: "cs" });
     res.json({ message: "Login successful", token });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 

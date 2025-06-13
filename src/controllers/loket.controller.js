@@ -2,12 +2,28 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { comparePassword, generateToken } = require("../auth/loket.auth");
 
-const addLoket = async (req, res) => {
+const addLoket = async (req, res, next) => {
   const { branchId, name, username, password, status, createdBy } = req.body;
   try {
+    if (
+      branchId == null ||
+      !name ||
+      !username ||
+      !password ||
+      status == null ||
+      !createdBy
+    ) {
+      const error = new Error("All fields are required.");
+      error.status = 400;
+      throw error;
+    }
+
     const existing = await prisma.loket.findUnique({ where: { username } });
-    if (existing)
-      return res.status(400).json({ message: "Username already exists" });
+    if (existing) {
+      const error = new Error("Username already exists");
+      error.status = 400;
+      throw error;
+    }
 
     const passwordHash = await hashPassword(password);
     const loket = await prisma.loket.create({
@@ -26,25 +42,37 @@ const addLoket = async (req, res) => {
       loket: { id: loket.id, name: loket.name, username: loket.username },
     });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { username, password } = req.body;
   try {
+    if (!username || !password) {
+      const error = new Error("Username and password are required.");
+      error.status = 400;
+      throw error;
+    }
+
     const loket = await prisma.loket.findUnique({ where: { username } });
-    if (!loket)
-      return res.status(401).json({ message: "Invalid username or password" });
+    if (!loket) {
+      const error = new Error("Invalid username or password");
+      error.status = 401;
+      throw error;
+    }
 
     const isMatch = await comparePassword(password, loket.passwordHash);
-    if (!isMatch)
-      return res.status(401).json({ message: "Invalid username or password" });
+    if (!isMatch) {
+      const error = new Error("Invalid username or password");
+      error.status = 401;
+      throw error;
+    }
 
     const token = generateToken({ loketId: loket.id, role: "loket" });
     res.json({ message: "Login successful", token });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 

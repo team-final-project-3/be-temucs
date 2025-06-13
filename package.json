@@ -22,7 +22,8 @@
     "nodemailer": "^7.0.3",
     "prisma": "^6.9.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^3.25.63"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

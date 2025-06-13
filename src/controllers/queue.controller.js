@@ -3,7 +3,11 @@ const prisma = new PrismaClient();
 
 async function generateTicketNumber(branchId, bookingDate) {
   const branch = await prisma.branch.findUnique({ where: { id: branchId } });
-  if (!branch) throw new Error("Branch not found");
+  if (!branch) {
+    const error = new Error("Branch not found");
+    error.status = 404;
+    throw error;
+  }
 
   const startOfDay = new Date(bookingDate);
   startOfDay.setHours(0, 0, 0, 0);
@@ -20,12 +24,11 @@ async function generateTicketNumber(branchId, bookingDate) {
     },
   });
 
-  // Ticket number = branchCode-NNN (increment per hari per branch)
   const paddingNumber = String(count + 1).padStart(3, "0");
   return `${branch.branchCode}-${paddingNumber}`;
 }
 
-const bookQueueOnline = async (req, res) => {
+const bookQueueOnline = async (req, res, next) => {
   const {
     userId,
     branchId,
@@ -37,16 +40,34 @@ const bookQueueOnline = async (req, res) => {
     createdBy,
     updatedBy,
   } = req.body;
+
   try {
+    if (
+      !userId ||
+      !branchId ||
+      !bookingDate ||
+      !name ||
+      !email ||
+      !phoneNumber ||
+      !Array.isArray(serviceIds) ||
+      serviceIds.length === 0 ||
+      !createdBy ||
+      !updatedBy
+    ) {
+      const error = new Error(
+        "All fields are required and serviceIds must be a non-empty array."
+      );
+      error.status = 400;
+      throw error;
+    }
+
     const ticketNumber = await generateTicketNumber(branchId, bookingDate);
 
-    // Tentukan hari booking
     const bookingDateObj = new Date(bookingDate);
     bookingDateObj.setHours(0, 0, 0, 0);
     const endOfDay = new Date(bookingDateObj);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Ambil semua antrian di branch & hari yang statusnya BUKAN done/skipped/canceled
     const activeQueues = await prisma.queue.findMany({
       where: {
         branchId,
@@ -64,7 +85,6 @@ const bookQueueOnline = async (req, res) => {
       },
     });
 
-    // Hitung total waktu layanan dari semua antrian aktif sebelum antrian baru ini
     let totalMinutes = 0;
     for (const q of activeQueues) {
       for (const s of q.services) {
@@ -72,16 +92,13 @@ const bookQueueOnline = async (req, res) => {
       }
     }
 
-    // estimatedTime = bookingDate + totalMinutes (antrian aktif sebelum ini)
     const estimatedTimeDate = new Date(
       new Date(bookingDate).getTime() + totalMinutes * 60000
     );
 
-    // Notifikasi 5 antrian pertama
     const count = activeQueues.length;
     const notification = count < 5;
 
-    // Buat queue
     const queue = await prisma.queue.create({
       data: {
         userId,
@@ -110,12 +127,11 @@ const bookQueueOnline = async (req, res) => {
     });
     res.status(201).json({ message: "Queue booked (online)", queue });
   } catch (error) {
-    console.error("Book queue online error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const bookQueueOffline = async (req, res) => {
+const bookQueueOffline = async (req, res, next) => {
   const {
     loketId,
     branchId,
@@ -128,15 +144,32 @@ const bookQueueOffline = async (req, res) => {
     updatedBy,
   } = req.body;
   try {
+    if (
+      loketId == null ||
+      branchId == null ||
+      !bookingDate ||
+      !name ||
+      !email ||
+      !phoneNumber ||
+      !Array.isArray(serviceIds) ||
+      serviceIds.length === 0 ||
+      !createdBy ||
+      !updatedBy
+    ) {
+      const error = new Error(
+        "All fields are required and serviceIds must be a non-empty array."
+      );
+      error.status = 400;
+      throw error;
+    }
+
     const ticketNumber = await generateTicketNumber(branchId, bookingDate);
 
-    // Tentukan hari booking
     const bookingDateObj = new Date(bookingDate);
     bookingDateObj.setHours(0, 0, 0, 0);
     const endOfDay = new Date(bookingDateObj);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Ambil semua antrian di branch & hari yang statusnya BUKAN done/skipped/canceled
     const activeQueues = await prisma.queue.findMany({
       where: {
         branchId,
@@ -154,7 +187,6 @@ const bookQueueOffline = async (req, res) => {
       },
     });
 
-    // Hitung total waktu layanan dari semua antrian aktif sebelum antrian baru ini
     let totalMinutes = 0;
     for (const q of activeQueues) {
       for (const s of q.services) {
@@ -162,16 +194,13 @@ const bookQueueOffline = async (req, res) => {
       }
     }
 
-    // estimatedTime = bookingDate + totalMinutes (antrian aktif sebelum ini)
     const estimatedTimeDate = new Date(
       new Date(bookingDate).getTime() + totalMinutes * 60000
     );
 
-    // Notifikasi 5 antrian pertama
     const count = activeQueues.length;
     const notification = count < 5;
 
-    // Buat queue
     const queue = await prisma.queue.create({
       data: {
         loketId,
@@ -200,12 +229,11 @@ const bookQueueOffline = async (req, res) => {
     });
     res.status(201).json({ message: "Queue booked (offline)", queue });
   } catch (error) {
-    console.error("Book queue offline error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const updateStatus = (newStatus) => async (req, res) => {
+const updateStatus = (newStatus) => async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
   try {
     const queue = await prisma.queue.update({
@@ -237,12 +265,11 @@ const updateStatus = (newStatus) => async (req, res) => {
 
     res.json({ message: `Queue status updated to ${newStatus}`, queue });
   } catch (error) {
-    console.error(`Update queue status to ${newStatus} error:`, error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const takeQueue = async (req, res) => {
+const takeQueue = async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
   const { csId } = req.body;
   try {
@@ -252,17 +279,18 @@ const takeQueue = async (req, res) => {
     });
     res.json({ message: "Queue status updated to in progress", queue });
   } catch (error) {
-    console.error("Update queue status to in progress error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getQueueCountByBranchId = async (req, res) => {
+const getQueueCountByBranchId = async (req, res, next) => {
   try {
     const branchId = parseInt(req.params.branchId, 10);
 
     if (!branchId) {
-      return res.status(400).json({ message: "branchId is required" });
+      const error = new Error("branchId is required");
+      error.status = 400;
+      throw error;
     }
 
     const count = await prisma.queue.count({
@@ -279,17 +307,18 @@ const getQueueCountByBranchId = async (req, res) => {
       totalQueue: count,
     });
   } catch (error) {
-    console.error("Get Queue Count Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getRemainingQueue = async (req, res) => {
+const getRemainingQueue = async (req, res, next) => {
   try {
     const queueId = parseInt(req.params.queueId, 10);
 
     if (!queueId) {
-      return res.status(400).json({ message: "queueId is required" });
+      const error = new Error("queueId is required");
+      error.status = 400;
+      throw error;
     }
 
     const myQueue = await prisma.queue.findUnique({
@@ -301,7 +330,9 @@ const getRemainingQueue = async (req, res) => {
     });
 
     if (!myQueue) {
-      return res.status(404).json({ message: "Queue not found" });
+      const error = new Error("Queue not found");
+      error.status = 404;
+      throw error;
     }
 
     const remaining = await prisma.queue.count({
@@ -318,12 +349,11 @@ const getRemainingQueue = async (req, res) => {
       remainingInFront: remaining,
     });
   } catch (error) {
-    console.error("Get Remaining Queue Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getLatestInProgressQueue = async (req, res) => {
+const getLatestInProgressQueue = async (req, res, next) => {
   try {
     const queue = await prisma.queue.findFirst({
       where: {
@@ -335,22 +365,25 @@ const getLatestInProgressQueue = async (req, res) => {
     });
 
     if (!queue) {
-      return res.status(404).json({ message: "No in-progress queue found" });
+      const error = new Error("No in-progress queue found");
+      error.status = 404;
+      throw error;
     }
 
     res.status(200).json(queue);
   } catch (error) {
-    console.error("Get Latest In-Progress Queue Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getWaitingQueuesByBranchId = async (req, res) => {
+const getWaitingQueuesByBranchId = async (req, res, next) => {
   try {
     const branchId = parseInt(req.params.branchId, 10);
 
     if (!branchId) {
-      return res.status(400).json({ message: "branchId is required" });
+      const error = new Error("branchId is required");
+      error.status = 400;
+      throw error;
     }
 
     const queues = await prisma.queue.findMany({
@@ -365,30 +398,30 @@ const getWaitingQueuesByBranchId = async (req, res) => {
 
     res.status(200).json(queues);
   } catch (error) {
-    console.error("Get Waiting Queues Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getOldestWaitingQueue = async (req, res) => {
+const getOldestWaitingQueue = async (req, res, next) => {
   try {
     const queue = await prisma.queue.findFirst({
       where: {
         status: "waiting",
       },
       orderBy: {
-        createdAt: "asc", // paling lama
+        createdAt: "asc",
       },
     });
 
     if (!queue) {
-      return res.status(404).json({ message: "No waiting queue found" });
+      const error = new Error("No waiting queue found");
+      error.status = 404;
+      throw error;
     }
 
     res.status(200).json(queue);
   } catch (error) {
-    console.error("Get Oldest Waiting Queue Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 

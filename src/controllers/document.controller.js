@@ -1,9 +1,15 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const addDocument = async (req, res) => {
+const addDocument = async (req, res, next) => {
   try {
     const { documentName, createdBy, updatedBy } = req.body;
+
+    if (documentName == null || createdBy == null || updatedBy == null) {
+      const error = new Error("All fields are required.");
+      error.status = 400;
+      throw error;
+    }
 
     const document = await prisma.document.create({
       data: {
@@ -15,65 +21,69 @@ const addDocument = async (req, res) => {
 
     res.status(201).json({ message: "Document created", document });
   } catch (error) {
-    console.error("Add Document Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getDocument = async (req, res) => {
+const getDocument = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const document = await prisma.document.findUnique({
-      where: { id: Number(id) },
+      where: { id },
     });
 
-    if (!document)
-      return res.status(404).json({ message: "Document not found" });
+    if (!document) {
+      const error = new Error("Document not found");
+      error.status = 404;
+      throw error;
+    }
 
     res.status(200).json(document);
   } catch (error) {
-    console.error("Get Document Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const getAllDocument = async (req, res) => {
+const getAllDocument = async (req, res, next) => {
   try {
     const document = await prisma.document.findMany();
     res.status(200).json(document);
   } catch (error) {
-    console.error("Get All Document Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const editDocument = async (req, res) => {
+const editDocument = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { documentName, updatedBy } = req.body;
 
+    if (documentName == null || updatedBy == null) {
+      const error = new Error("All fields are required.");
+      error.status = 400;
+      throw error;
+    }
+
     const updatedDocument = await prisma.document.update({
-      where: { id: Number(id) },
+      where: { id },
       data: { documentName, updatedBy },
     });
 
     res.status(200).json({ message: "Document updated", updatedDocument });
   } catch (error) {
-    console.error("Edit Document Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-const deleteDocument = async (req, res) => {
+const deleteDocument = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
 
-    await prisma.document.delete({ where: { id: Number(id) } });
+    await prisma.document.delete({ where: { id } });
 
     res.status(200).json({ message: "Document deleted" });
   } catch (error) {
-    console.error("Delete Document Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
