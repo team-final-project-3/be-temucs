@@ -19,9 +19,18 @@ const verifyLoketToken = (req, res, next) => {
   }
 };
 
+const hashPassword = async (password) => {
+  return await bcrypt.hash(password, 10);
+};
+
 const comparePassword = async (password, hash) =>
   await bcrypt.compare(password, hash);
 
 const generateToken = (payload) => jwt.sign(payload, secret);
 
-module.exports = { verifyLoketToken, comparePassword, generateToken };
+module.exports = {
+  verifyLoketToken,
+  hashPassword,
+  comparePassword,
+  generateToken,
+};

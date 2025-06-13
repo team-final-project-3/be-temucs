@@ -1,6 +1,10 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const { comparePassword, generateToken } = require("../auth/cs.auth");
+const {
+  comparePassword,
+  hashPassword,
+  generateToken,
+} = require("../auth/cs.auth");
 
 const addCS = async (req, res, next) => {
   const { branchId, name, username, password, createdBy } = req.body;

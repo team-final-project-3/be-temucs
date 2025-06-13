@@ -11,13 +11,9 @@ const swaggerSpec = require("./configs/swagger");
 
 const app = express();
 
-app.use((err, req, res, next) => {
-  res.status(err.status || 500).json({
-    message: err.message || "Internal server error",
-  });
+app.use((req, res, next) => {
   res.on("finish", () => {
     let statusColor;
-
     if (res.statusCode >= 500) {
       statusColor = "\x1b[31m"; // red
     } else if (res.statusCode >= 400) {
@@ -29,14 +25,11 @@ app.use((err, req, res, next) => {
     } else {
       statusColor = "\x1b[0m"; // reset
     }
-
     const resetColor = "\x1b[0m";
-
     console.log(
       `${req.method} ${statusColor}${res.statusCode}${resetColor} ${req.originalUrl}`
     );
   });
-
   next();
 });
 
@@ -52,5 +45,11 @@ app.use(
   branchRoutes
 );
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.use((err, req, res, next) => {
+  res.status(err.status || 500).json({
+    message: err.message || "Internal server error",
+  });
+});
 
 module.exports = app;

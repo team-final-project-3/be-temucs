@@ -1,18 +1,15 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const { comparePassword, generateToken } = require("../auth/loket.auth");
+const {
+  comparePassword,
+  generateToken,
+  hashPassword,
+} = require("../auth/loket.auth");
 
 const addLoket = async (req, res, next) => {
-  const { branchId, name, username, password, status, createdBy } = req.body;
+  const { branchId, name, username, password, createdBy } = req.body;
   try {
-    if (
-      branchId == null ||
-      !name ||
-      !username ||
-      !password ||
-      status == null ||
-      !createdBy
-    ) {
+    if (branchId == null || !name || !username || !password || !createdBy) {
       const error = new Error("All fields are required.");
       error.status = 400;
       throw error;
@@ -32,7 +29,6 @@ const addLoket = async (req, res, next) => {
         name,
         username,
         passwordHash,
-        status,
         createdBy,
         updatedBy: createdBy,
       },

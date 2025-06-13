@@ -110,6 +110,10 @@ const getBranch = async (req, res, next) => {
     const id = parseInt(req.params.id, 10);
     const branch = await prisma.branch.findUnique({
       where: { id },
+      include: {
+        lokets: true,
+        cs: true,
+      },
     });
     if (!branch) {
       const error = new Error("Branch not found");

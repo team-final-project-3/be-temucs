@@ -21,7 +21,6 @@ const registerSchema = z.object({
 
 const register = async (req, res, next) => {
   try {
-    // ✅ Validasi input
     const {
       fullname,
       username,
@@ -31,7 +30,6 @@ const register = async (req, res, next) => {
       role = "nasabah",
     } = registerSchema.parse(req.body);
 
-    // 🔍 Cek apakah email ada di coreBanking
     const coreBanking = await prisma.coreBanking.findUnique({
       where: { email },
     });
@@ -43,7 +41,6 @@ const register = async (req, res, next) => {
       throw error;
     }
 
-    // 🔍 Cek apakah user sudah pernah mendaftar
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ phoneNumber }, { username }, { email }],
@@ -73,7 +70,6 @@ const register = async (req, res, next) => {
       throw error;
     }
 
-    // 🔐 Hash password & generate OTP
     const passwordHash = await hashPassword(password);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -99,7 +95,6 @@ const register = async (req, res, next) => {
       userId: user.id,
     });
   } catch (error) {
-    // 🛑 Tangani error dari zod
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         message: "Validation error",
@@ -316,6 +311,52 @@ const getProfile = async (req, res, next) => {
   }
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      const error = new Error("Old password and new password are required");
+      error.status = 400;
+      throw error;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      const error = new Error("User not found");
+      error.status = 404;
+      throw error;
+    }
+
+    const isMatch = await comparePassword(oldPassword, user.passwordHash);
+    if (!isMatch) {
+      const error = new Error("Old password is incorrect");
+      error.status = 400;
+      throw error;
+    }
+
+    if (oldPassword === newPassword) {
+      const error = new Error(
+        "New password must be different from old password"
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    res.json({ message: "Password changed successfully." });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   verifyOtp,
@@ -325,4 +366,5 @@ module.exports = {
   resetPassword,
   verifyOtpForgotPassword,
   getProfile,
+  changePassword,
 };

@@ -1,0 +1,233 @@
+{
+  "info": {
+    "name": "TemuCS API",
+    "_postman_id": "temucs-api-collection",
+    "description": "Postman collection for TemuCS API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "User Register",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullname\": \"Test User\",\n  \"username\": \"testuser\",\n  \"email\": \"testuser@email.com\",\n  \"password\": \"password123\",\n  \"phoneNumber\": \"081234567899\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/users/register", "host": ["{{baseUrl}}"], "path": ["api", "users", "register"] }
+      }
+    },
+    {
+      "name": "User Verify OTP",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"testuser@email.com\",\n  \"otp\": \"123456\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/users/verify-otp", "host": ["{{baseUrl}}"], "path": ["api", "users", "verify-otp"] }
+      }
+    },
+    {
+      "name": "User Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  var json = pm.response.json();",
+              "  pm.environment.set(\"userToken\", json.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/users/login", "host": ["{{baseUrl}}"], "path": ["api", "users", "login"] }
+      }
+    },
+    {
+      "name": "Get User Profile",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}", "type": "text" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/users/profile", "host": ["{{baseUrl}}"], "path": ["api", "users", "profile"] }
+      }
+    },
+    {
+      "name": "Add Branch",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Cabang Jakarta\",\n  \"branchCode\": \"JKT001\",\n  \"address\": \"Jl. Sudirman No.1\",\n  \"longitude\": 106.827153,\n  \"latitude\": -6.17511,\n  \"holiday\": false,\n  \"status\": true,\n  \"createdBy\": \"admin\",\n  \"updatedBy\": \"admin\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/branch", "host": ["{{baseUrl}}"], "path": ["api", "branch"] }
+      }
+    },
+    {
+      "name": "Get All Branch",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}", "type": "text" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/branch", "host": ["{{baseUrl}}"], "path": ["api", "branch"] }
+      }
+    },
+    {
+      "name": "Add Service",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serviceName\": \"Buka Tabungan\",\n  \"estimatedTime\": 10,\n  \"createdBy\": \"admin\",\n  \"updatedBy\": \"admin\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/service", "host": ["{{baseUrl}}"], "path": ["api", "service"] }
+      }
+    },
+    {
+      "name": "Get All Service",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}", "type": "text" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/service", "host": ["{{baseUrl}}"], "path": ["api", "service"] }
+      }
+    },
+    {
+      "name": "Add Document",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"documentName\": \"KTP\",\n  \"createdBy\": \"admin\",\n  \"updatedBy\": \"admin\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/document", "host": ["{{baseUrl}}"], "path": ["api", "document"] }
+      }
+    },
+    {
+      "name": "Get All Document",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}", "type": "text" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/document", "host": ["{{baseUrl}}"], "path": ["api", "document"] }
+      }
+    },
+    {
+      "name": "Book Queue Online",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": 1,\n  \"branchId\": 1,\n  \"bookingDate\": \"2024-06-13T09:00:00.000Z\",\n  \"name\": \"Test User\",\n  \"email\": \"testuser@email.com\",\n  \"phoneNumber\": \"081234567899\",\n  \"serviceIds\": [1],\n  \"createdBy\": \"admin\",\n  \"updatedBy\": \"admin\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/queue/book-online", "host": ["{{baseUrl}}"], "path": ["api", "queue", "book-online"] }
+      }
+    },
+    {
+      "name": "Book Queue Offline",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"loketId\": 1,\n  \"branchId\": 1,\n  \"bookingDate\": \"2024-06-13T09:00:00.000Z\",\n  \"name\": \"Test User\",\n  \"email\": \"testuser@email.com\",\n  \"phoneNumber\": \"081234567899\",\n  \"serviceIds\": [1],\n  \"createdBy\": \"admin\",\n  \"updatedBy\": \"admin\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/queue/book-offline", "host": ["{{baseUrl}}"], "path": ["api", "queue", "book-offline"] }
+      }
+    },
+    {
+      "name": "CS Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  var json = pm.response.json();",
+              "  pm.environment.set(\"csToken\", json.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"cs1\",\n  \"password\": \"cs123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/cs/login", "host": ["{{baseUrl}}"], "path": ["api", "cs", "login"] }
+      }
+    },
+    {
+      "name": "Loket Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  var json = pm.response.json();",
+              "  pm.environment.set(\"loketToken\", json.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"loket1\",\n  \"password\": \"loket123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": { "raw": "{{baseUrl}}/api/loket/login", "host": ["{{baseUrl}}"], "path": ["api", "loket", "login"] }
+      }
+    }
+  ],
+  "event": []
+}

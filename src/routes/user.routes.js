@@ -259,4 +259,38 @@ router.post("/users/verify-otp-forgot", userController.verifyOtpForgotPassword);
  */
 router.get("/users/profile", userController.getProfile);
 
+/**
+ * @swagger
+ * /api/users/change-password:
+ *   post:
+ *     summary: Change password for the logged-in user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *                 description: Password lama user
+ *               newPassword:
+ *                 type: string
+ *                 description: Password baru user
+ *     responses:
+ *       200:
+ *         description: Password changed successfully.
+ *       400:
+ *         description: Validation error or old password incorrect
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/users/change-password", userController.changePassword);
+
 module.exports = router;
