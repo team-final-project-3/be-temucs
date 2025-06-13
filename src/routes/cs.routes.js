@@ -66,6 +66,44 @@ router.post("/cs/add", csController.addCS);
  *     responses:
  *       200:
  *         description: Successful login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Login successful
+ *                 token:
+ *                   type: string
+ *                 cs:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     username:
+ *                       type: string
+ *                     branch:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                         branchCode:
+ *                           type: string
+ *                         address:
+ *                           type: string
+ *                         longitude:
+ *                           type: number
+ *                         latitude:
+ *                           type: number
+ *                         holiday:
+ *                           type: boolean
+ *                         status:
+ *                           type: boolean
  *       401:
  *         description: Invalid credentials
  */

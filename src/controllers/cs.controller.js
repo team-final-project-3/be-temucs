@@ -51,7 +51,10 @@ const login = async (req, res, next) => {
       throw error;
     }
 
-    const cs = await prisma.cS.findUnique({ where: { username } });
+    const cs = await prisma.cS.findUnique({
+      where: { username },
+      include: { branch: true },
+    });
     if (!cs) {
       const error = new Error("Invalid username or password");
       error.status = 401;
@@ -66,7 +69,16 @@ const login = async (req, res, next) => {
     }
 
     const token = generateToken({ csId: cs.id, role: "cs" });
-    res.json({ message: "Login successful", token });
+    res.json({
+      message: "Login successful",
+      token,
+      cs: {
+        id: cs.id,
+        name: cs.name,
+        username: cs.username,
+        branch: cs.branch,
+      },
+    });
   } catch (error) {
     next(error);
   }

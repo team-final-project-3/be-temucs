@@ -51,7 +51,10 @@ const login = async (req, res, next) => {
       throw error;
     }
 
-    const loket = await prisma.loket.findUnique({ where: { username } });
+    const loket = await prisma.loket.findUnique({
+      where: { username },
+      include: { branch: true },
+    });
     if (!loket) {
       const error = new Error("Invalid username or password");
       error.status = 401;
@@ -66,7 +69,17 @@ const login = async (req, res, next) => {
     }
 
     const token = generateToken({ loketId: loket.id, role: "loket" });
-    res.json({ message: "Login successful", token });
+
+    res.json({
+      message: "Login successful",
+      token,
+      loket: {
+        id: loket.id,
+        name: loket.name,
+        username: loket.username,
+        branch: loket.branch,
+      },
+    });
   } catch (error) {
     next(error);
   }
