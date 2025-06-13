@@ -315,18 +315,26 @@ const getQueueCountByBranchId = async (req, res) => {
     }
 
     const count = await prisma.queue.count({
-      where: { branchId: Number(branchId) }
+      where: {
+        branchId: Number(branchId),
+        status: {
+          notIn: ["done", "skipped", "canceled"],
+        },
+      },
     });
 
     res.status(200).json({
       branchId: Number(branchId),
-      totalQueue: count
+      totalQueue: count,
     });
   } catch (error) {
     console.error("Get Queue Count Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+module.exports = { getQueueCountByBranchId };
+
 
 module.exports = {
   bookQueueOnline,

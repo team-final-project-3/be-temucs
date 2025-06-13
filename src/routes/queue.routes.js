@@ -176,7 +176,7 @@ router.patch("/queue/:id/done", queueController.doneQueue);
  * @swagger
  * /api/queue/count/{branchId}:
  *   get:
- *     summary: Get total number of queues in a specific branch
+ *     summary: Get total active queues (not done, skipped, or canceled) in a specific branch
  *     tags: [Queue]
  *     parameters:
  *       - in: path
@@ -187,7 +187,7 @@ router.patch("/queue/:id/done", queueController.doneQueue);
  *         description: ID of the branch
  *     responses:
  *       200:
- *         description: Total number of queues
+ *         description: Total active queue count in the specified branch
  *         content:
  *           application/json:
  *             schema:
@@ -198,7 +198,7 @@ router.patch("/queue/:id/done", queueController.doneQueue);
  *                 totalQueue:
  *                   type: integer
  *       400:
- *         description: Missing or invalid branchId
+ *         description: branchId is missing or invalid
  *       500:
  *         description: Internal server error
  */
