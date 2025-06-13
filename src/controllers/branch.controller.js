@@ -6,7 +6,6 @@ const addBranch = async (req, res, next) => {
     const {
       name,
       branchCode,
-      regionCode,
       address,
       longitude,
       latitude,
@@ -19,7 +18,6 @@ const addBranch = async (req, res, next) => {
     if (
       !name ||
       !branchCode ||
-      !regionCode ||
       !address ||
       longitude == null ||
       latitude == null ||
@@ -35,7 +33,6 @@ const addBranch = async (req, res, next) => {
       data: {
         name,
         branchCode,
-        regionCode,
         address,
         longitude,
         latitude,
@@ -58,7 +55,6 @@ const editBranch = async (req, res, next) => {
     const {
       name,
       branchCode,
-      regionCode,
       address,
       longitude,
       latitude,
@@ -70,7 +66,6 @@ const editBranch = async (req, res, next) => {
     if (
       !name ||
       !branchCode ||
-      !regionCode ||
       !address ||
       longitude == null ||
       latitude == null ||
@@ -86,7 +81,6 @@ const editBranch = async (req, res, next) => {
       data: {
         name,
         branchCode,
-        regionCode,
         address,
         longitude,
         latitude,
