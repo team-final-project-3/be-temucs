@@ -6,6 +6,7 @@ const addService = async (req, res) => {
     try {
         const {
             serviceName,
+            estimatedTime,
             createdBy,
             updatedBy,
         } = req.body;
@@ -13,6 +14,7 @@ const addService = async (req, res) => {
         const service = await prisma.service.create({
             data: {
                 serviceName,
+                estimatedTime,
                 createdBy,
                 updatedBy,
             },
@@ -57,11 +59,11 @@ const getAllService = async (req, res) => {
 const editService = async (req, res) => {
     try {
         const { id } = req.params;
-        const { serviceName, updatedBy } = req.body;
+        const { serviceName, estimatedTime, updatedBy } = req.body;
 
         const updatedService = await prisma.service.update({
             where: { id: Number(id) },
-            data: { serviceName, updatedBy },
+            data: { serviceName, estimatedTime, updatedBy },
         });
 
         res.status(200).json({ message: "Service updated", updatedService });

@@ -23,6 +23,10 @@ const serviceController = require("../controllers/service.controller");
  *               serviceName:
  *                 type: string
  *                 example: "Customer Onboarding"
+ *               estimatedTime:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 15
  *               createdBy:
  *                 type: string
  *                 example: "admin"
@@ -54,7 +58,6 @@ router.post("/service", serviceController.addService);
  *       200:
  *         description: A list of all services
  */
-router.get("/service", serviceController.getAllService);
 
 /**
  * @swagger
@@ -66,7 +69,8 @@ router.get("/service", serviceController.getAllService);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: integer }
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: Service data
@@ -85,7 +89,8 @@ router.get("/service/:id", serviceController.getService);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: integer }
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -93,8 +98,15 @@ router.get("/service/:id", serviceController.getService);
  *           schema:
  *             type: object
  *             properties:
- *               serviceName: { type: string }
- *               updatedBy: { type: string }
+ *               serviceName:
+ *                 type: string
+ *                 example: "Pengajuan KPR"
+ *               estimatedTime:
+ *                 type: integer
+ *                 example: 20
+ *               updatedBy:
+ *                 type: string
+ *                 example: "admin"
  *     responses:
  *       200:
  *         description: Service updated
@@ -111,10 +123,10 @@ router.put("/service/:id", serviceController.editService);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: integer }
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: Service deleted
  */
 router.delete("/service/:id", serviceController.deleteService);
-
