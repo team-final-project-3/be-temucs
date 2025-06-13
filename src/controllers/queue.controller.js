@@ -206,7 +206,7 @@ const bookQueueOffline = async (req, res) => {
 };
 
 const updateStatus = (newStatus) => async (req, res) => {
-  const { id } = req.params;
+  const id = parseInt(req.params.id, 10);
   try {
     const queue = await prisma.queue.update({
       where: { id: Number(id) },
@@ -243,7 +243,7 @@ const updateStatus = (newStatus) => async (req, res) => {
 };
 
 const takeQueue = async (req, res) => {
-  const { id } = req.params;
+  const id = parseInt(req.params.id, 10);
   const { csId } = req.body;
   try {
     const queue = await prisma.queue.update({
@@ -259,7 +259,7 @@ const takeQueue = async (req, res) => {
 
 const getQueueCountByBranchId = async (req, res) => {
   try {
-    const { branchId } = req.params;
+    const branchId = parseInt(req.params.branchId, 10);
 
     if (!branchId) {
       return res.status(400).json({ message: "branchId is required" });
@@ -286,7 +286,7 @@ const getQueueCountByBranchId = async (req, res) => {
 
 const getRemainingQueue = async (req, res) => {
   try {
-    const { queueId } = req.params;
+    const queueId = parseInt(req.params.queueId, 10);
 
     if (!queueId) {
       return res.status(400).json({ message: "queueId is required" });
@@ -296,8 +296,8 @@ const getRemainingQueue = async (req, res) => {
       where: { id: Number(queueId) },
       select: {
         id: true,
-        branchId: true
-      }
+        branchId: true,
+      },
     });
 
     if (!myQueue) {
@@ -308,16 +308,15 @@ const getRemainingQueue = async (req, res) => {
       where: {
         branchId: myQueue.branchId,
         id: { lt: myQueue.id },
-        status: { notIn: ["done", "skipped", "canceled"] }
-      }
+        status: { notIn: ["done", "skipped", "canceled"] },
+      },
     });
 
     res.status(200).json({
       queueId: myQueue.id,
       branchId: myQueue.branchId,
-      remainingInFront: remaining
+      remainingInFront: remaining,
     });
-
   } catch (error) {
     console.error("Get Remaining Queue Error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -331,7 +330,7 @@ const getLatestInProgressQueue = async (req, res) => {
         status: "in progress",
       },
       orderBy: {
-        calledAt: 'desc',
+        calledAt: "desc",
       },
     });
 
@@ -348,7 +347,7 @@ const getLatestInProgressQueue = async (req, res) => {
 
 const getWaitingQueuesByBranchId = async (req, res) => {
   try {
-    const { branchId } = req.params;
+    const branchId = parseInt(req.params.branchId, 10);
 
     if (!branchId) {
       return res.status(400).json({ message: "branchId is required" });
@@ -392,7 +391,6 @@ const getOldestWaitingQueue = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 module.exports = {
   bookQueueOnline,

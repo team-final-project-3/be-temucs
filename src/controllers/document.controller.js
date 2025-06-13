@@ -22,7 +22,7 @@ const addDocument = async (req, res) => {
 
 const getDocument = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
     const document = await prisma.document.findUnique({
       where: { id: Number(id) },
     });
@@ -49,12 +49,12 @@ const getAllDocument = async (req, res) => {
 
 const editDocument = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
     const { documentName, updatedBy } = req.body;
 
     const updatedDocument = await prisma.document.update({
       where: { id: Number(id) },
-      data: { DocumentName, updatedBy },
+      data: { documentName, updatedBy },
     });
 
     res.status(200).json({ message: "Document updated", updatedDocument });
@@ -66,7 +66,7 @@ const editDocument = async (req, res) => {
 
 const deleteDocument = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
 
     await prisma.document.delete({ where: { id: Number(id) } });
 

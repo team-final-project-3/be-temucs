@@ -40,7 +40,7 @@ const addBranch = async (req, res) => {
 
 const editBranch = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
     const {
       name,
       branchCode,
@@ -87,8 +87,10 @@ const getAllBranch = async (req, res) => {
 
 const getBranch = async (req, res) => {
   try {
-    const { id } = req.params;
-    const branch = await prisma.branch.findUnique({ where: { id } });
+    const id = parseInt(req.params.id, 10);
+    const branch = await prisma.branch.findUnique({
+      where: { id },
+    });
     if (!branch) {
       return res.status(404).json({ message: "Branch not found" });
     }
