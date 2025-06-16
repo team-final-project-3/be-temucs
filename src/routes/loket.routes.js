@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const loketController = require("../controllers/loket.controller");
+const { verifyLoketToken } = require("../auth/loket.auth");
 
 /**
  * @swagger
@@ -133,12 +134,8 @@ router.post("/loket/login", loketController.login);
  *   get:
  *     summary: Get Loket profile by ID
  *     tags: [Loket]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Loket profile
@@ -150,23 +147,34 @@ router.post("/loket/login", loketController.login);
  *                 loket:
  *                   type: object
  *                   properties:
- *                     id: { type: integer }
- *                     name: { type: string }
- *                     username: { type: string }
- *                     status: { type: boolean }
- *                     branchId: { type: integer }
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     username:
+ *                       type: string
+ *                     status:
+ *                       type: boolean
+ *                     branchId:
+ *                       type: integer
  *                     branch:
  *                       type: object
  *                       properties:
- *                         id: { type: integer }
- *                         name: { type: string }
- *                     createdAt: { type: string, format: date-time }
- *                     updatedAt: { type: string, format: date-time }
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
  *       404:
  *         description: Loket not found
  *       500:
  *         description: Internal server error
  */
-router.get("/loket/:id/profile", loketController.getLoket);
+router.get("/loket/:id/profile", verifyLoketToken, loketController.getLoket);
 
 module.exports = router;
