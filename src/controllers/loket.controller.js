@@ -115,12 +115,6 @@ const login = async (req, res, next) => {
     res.json({
       message: "Login successful",
       token,
-      loket: {
-        id: loket.id,
-        name: loket.name,
-        username: loket.username,
-        branch: loket.branch,
-      },
     });
   } catch (error) {
     next(error);
@@ -142,12 +136,12 @@ const getLoket = async (req, res, next) => {
         branch: {
           select: {
             id: true,
-            name: true
-          }
+            name: true,
+          },
         },
         createdAt: true,
-        updatedAt: true
-      }
+        updatedAt: true,
+      },
     });
 
     if (!loket) {

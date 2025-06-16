@@ -69,7 +69,11 @@ const editCS = async (req, res, next) => {
 
     res.status(200).json({
       message: "CS updated",
-      cs: { id: updatedCS.id, name: updatedCS.name, username: updatedCS.username },
+      cs: {
+        id: updatedCS.id,
+        name: updatedCS.name,
+        username: updatedCS.username,
+      },
     });
   } catch (error) {
     next(error);
@@ -122,12 +126,6 @@ const login = async (req, res, next) => {
     res.json({
       message: "Login successful",
       token,
-      cs: {
-        id: cs.id,
-        name: cs.name,
-        username: cs.username,
-        branch: cs.branch,
-      },
     });
   } catch (error) {
     next(error);
@@ -165,6 +163,5 @@ const getCS = async (req, res, next) => {
     next(error);
   }
 };
-
 
 module.exports = { addCS, login, editCS, deleteCS, getCS };
