@@ -23,7 +23,6 @@ const { allowRoles } = require("../middlewares/auth");
  *               - name
  *               - username
  *               - password
- *               - createdBy
  *             properties:
  *               branchId:
  *                 type: integer
@@ -32,8 +31,6 @@ const { allowRoles } = require("../middlewares/auth");
  *               username:
  *                 type: string
  *               password:
- *                 type: string
- *               createdBy:
  *                 type: string
  *     responses:
  *       201:
@@ -65,7 +62,6 @@ router.post("/cs/add", allowRoles("admin"), csController.addCS);
  *             type: object
  *             required:
  *               - name
- *               - updatedBy
  *             properties:
  *               name:
  *                 type: string
@@ -73,9 +69,6 @@ router.post("/cs/add", allowRoles("admin"), csController.addCS);
  *               password:
  *                 type: string
  *                 example: "newPassword123"  # Optional
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       200:
  *         description: CS updated

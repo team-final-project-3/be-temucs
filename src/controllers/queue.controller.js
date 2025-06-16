@@ -29,6 +29,7 @@ async function generateTicketNumber(branchId, bookingDate) {
 }
 
 const bookQueueOnline = async (req, res, next) => {
+  const username = req.user.username;
   const {
     userId,
     branchId,
@@ -37,8 +38,6 @@ const bookQueueOnline = async (req, res, next) => {
     email,
     phoneNumber,
     serviceIds,
-    createdBy,
-    updatedBy,
   } = req.body;
 
   const prisma = new PrismaClient();
@@ -54,9 +53,7 @@ const bookQueueOnline = async (req, res, next) => {
       !email ||
       !phoneNumber ||
       !Array.isArray(serviceIds) ||
-      serviceIds.length === 0 ||
-      !createdBy ||
-      !updatedBy
+      serviceIds.length === 0
     ) {
       const error = new Error(
         "All fields are required and serviceIds must be a non-empty array."
@@ -115,13 +112,13 @@ const bookQueueOnline = async (req, res, next) => {
         status: "waiting",
         notification,
         estimatedTime: estimatedTimeDate,
-        createdBy,
-        updatedBy,
+        createdBy: username,
+        updatedBy: username,
         services: {
           create: serviceIds.map((serviceId) => ({
             serviceId,
-            createdBy,
-            updatedBy,
+            createdBy: username,
+            updatedBy: username,
           })),
         },
       },
@@ -141,6 +138,7 @@ const bookQueueOnline = async (req, res, next) => {
 };
 
 const bookQueueOffline = async (req, res, next) => {
+  const username = req.user.username;
   const {
     loketId,
     branchId,
@@ -149,8 +147,6 @@ const bookQueueOffline = async (req, res, next) => {
     email,
     phoneNumber,
     serviceIds,
-    createdBy,
-    updatedBy,
   } = req.body;
 
   const prisma = new PrismaClient();
@@ -165,9 +161,7 @@ const bookQueueOffline = async (req, res, next) => {
       !email ||
       !phoneNumber ||
       !Array.isArray(serviceIds) ||
-      serviceIds.length === 0 ||
-      !createdBy ||
-      !updatedBy
+      serviceIds.length === 0
     ) {
       const error = new Error(
         "All fields are required and serviceIds must be a non-empty array."
@@ -226,13 +220,13 @@ const bookQueueOffline = async (req, res, next) => {
         status: "waiting",
         notification,
         estimatedTime: estimatedTimeDate,
-        createdBy,
-        updatedBy,
+        createdBy: username,
+        updatedBy: username,
         services: {
           create: serviceIds.map((serviceId) => ({
             serviceId,
-            createdBy,
-            updatedBy,
+            createdBy: username,
+            updatedBy: username,
           })),
         },
       },
@@ -257,9 +251,19 @@ const updateStatus = (newStatus) => async (req, res, next) => {
   const tx = await prisma.$transaction();
 
   try {
+    let username;
+    if (newStatus === "canceled") {
+      username = req.user?.username;
+    } else {
+      username = req.cs?.username || req.user?.username;
+    }
+
     const queue = await tx.queue.update({
       where: { id: Number(id) },
-      data: { status: newStatus },
+      data: {
+        status: newStatus,
+        updatedBy: username,
+      },
     });
 
     if (["done", "skipped", "canceled"].includes(newStatus)) {
@@ -296,14 +300,19 @@ const updateStatus = (newStatus) => async (req, res, next) => {
 
 const takeQueue = async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
-  const { csId } = req.body;
+  const csId = req.cs.csId;
+  const username = req.cs.username;
   const prisma = new PrismaClient();
   const tx = await prisma.$transaction();
 
   try {
     const queue = await tx.queue.update({
       where: { id: Number(id) },
-      data: { status: "in progress", csId },
+      data: {
+        status: "in progress",
+        csId,
+        updatedBy: username,
+      },
     });
 
     await tx.$commit();

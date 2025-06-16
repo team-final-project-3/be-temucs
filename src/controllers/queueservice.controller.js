@@ -3,7 +3,8 @@ const prisma = new PrismaClient();
 
 const createQueueService = async (req, res, next) => {
   try {
-    const { queueId, serviceIds, createdBy, updatedBy } = req.body;
+    const username = req.user.username;
+    const { queueId, serviceIds } = req.body;
 
     if (!queueId || !Array.isArray(serviceIds)) {
       const error = new Error("queueId and serviceIds are required");
@@ -14,8 +15,8 @@ const createQueueService = async (req, res, next) => {
     const dataToInsert = serviceIds.map((serviceId) => ({
       queueId,
       serviceId,
-      createdBy,
-      updatedBy,
+      createdBy: username,
+      updatedBy: username,
     }));
 
     const result = await prisma.queueService.createMany({

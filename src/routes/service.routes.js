@@ -17,8 +17,7 @@ const { allowRoles } = require("../middlewares/auth");
  *             type: object
  *             required:
  *               - serviceName
- *               - createdBy
- *               - updatedBy
+ *               - documentIds
  *             properties:
  *               serviceName:
  *                 type: string
@@ -27,12 +26,12 @@ const { allowRoles } = require("../middlewares/auth");
  *                 type: integer
  *                 nullable: true
  *                 example: 15
- *               createdBy:
- *                 type: string
- *                 example: "admin"
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
+ *               documentIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: List of document IDs to relate with this service
+ *                 example: [1, 2, 3]
  *     responses:
  *       201:
  *         description: Service created
@@ -43,6 +42,10 @@ const { allowRoles } = require("../middlewares/auth");
  *               properties:
  *                 message:
  *                   type: string
+ *                 service:
+ *                   type: object
+ *       400:
+ *         description: Validation error
  *       500:
  *         description: Internal server error
  */
@@ -113,9 +116,6 @@ router.get(
  *               estimatedTime:
  *                 type: integer
  *                 example: 20
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       200:
  *         description: Service updated

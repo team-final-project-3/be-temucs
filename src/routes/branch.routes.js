@@ -23,8 +23,6 @@ const { allowRoles } = require("../middlewares/auth");
  *               latitude: { type: number }
  *               holiday: { type: boolean }
  *               status: { type: boolean }
- *               createdBy: { type: string }
- *               updatedBy: { type: string }
  *     responses:
  *       201:
  *         description: Branch created
@@ -57,7 +55,6 @@ router.post("/branch", allowRoles("admin"), branchController.addBranch);
  *               latitude: { type: number }
  *               holiday: { type: boolean }
  *               status: { type: boolean }
- *               updatedBy: { type: string }
  *     responses:
  *       200:
  *         description: Branch updated

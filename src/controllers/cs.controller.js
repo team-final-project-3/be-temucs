@@ -7,9 +7,10 @@ const {
 } = require("../auth/cs.auth");
 
 const addCS = async (req, res, next) => {
-  const { branchId, name, username, password, createdBy } = req.body;
+  const adminUsername = req.user.username;
+  const { branchId, name, username, password } = req.body;
   try {
-    if (branchId == null || !name || !username || !password || !createdBy) {
+    if (branchId == null || !name || !username || !password) {
       const error = new Error("All fields are required.");
       error.status = 400;
       throw error;
@@ -29,8 +30,8 @@ const addCS = async (req, res, next) => {
         name,
         username,
         passwordHash,
-        createdBy,
-        updatedBy: createdBy,
+        createdBy: adminUsername,
+        updatedBy: adminUsername,
       },
     });
     res.status(201).json({
@@ -122,7 +123,11 @@ const login = async (req, res, next) => {
       throw error;
     }
 
-    const token = generateToken({ csId: cs.id, role: "cs" });
+    const token = generateToken({
+      csId: cs.id,
+      username: cs.username,
+      role: "cs",
+    });
     res.json({
       message: "Login successful",
       token,
