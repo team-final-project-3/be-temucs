@@ -149,12 +149,7 @@ const getCS = async (req, res, next) => {
         name: true,
         username: true,
         branchId: true,
-        branch: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        branch: true,
         createdAt: true,
         updatedAt: true,
       },

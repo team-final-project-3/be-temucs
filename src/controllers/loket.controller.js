@@ -139,12 +139,7 @@ const getLoket = async (req, res, next) => {
         username: true,
         status: true,
         branchId: true,
-        branch: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        branch: true,
         createdAt: true,
         updatedAt: true,
       },

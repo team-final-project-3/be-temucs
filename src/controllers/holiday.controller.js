@@ -51,8 +51,36 @@ const deleteHoliday = async (req, res, next) => {
   }
 };
 
+const getHoliday = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const holiday = await prisma.holiday.findUnique({ where: { id } });
+    if (!holiday) {
+      const error = new Error("Holiday not found");
+      error.status = 404;
+      throw error;
+    }
+    res.json({ holiday });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAllHoliday = async (req, res, next) => {
+  try {
+    const holidays = await prisma.holiday.findMany({
+      orderBy: { date: "asc" },
+    });
+    res.json({ holidays });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   addHoliday,
   editHoliday,
   deleteHoliday,
+  getHoliday,
+  getAllHoliday,
 };
