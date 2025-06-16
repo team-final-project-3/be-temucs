@@ -1,11 +1,16 @@
 const express = require("express");
 const cors = require("cors");
+
 const authMiddleware = require("./middlewares/auth");
+
 const userRoutes = require("./routes/user.routes");
 const csRoutes = require("./routes/cs.routes");
 const loketRoutes = require("./routes/loket.routes");
 const dummyRoutes = require("./routes/dummy.routes");
 const branchRoutes = require("./routes/branch.routes");
+const queueRoutes = require("./routes/queue.routes");
+const queueServiceRoutes = require("./routes/queueservice.routes");
+
 const serviceRoutes = require("./routes/service.routes");
 const documentRoutes = require("./routes/document.routes");
 const holidayRoutes = require("./routes/holiday.routes");
@@ -31,6 +36,8 @@ app.use(
   loketRoutes,
   dummyRoutes,
   branchRoutes,
+  queueRoutes,
+  queueServiceRoutes,
   documentRoutes,
   serviceRoutes,
   holidayRoutes

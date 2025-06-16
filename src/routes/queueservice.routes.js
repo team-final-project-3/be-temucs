@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const branchController = require("../controllers/queuservice.controller");
+const queueServiceController = require("../controllers/queueservice.controller");
 
 /**
  * @swagger
@@ -65,4 +65,41 @@ router.post("/queue-service", queueServiceController.createQueueService);
  *       500:
  *         description: Internal server error
  */
-router.get("/documents-by-queue/:queueId", queueServiceController.getDocumentsByQueueId);
+router.get(
+  "/documents-by-queue/:queueId",
+  queueServiceController.getDocumentsByQueueId
+);
+
+/**
+ * @swagger
+ * /api/queue-service/{queueId}:
+ *   get:
+ *     summary: Get all services linked to a specific queue
+ *     tags: [QueueService]
+ *     parameters:
+ *       - in: path
+ *         name: queueId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the queue
+ *     responses:
+ *       200:
+ *         description: List of services for the given queue
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: queueId is required
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue-service/:queueId",
+  queueServiceController.getQueueServicesByQueueId
+);
+
+module.exports = router;

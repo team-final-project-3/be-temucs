@@ -63,4 +63,30 @@ const getDocumentsByQueueId = async (req, res, next) => {
   }
 };
 
-module.exports = { createQueueService, getDocumentsByQueueId };
+const getQueueServicesByQueueId = async (req, res) => {
+  try {
+    const { queueId } = req.params;
+
+    if (!queueId) {
+      return res.status(400).json({ message: "queueId is required" });
+    }
+
+    const queueServices = await prisma.queueService.findMany({
+      where: { queueId: Number(queueId) },
+      include: {
+        service: true,
+      },
+    });
+
+    res.status(200).json(queueServices);
+  } catch (error) {
+    console.error("Get Queue Services Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports = {
+  createQueueService,
+  getDocumentsByQueueId,
+  getQueueServicesByQueueId,
+};
