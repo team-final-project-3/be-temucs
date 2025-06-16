@@ -436,9 +436,21 @@ const getWaitingQueuesByBranchId = async (req, res, next) => {
       orderBy: {
         createdAt: "asc",
       },
+      include: {
+        services: {
+          include: {
+            service: true,
+          },
+        },
+      },
     });
 
-    res.status(200).json(queues);
+    const formattedQueues = queues.map((queue) => ({
+      ...queue,
+      services: queue.services.map((qs) => qs.service),
+    }));
+
+    res.status(200).json(formattedQueues);
   } catch (error) {
     next(error);
   }
