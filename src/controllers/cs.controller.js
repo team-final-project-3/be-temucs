@@ -42,6 +42,56 @@ const addCS = async (req, res, next) => {
   }
 };
 
+const editCS = async (req, res, next) => {
+  const { id } = req.params;
+  const { name, password, updatedBy } = req.body;
+
+  try {
+    const cs = await prisma.cS.findUnique({ where: { id: Number(id) } });
+    if (!cs) {
+      return res.status(404).json({ message: "CS not found" });
+    }
+
+    const updateData = {
+      name,
+      updatedBy,
+    };
+
+    if (password) {
+      const passwordHash = await hashPassword(password);
+      updateData.passwordHash = passwordHash;
+    }
+
+    const updatedCS = await prisma.cS.update({
+      where: { id: Number(id) },
+      data: updateData,
+    });
+
+    res.status(200).json({
+      message: "CS updated",
+      cs: { id: updatedCS.id, name: updatedCS.name, username: updatedCS.username },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteCS = async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const cs = await prisma.cS.findUnique({ where: { id: Number(id) } });
+    if (!cs) {
+      return res.status(404).json({ message: "CS not found" });
+    }
+
+    await prisma.cS.delete({ where: { id: Number(id) } });
+
+    res.status(200).json({ message: "CS deleted" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const login = async (req, res, next) => {
   const { username, password } = req.body;
   try {
@@ -84,4 +134,4 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { addCS, login };
+module.exports = { addCS, login, editCS, deleteCS };

@@ -322,5 +322,33 @@ router.get("/queue/waiting/:branchId", queueController.getWaitingQueuesByBranchI
  */
 router.get("/queue/waiting-oldest", queueController.getOldestWaitingQueue);
 
+/**
+ * @swagger
+ * /api/queue-service/{queueId}:
+ *   get:
+ *     summary: Get all services linked to a specific queue
+ *     tags: [QueueService]
+ *     parameters:
+ *       - in: path
+ *         name: queueId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the queue
+ *     responses:
+ *       200:
+ *         description: List of services for the given queue
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: queueId is required
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/queue-service/:queueId", queueServiceController.getQueueServicesByQueueId);
 
 module.exports = router;

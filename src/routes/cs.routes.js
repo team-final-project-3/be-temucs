@@ -45,6 +45,69 @@ router.post("/cs/add", csController.addCS);
 
 /**
  * @swagger
+ * /api/cs/{id}:
+ *   put:
+ *     summary: Edit CS (only name and password)
+ *     tags: [CS]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - updatedBy
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "CS John"
+ *               password:
+ *                 type: string
+ *                 example: "newPassword123"  # Optional
+ *               updatedBy:
+ *                 type: string
+ *                 example: "admin"
+ *     responses:
+ *       200:
+ *         description: CS updated
+ *       404:
+ *         description: CS not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put("/cs/:id", csController.editCS);
+
+/**
+ * @swagger
+ * /api/cs/{id}:
+ *   delete:
+ *     summary: Delete CS
+ *     tags: [CS]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: CS deleted
+ *       404:
+ *         description: CS not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete("/cs/:id", csController.deleteCS);
+
+/**
+ * @swagger
  * /api/cs/login:
  *   post:
  *     summary: Login CS
