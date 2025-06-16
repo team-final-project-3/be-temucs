@@ -79,7 +79,7 @@ const editLoket = async (req, res, next) => {
         status: updatedLoket.status,
       },
     });
-  } catch (error) {
+  } catch (error) { 
     next(error);
   }
 };

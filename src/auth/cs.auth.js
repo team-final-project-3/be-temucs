@@ -33,4 +33,4 @@ module.exports = {
   hashPassword,
   comparePassword,
   generateToken,
-};
+};git
