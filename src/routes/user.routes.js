@@ -301,7 +301,7 @@ router.post("/users/change-password", userController.changePassword);
  *     tags: [Users]
  *     responses:
  *       200:
- *         description: A list of users
+ *         description: A list of all user
  *         content:
  *           application/json:
  *             schema:
