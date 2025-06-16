@@ -4,14 +4,27 @@ const cron = require("node-cron");
 
 const updateBranchHolidayStatus = async () => {
   try {
+    // Ambil tanggal hari ini dalam format YYYY-MM-DD (lokal)
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${yyyy}-${mm}-${dd}`;
 
-    const holiday = await prisma.holiday.findFirst({
-      where: { date: today },
+    // Ambil semua holiday
+    const holidays = await prisma.holiday.findMany();
+
+    // Cek apakah ada holiday dengan tanggal sama (hanya tanggal, tanpa jam)
+    const isHoliday = holidays.some((h) => {
+      const holidayDate = new Date(h.date);
+      const hyyyy = holidayDate.getFullYear();
+      const hmm = String(holidayDate.getMonth() + 1).padStart(2, "0");
+      const hdd = String(holidayDate.getDate()).padStart(2, "0");
+      const holidayStr = `${hyyyy}-${hmm}-${hdd}`;
+      return holidayStr === todayStr;
     });
 
-    if (holiday) {
+    if (isHoliday) {
       await prisma.branch.updateMany({ data: { holiday: true } });
       console.log("Hari ini libur, semua branch holiday = true");
     } else {

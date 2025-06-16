@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const serviceController = require("../controllers/document.controller");
-
+const documentController = require("../controllers/document.controller");
 
 /**
  * @swagger
@@ -125,3 +124,5 @@ router.put("/document/:id", documentController.editDocument);
  *         description: Internal server error
  */
 router.delete("/document/:id", documentController.deleteDocument);
+
+module.exports = router;

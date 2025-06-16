@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const serviceController = require("../controllers/service.controller");
 
-
 /**
  * @swagger
  * /api/service:
@@ -58,6 +57,7 @@ router.post("/service", serviceController.addService);
  *       200:
  *         description: A list of all services
  */
+router.get("/service", serviceController.getAllService);
 
 /**
  * @swagger
@@ -130,3 +130,5 @@ router.put("/service/:id", serviceController.editService);
  *         description: Service deleted
  */
 router.delete("/service/:id", serviceController.deleteService);
+
+module.exports = router;

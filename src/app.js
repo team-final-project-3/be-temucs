@@ -6,7 +6,10 @@ const csRoutes = require("./routes/cs.routes");
 const loketRoutes = require("./routes/loket.routes");
 const dummyRoutes = require("./routes/dummy.routes");
 const branchRoutes = require("./routes/branch.routes");
+const serviceRoutes = require("./routes/service.routes");
+const documentRoutes = require("./routes/document.routes");
 const holidayRoutes = require("./routes/holiday.routes");
+
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./configs/swagger");
 
@@ -28,6 +31,8 @@ app.use(
   loketRoutes,
   dummyRoutes,
   branchRoutes,
+  documentRoutes,
+  serviceRoutes,
   holidayRoutes
 );
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
