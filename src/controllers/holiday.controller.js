@@ -1,31 +1,58 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const cron = require("node-cron");
 
-const updateBranchHolidayStatus = async () => {
+const addHoliday = async (req, res, next) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const holiday = await prisma.holiday.findFirst({
-      where: { date: today },
-    });
-
-    if (holiday) {
-      await prisma.branch.updateMany({ data: { holiday: true } });
-      console.log("Hari ini libur, semua branch holiday = true");
-    } else {
-      await prisma.branch.updateMany({ data: { holiday: false } });
-      console.log("Hari ini bukan libur, semua branch holiday = false");
+    const { holidayName, date, createdBy, updatedBy } = req.body;
+    if (!holidayName || !date) {
+      const error = new Error("holidayName and date are required");
+      error.status = 400;
+      throw error;
     }
+    const holiday = await prisma.holiday.create({
+      data: {
+        holidayName,
+        date: new Date(date),
+        createdBy,
+        updatedBy,
+      },
+    });
+    res.status(201).json({ message: "Holiday added", holiday });
   } catch (error) {
-    console.error("Error updating branch holiday status:", error);
+    next(error);
   }
 };
 
-// Jalankan setiap hari jam 00:01 WIB
-cron.schedule("1 0 * * *", updateBranchHolidayStatus, {
-  timezone: "Asia/Jakarta",
-});
+const editHoliday = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { holidayName, date, updatedBy } = req.body;
+    const holiday = await prisma.holiday.update({
+      where: { id },
+      data: {
+        holidayName,
+        date: date ? new Date(date) : undefined,
+        updatedBy,
+      },
+    });
+    res.json({ message: "Holiday updated", holiday });
+  } catch (error) {
+    next(error);
+  }
+};
 
-module.exports = { updateBranchHolidayStatus };
+const deleteHoliday = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await prisma.holiday.delete({ where: { id } });
+    res.json({ message: "Holiday deleted" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  addHoliday,
+  editHoliday,
+  deleteHoliday,
+};
