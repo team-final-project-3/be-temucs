@@ -48,6 +48,47 @@ router.post("/loket/add", loketController.addLoket);
 
 /**
  * @swagger
+ * /api/loket/{id}:
+ *   put:
+ *     summary: Edit Loket
+ *     tags: [Loket]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - updatedBy
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Loket A"
+ *               password:
+ *                 type: string
+ *                 example: "newPassword123"  # optional
+ *               updatedBy:
+ *                 type: string
+ *                 example: "admin"
+ *     responses:
+ *       200:
+ *         description: Loket updated
+ *       404:
+ *         description: Loket not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put("/loket/:id", loketController.editLoket);
+
+/**
+ * @swagger
  * /api/loket/login:
  *   post:
  *     summary: Login Loket

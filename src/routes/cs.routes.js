@@ -47,7 +47,7 @@ router.post("/cs/add", csController.addCS);
  * @swagger
  * /api/cs/{id}:
  *   put:
- *     summary: Edit CS (only name and password)
+ *     summary: Edit CS
  *     tags: [CS]
  *     parameters:
  *       - in: path
