@@ -172,4 +172,45 @@ router.delete("/cs/:id", csController.deleteCS);
  */
 router.post("/cs/login", csController.login);
 
+/**
+ * @swagger
+ * /api/cs/{id}/profile:
+ *   get:
+ *     summary: Get CS profile by ID
+ *     tags: [CS]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: CS profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 cs:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: integer }
+ *                     name: { type: string }
+ *                     username: { type: string }
+ *                     branchId: { type: integer }
+ *                     branch:
+ *                       type: object
+ *                       properties:
+ *                         id: { type: integer }
+ *                         name: { type: string }
+ *                     createdAt: { type: string, format: date-time }
+ *                     updatedAt: { type: string, format: date-time }
+ *       404:
+ *         description: CS not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/cs/:id/profile", csController.getCS);
+
 module.exports = router;

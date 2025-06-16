@@ -134,4 +134,37 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { addCS, login, editCS, deleteCS };
+const getCS = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const cs = await prisma.cS.findUnique({
+      where: { id: Number(id) },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        branchId: true,
+        branch: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!cs) {
+      return res.status(404).json({ message: "CS not found" });
+    }
+
+    res.status(200).json({ cs });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+module.exports = { addCS, login, editCS, deleteCS, getCS };
