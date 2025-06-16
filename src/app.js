@@ -9,6 +9,8 @@ const branchRoutes = require("./routes/branch.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./configs/swagger");
 
+require("./controllers/holiday.controller");
+
 const app = express();
 
 app.use((req, res, next) => {
