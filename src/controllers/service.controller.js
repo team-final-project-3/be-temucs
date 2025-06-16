@@ -40,6 +40,13 @@ const getService = async (req, res, next) => {
     const id = parseInt(req.params.id, 10);
     const service = await prisma.service.findUnique({
       where: { id: Number(id) },
+      include: {
+        documents: {
+          include: {
+            document: true,
+          },
+        },
+      },
     });
 
     if (!service) {
@@ -48,7 +55,12 @@ const getService = async (req, res, next) => {
       throw error;
     }
 
-    res.status(200).json(service);
+    const documents = service.documents.map((sd) => sd.document);
+
+    res.status(200).json({
+      ...service,
+      documents,
+    });
   } catch (error) {
     next(error);
   }

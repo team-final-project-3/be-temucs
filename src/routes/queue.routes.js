@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const queueController = require("../controllers/queue.controller");
 const { allowRoles } = require("../middlewares/auth");
+const { verifyCSToken } = require("../auth/cs.auth");
 
 /**
  * @swagger
@@ -9,6 +10,8 @@ const { allowRoles } = require("../middlewares/auth");
  *   post:
  *     summary: Book queue online (user)
  *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -16,15 +19,13 @@ const { allowRoles } = require("../middlewares/auth");
  *           schema:
  *             type: object
  *             required:
- *               - userId
  *               - branchId
  *               - bookingDate
  *               - name
  *               - email
  *               - phoneNumber
+ *               - serviceIds
  *             properties:
- *               userId:
- *                 type: integer
  *               branchId:
  *                 type: integer
  *               bookingDate:
@@ -36,9 +37,25 @@ const { allowRoles } = require("../middlewares/auth");
  *                 type: string
  *               phoneNumber:
  *                 type: string
+ *               serviceIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: List of service IDs to book
  *     responses:
  *       201:
  *         description: Queue booked (online)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 queue:
+ *                   type: object
+ *       400:
+ *         description: Validation error
  */
 router.post(
   "/queue/book-online",
@@ -52,6 +69,8 @@ router.post(
  *   post:
  *     summary: Book queue offline (loket)
  *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -65,6 +84,7 @@ router.post(
  *               - name
  *               - email
  *               - phoneNumber
+ *               - serviceIds
  *             properties:
  *               loketId:
  *                 type: integer
@@ -79,9 +99,25 @@ router.post(
  *                 type: string
  *               phoneNumber:
  *                 type: string
+ *               serviceIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: List of service IDs to book
  *     responses:
  *       201:
  *         description: Queue booked (offline)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 queue:
+ *                   type: object
+ *       400:
+ *         description: Validation error
  */
 router.post(
   "/queue/book-offline",
@@ -131,7 +167,12 @@ router.patch(
  *       200:
  *         description: Queue skipped
  */
-router.patch("/queue/:id/skip", allowRoles("cs"), queueController.skipQueue);
+router.patch(
+  "/queue/:id/skip",
+  allowRoles("cs"),
+  verifyCSToken,
+  queueController.skipQueue
+);
 
 /**
  * @swagger
@@ -147,23 +188,16 @@ router.patch("/queue/:id/skip", allowRoles("cs"), queueController.skipQueue);
  *           type: integer
  *         required: true
  *         description: Queue ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - csId
- *             properties:
- *               csId:
- *                 type: integer
- *                 description: ID CS yang mengambil antrian
  *     responses:
  *       200:
  *         description: Queue taken (in progress)
  */
-router.patch("/queue/:id/take", allowRoles("cs"), queueController.takeQueue);
+router.patch(
+  "/queue/:id/take",
+  allowRoles("cs"),
+  verifyCSToken,
+  queueController.takeQueue
+);
 
 /**
  * @swagger
@@ -183,7 +217,12 @@ router.patch("/queue/:id/take", allowRoles("cs"), queueController.takeQueue);
  *       200:
  *         description: Queue done
  */
-router.patch("/queue/:id/done", allowRoles("cs"), queueController.doneQueue);
+router.patch(
+  "/queue/:id/done",
+  allowRoles("cs"),
+  verifyCSToken,
+  queueController.doneQueue
+);
 
 /**
  * @swagger
@@ -320,11 +359,18 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/next-to-serve:
+ * /api/queue/waiting-oldest/{branchId}:
  *   get:
  *     summary: Get the next customer queue to be served for CS
  *     tags: [Queue]
  *     description: Returns the earliest queue entry with status 'waiting'. Used by CS to call the next customer.
+ *     parameters:
+ *       - in: path
+ *         name: branchId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the branch
  *     responses:
  *       200:
  *         description: The next waiting queue found
@@ -350,7 +396,7 @@ router.get(
  *         description: Internal server error
  */
 router.get(
-  "/queue/waiting-oldest",
+  "/queue/waiting-oldest/:branchId",
   allowRoles("nasabah", "cs", "loket"),
   queueController.getOldestWaitingQueue
 );

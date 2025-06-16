@@ -29,26 +29,13 @@ async function generateTicketNumber(branchId, bookingDate) {
 }
 
 const bookQueueOnline = async (req, res, next) => {
+  const userId = req.user.userId;
   const username = req.user.username;
-  const {
-    userId,
-    branchId,
-    bookingDate,
-    name,
-    email,
-    phoneNumber,
-    serviceIds,
-  } = req.body;
-
-  const prisma = new PrismaClient();
-
-  const tx = await prisma.$transaction();
+  const { branchId, name, email, phoneNumber, serviceIds } = req.body;
 
   try {
     if (
-      !userId ||
       !branchId ||
-      !bookingDate ||
       !name ||
       !email ||
       !phoneNumber ||
@@ -62,101 +49,100 @@ const bookQueueOnline = async (req, res, next) => {
       throw error;
     }
 
-    const ticketNumber = await generateTicketNumber(branchId, bookingDate);
+    const bookingDate = new Date();
 
-    const bookingDateObj = new Date(bookingDate);
-    bookingDateObj.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(bookingDateObj);
-    endOfDay.setHours(23, 59, 59, 999);
+    const queue = await prisma.$transaction(async (tx) => {
+      const ticketNumber = await generateTicketNumber(branchId, bookingDate);
 
-    const activeQueues = await tx.queue.findMany({
-      where: {
-        branchId,
-        bookingDate: {
-          gte: bookingDateObj,
-          lte: endOfDay,
+      const bookingDateObj = new Date(bookingDate);
+      bookingDateObj.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(bookingDateObj);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const activeQueues = await tx.queue.findMany({
+        where: {
+          branchId,
+          bookingDate: {
+            gte: bookingDateObj,
+            lte: endOfDay,
+          },
+          status: { notIn: ["done", "skipped", "canceled"] },
         },
-        status: { notIn: ["done", "skipped", "canceled"] },
-      },
-      orderBy: { id: "asc" },
-      include: {
-        services: {
-          include: { service: { select: { estimatedTime: true } } },
+        orderBy: { id: "asc" },
+        include: {
+          services: {
+            include: { service: { select: { estimatedTime: true } } },
+          },
         },
-      },
-    });
+      });
 
-    let totalMinutes = 0;
-    for (const q of activeQueues) {
-      for (const s of q.services) {
-        totalMinutes += s.service.estimatedTime || 0;
+      let totalMinutes = 0;
+      for (const q of activeQueues) {
+        for (const s of q.services) {
+          totalMinutes += s.service.estimatedTime || 0;
+        }
       }
-    }
 
-    const estimatedTimeDate = new Date(
-      new Date(bookingDate).getTime() + totalMinutes * 60000
-    );
+      const estimatedTimeDate = new Date(
+        new Date(bookingDate).getTime() + totalMinutes * 60000
+      );
 
-    const count = activeQueues.length;
-    const notification = count < 5;
+      const count = activeQueues.length;
+      const notification = count < 5;
 
-    const queue = await tx.queue.create({
-      data: {
-        userId,
-        branchId,
-        bookingDate: new Date(bookingDate),
-        name,
-        email,
-        phoneNumber,
-        ticketNumber,
-        status: "waiting",
-        notification,
-        estimatedTime: estimatedTimeDate,
-        createdBy: username,
-        updatedBy: username,
-        services: {
-          create: serviceIds.map((serviceId) => ({
-            serviceId,
-            createdBy: username,
-            updatedBy: username,
-          })),
+      const queue = await tx.queue.create({
+        data: {
+          userId,
+          branchId,
+          bookingDate: new Date(bookingDate),
+          name,
+          email,
+          phoneNumber,
+          ticketNumber,
+          status: "waiting",
+          notification,
+          estimatedTime: estimatedTimeDate,
+          createdBy: username,
+          updatedBy: username,
+          services: {
+            create: serviceIds.map((serviceId) => ({
+              serviceId,
+              createdBy: username,
+              updatedBy: username,
+            })),
+          },
         },
-      },
-      include: {
-        services: true,
-      },
+        include: {
+          services: true,
+        },
+      });
+
+      await tx.queueLog.create({
+        data: {
+          queueId: queue.id,
+          status: "waiting",
+          createdBy: username,
+          updatedBy: username,
+        },
+      });
+
+      return queue;
     });
 
-    await tx.$commit();
     res.status(201).json({ message: "Queue booked (online)", queue });
   } catch (error) {
-    await tx.$rollback();
     next(error);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
 const bookQueueOffline = async (req, res, next) => {
   const username = req.user.username;
-  const {
-    loketId,
-    branchId,
-    bookingDate,
-    name,
-    email,
-    phoneNumber,
-    serviceIds,
-  } = req.body;
-
-  const prisma = new PrismaClient();
-  const tx = await prisma.$transaction();
+  const { loketId, branchId, name, email, phoneNumber, serviceIds } = req.body;
 
   try {
     if (
       loketId == null ||
       branchId == null ||
-      !bookingDate ||
       !name ||
       !email ||
       !phoneNumber ||
@@ -170,85 +156,98 @@ const bookQueueOffline = async (req, res, next) => {
       throw error;
     }
 
-    const ticketNumber = await generateTicketNumber(branchId, bookingDate);
+    const bookingDate = new Date();
 
-    const bookingDateObj = new Date(bookingDate);
-    bookingDateObj.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(bookingDateObj);
-    endOfDay.setHours(23, 59, 59, 999);
+    const queue = await prisma.$transaction(async (tx) => {
+      const ticketNumber = await generateTicketNumber(branchId, bookingDate);
 
-    const activeQueues = await tx.queue.findMany({
-      where: {
-        branchId,
-        bookingDate: {
-          gte: bookingDateObj,
-          lte: endOfDay,
+      const bookingDateObj = new Date(bookingDate);
+      bookingDateObj.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(bookingDateObj);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const activeQueues = await tx.queue.findMany({
+        where: {
+          branchId,
+          bookingDate: {
+            gte: bookingDateObj,
+            lte: endOfDay,
+          },
+          status: { notIn: ["done", "skipped", "canceled"] },
         },
-        status: { notIn: ["done", "skipped", "canceled"] },
-      },
-      orderBy: { id: "asc" },
-      include: {
-        services: {
-          include: { service: { select: { estimatedTime: true } } },
+        orderBy: { id: "asc" },
+        include: {
+          services: {
+            include: { service: { select: { estimatedTime: true } } },
+          },
         },
-      },
-    });
+      });
 
-    let totalMinutes = 0;
-    for (const q of activeQueues) {
-      for (const s of q.services) {
-        totalMinutes += s.service.estimatedTime || 0;
+      let totalMinutes = 0;
+      for (const q of activeQueues) {
+        for (const s of q.services) {
+          totalMinutes += s.service.estimatedTime || 0;
+        }
       }
-    }
 
-    const estimatedTimeDate = new Date(
-      new Date(bookingDate).getTime() + totalMinutes * 60000
-    );
+      const estimatedTimeDate = new Date(
+        new Date(bookingDate).getTime() + totalMinutes * 60000
+      );
 
-    const count = activeQueues.length;
-    const notification = count < 5;
+      const count = activeQueues.length;
+      const notification = count < 5;
 
-    const queue = await tx.queue.create({
-      data: {
-        loketId,
-        branchId,
-        bookingDate: new Date(bookingDate),
-        name,
-        email,
-        phoneNumber,
-        ticketNumber,
-        status: "waiting",
-        notification,
-        estimatedTime: estimatedTimeDate,
-        createdBy: username,
-        updatedBy: username,
-        services: {
-          create: serviceIds.map((serviceId) => ({
-            serviceId,
-            createdBy: username,
-            updatedBy: username,
-          })),
+      const queue = await tx.queue.create({
+        data: {
+          loketId,
+          branchId,
+          bookingDate: new Date(bookingDate),
+          name,
+          email,
+          phoneNumber,
+          ticketNumber,
+          status: "waiting",
+          notification,
+          estimatedTime: estimatedTimeDate,
+          createdBy: username,
+          updatedBy: username,
+          services: {
+            create: serviceIds.map((serviceId) => ({
+              serviceId,
+              createdBy: username,
+              updatedBy: username,
+            })),
+          },
         },
-      },
-      include: {
-        services: true,
-      },
+        include: {
+          services: true,
+        },
+      });
+
+      await tx.queueLog.create({
+        data: {
+          queueId: queue.id,
+          status: "waiting",
+          createdBy: username,
+          updatedBy: username,
+        },
+      });
+
+      return queue;
     });
 
-    await tx.$commit();
     res.status(201).json({ message: "Queue booked (offline)", queue });
   } catch (error) {
-    await tx.$rollback();
     next(error);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
 const updateStatus = (newStatus) => async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
-  const prisma = new PrismaClient();
-  const tx = await prisma.$transaction();
+  const branchIdParam = req.params.branchId
+    ? parseInt(req.params.branchId, 10)
+    : null;
+  const csBranchId = req.cs?.branchId !== undefined ? req.cs.branchId : null;
 
   try {
     let username;
@@ -257,41 +256,72 @@ const updateStatus = (newStatus) => async (req, res, next) => {
     } else {
       username = req.cs?.username || req.user?.username;
     }
-
-    const queue = await tx.queue.update({
-      where: { id: Number(id) },
-      data: {
-        status: newStatus,
-        updatedBy: username,
-      },
-    });
-
-    if (["done", "skipped", "canceled"].includes(newStatus)) {
-      const nextQueues = await tx.queue.findMany({
-        where: {
-          branchId: queue.branchId,
-          bookingDate: queue.bookingDate,
-          status: "waiting",
-          id: { gt: queue.id },
-        },
-        orderBy: { id: "asc" },
-        take: 5,
-      });
-
-      const nextIds = nextQueues.map((q) => q.id);
-
-      if (nextIds.length > 0) {
-        await tx.queue.updateMany({
-          where: { id: { in: nextIds } },
-          data: { notification: true },
-        });
-      }
+    if (!username) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: username not found" });
     }
 
-    await tx.$commit();
-    res.json({ message: `Queue status updated to ${newStatus}`, queue });
+    const queueData = await prisma.queue.findUnique({ where: { id } });
+    if (!queueData) {
+      return res.status(404).json({ message: "Queue not found" });
+    }
+
+    if (
+      (branchIdParam !== null && queueData.branchId !== branchIdParam) ||
+      (csBranchId !== null && queueData.branchId !== csBranchId)
+    ) {
+      return res.status(403).json({ message: "Forbidden: branchId mismatch" });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const queue = await tx.queue.update({
+        where: { id },
+        data: {
+          status: newStatus,
+          updatedBy: username,
+        },
+      });
+
+      await tx.queueLog.create({
+        data: {
+          queueId: queue.id,
+          status: newStatus,
+          createdBy: username,
+          updatedBy: username,
+        },
+      });
+
+      if (["done", "skipped", "canceled"].includes(newStatus)) {
+        const nextQueues = await tx.queue.findMany({
+          where: {
+            branchId: queue.branchId,
+            bookingDate: queue.bookingDate,
+            status: "waiting",
+            id: { gt: queue.id },
+          },
+          orderBy: { id: "asc" },
+          take: 5,
+        });
+
+        const nextIds = nextQueues.map((q) => q.id);
+
+        if (nextIds.length > 0) {
+          await tx.queue.updateMany({
+            where: { id: { in: nextIds } },
+            data: { notification: true },
+          });
+        }
+      }
+
+      return queue;
+    });
+
+    res.json({
+      message: `Queue status updated to ${newStatus}`,
+      queue: result,
+    });
   } catch (error) {
-    await tx.$rollback();
     next(error);
   } finally {
     await prisma.$disconnect();
@@ -300,25 +330,50 @@ const updateStatus = (newStatus) => async (req, res, next) => {
 
 const takeQueue = async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
-  const csId = req.cs.csId;
-  const username = req.cs.username;
-  const prisma = new PrismaClient();
-  const tx = await prisma.$transaction();
+  const { csId, username, branchId: csBranchId } = req.cs || {};
+  const branchIdParam = req.params.branchId
+    ? parseInt(req.params.branchId, 10)
+    : null;
+
+  if (!csId || !username) {
+    return res.status(403).json({ message: "CS not authorized or missing" });
+  }
 
   try {
-    const queue = await tx.queue.update({
-      where: { id: Number(id) },
+    const queueData = await prisma.queue.findUnique({ where: { id } });
+    if (!queueData) {
+      return res.status(404).json({ message: "Queue not found" });
+    }
+    if (
+      (typeof csBranchId !== "undefined" &&
+        queueData.branchId !== csBranchId) ||
+      (branchIdParam !== null && queueData.branchId !== branchIdParam)
+    ) {
+      return res.status(403).json({ message: "Forbidden: branchId mismatch" });
+    }
+
+    const queue = await prisma.$transaction(async (tx) => {
+      return await tx.queue.update({
+        where: { id },
+        data: {
+          status: "in progress",
+          csId,
+          updatedBy: username,
+        },
+      });
+    });
+
+    await prisma.queueLog.create({
       data: {
+        queueId: queue.id,
         status: "in progress",
-        csId,
+        createdBy: username,
         updatedBy: username,
       },
     });
 
-    await tx.$commit();
     res.json({ message: "Queue status updated to in progress", queue });
   } catch (error) {
-    await tx.$rollback();
     next(error);
   } finally {
     await prisma.$disconnect();
@@ -458,9 +513,25 @@ const getWaitingQueuesByBranchId = async (req, res, next) => {
 
 const getOldestWaitingQueue = async (req, res, next) => {
   try {
+    const branchId = parseInt(req.params.branchId, 10);
+
+    if (!branchId) {
+      const error = new Error("branchId is required");
+      error.status = 400;
+      throw error;
+    }
+
     const queue = await prisma.queue.findFirst({
       where: {
+        branchId: branchId,
         status: "waiting",
+      },
+      include: {
+        services: {
+          include: {
+            service: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "asc",
