@@ -140,34 +140,8 @@ router.delete("/cs/:id", csController.deleteCS);
  *                   example: Login successful
  *                 token:
  *                   type: string
- *                 cs:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                     name:
- *                       type: string
- *                     username:
- *                       type: string
- *                     branch:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: integer
- *                         name:
- *                           type: string
- *                         branchCode:
- *                           type: string
- *                         address:
- *                           type: string
- *                         longitude:
- *                           type: number
- *                         latitude:
- *                           type: number
- *                         holiday:
- *                           type: boolean
- *                         status:
- *                           type: boolean
+ *                 csId:
+ *                   type: integer
  *       401:
  *         description: Invalid credentials
  */
@@ -175,16 +149,12 @@ router.post("/cs/login", csController.login);
 
 /**
  * @swagger
- * /api/cs/{id}/profile:
+ * /api/cs/profile:
  *   get:
- *     summary: Get CS profile by ID
+ *     summary: Get CS profile
  *     tags: [CS]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: CS profile

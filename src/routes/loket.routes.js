@@ -120,34 +120,8 @@ router.put("/loket/:id", loketController.editLoket);
  *                   example: Login successful
  *                 token:
  *                   type: string
- *                 loket:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                     name:
- *                       type: string
- *                     username:
- *                       type: string
- *                     branch:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: integer
- *                         name:
- *                           type: string
- *                         branchCode:
- *                           type: string
- *                         address:
- *                           type: string
- *                         longitude:
- *                           type: number
- *                         latitude:
- *                           type: number
- *                         holiday:
- *                           type: boolean
- *                         status:
- *                           type: boolean
+ *                 loketId:
+ *                   type: integer
  *       401:
  *         description: Invalid credentials
  */

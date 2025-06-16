@@ -123,10 +123,16 @@ const login = async (req, res, next) => {
 
 const getLoket = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const loketId = req.loket.loketId;
+
+    if (!loketId) {
+      const error = new Error("Loket ID not found in token");
+      error.status = 400;
+      throw error;
+    }
 
     const loket = await prisma.loket.findUnique({
-      where: { id: Number(id) },
+      where: { id: loketId },
       select: {
         id: true,
         name: true,
@@ -145,7 +151,9 @@ const getLoket = async (req, res, next) => {
     });
 
     if (!loket) {
-      return res.status(404).json({ message: "Loket not found" });
+      const error = new Error("Loket Not Found!");
+      error.status = 404;
+      throw error;
     }
 
     res.status(200).json({ loket });

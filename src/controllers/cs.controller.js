@@ -134,10 +134,12 @@ const login = async (req, res, next) => {
 
 const getCS = async (req, res, next) => {
   try {
-    const csId = req.cs?.id;
+    const csId = req.cs.csId;
 
     if (!csId) {
-      return res.status(400).json({ message: "CS ID not found in token" });
+      const error = new Error("CS ID not found in token");
+      error.status = 400;
+      throw error;
     }
 
     const cs = await prisma.cS.findUnique({
@@ -159,7 +161,9 @@ const getCS = async (req, res, next) => {
     });
 
     if (!cs) {
-      return res.status(404).json({ message: "CS not found" });
+      const error = new Error("CS Not Found");
+      error.status = 404;
+      throw error;
     }
 
     res.status(200).json({ cs });
@@ -167,6 +171,5 @@ const getCS = async (req, res, next) => {
     next(error);
   }
 };
-
 
 module.exports = { addCS, login, editCS, deleteCS, getCS };

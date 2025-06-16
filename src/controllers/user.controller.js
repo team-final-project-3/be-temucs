@@ -284,6 +284,13 @@ const verifyOtpForgotPassword = async (req, res, next) => {
 const getProfile = async (req, res, next) => {
   try {
     const userId = req.user.userId;
+
+    if (!userId) {
+      const error = new Error("User ID not found in token");
+      error.status = 400;
+      throw error;
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
