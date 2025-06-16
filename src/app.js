@@ -42,6 +42,11 @@ app.use(
 );
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+
 app.use(errorHandler);
+
+app.get("/", (req, res) => {
+  res.redirect("/api-docs");
+});
 
 module.exports = app;
