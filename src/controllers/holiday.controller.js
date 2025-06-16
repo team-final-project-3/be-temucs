@@ -3,7 +3,8 @@ const prisma = new PrismaClient();
 
 const addHoliday = async (req, res, next) => {
   try {
-    const { holidayName, date, createdBy, updatedBy } = req.body;
+    const username = req.user.username;
+    const { holidayName, date } = req.body;
     if (!holidayName || !date) {
       const error = new Error("holidayName and date are required");
       error.status = 400;
@@ -13,8 +14,8 @@ const addHoliday = async (req, res, next) => {
       data: {
         holidayName,
         date: new Date(date),
-        createdBy,
-        updatedBy,
+        createdBy: username,
+        updatedBy: username,
       },
     });
     res.status(201).json({ message: "Holiday added", holiday });
@@ -25,14 +26,15 @@ const addHoliday = async (req, res, next) => {
 
 const editHoliday = async (req, res, next) => {
   try {
+    const username = req.user.username;
     const id = parseInt(req.params.id, 10);
-    const { holidayName, date, updatedBy } = req.body;
+    const { holidayName, date } = req.body;
     const holiday = await prisma.holiday.update({
       where: { id },
       data: {
         holidayName,
         date: date ? new Date(date) : undefined,
-        updatedBy,
+        updatedBy: username,
       },
     });
     res.json({ message: "Holiday updated", holiday });

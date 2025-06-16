@@ -195,7 +195,11 @@ const login = async (req, res, next) => {
       throw error;
     }
 
-    const token = generateToken({ userId: user.id, role: user.role });
+    const token = generateToken({
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+    });
 
     res.json({
       message: "Login successful",

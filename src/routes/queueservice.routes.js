@@ -18,8 +18,6 @@ const { allowRoles } = require("../middlewares/auth");
  *             required:
  *               - queueId
  *               - serviceIds
- *               - createdBy
- *               - updatedBy
  *             properties:
  *               queueId:
  *                 type: integer
@@ -29,12 +27,6 @@ const { allowRoles } = require("../middlewares/auth");
  *                 items:
  *                   type: integer
  *                 example: [1, 3, 5]
- *               createdBy:
- *                 type: string
- *                 example: "admin"
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       201:
  *         description: Data layanan untuk antrean berhasil disimpan

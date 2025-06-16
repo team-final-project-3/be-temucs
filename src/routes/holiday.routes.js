@@ -25,18 +25,12 @@ const { allowRoles } = require("../middlewares/auth");
  *             required:
  *               - holidayName
  *               - date
- *               - createdBy
- *               - updatedBy
  *             properties:
  *               holidayName:
  *                 type: string
  *               date:
  *                 type: string
  *                 format: date
- *               createdBy:
- *                 type: string
- *               updatedBy:
- *                 type: string
  *     responses:
  *       201:
  *         description: Holiday added
@@ -68,8 +62,6 @@ router.post("/holiday", holidayController.addHoliday);
  *               date:
  *                 type: string
  *                 format: date
- *               updatedBy:
- *                 type: string
  *     responses:
  *       200:
  *         description: Holiday updated
@@ -122,8 +114,6 @@ router.delete("/holiday/:id", holidayController.deleteHoliday);
  *                     id: { type: integer }
  *                     holidayName: { type: string }
  *                     date: { type: string, format: date }
- *                     createdBy: { type: string }
- *                     updatedBy: { type: string }
  *                     createdAt: { type: string, format: date-time }
  *                     updatedAt: { type: string, format: date-time }
  *       404:
@@ -153,8 +143,6 @@ router.get("/holiday/:id", allowRoles("admin"), holidayController.getHoliday);
  *                       id: { type: integer }
  *                       holidayName: { type: string }
  *                       date: { type: string, format: date }
- *                       createdBy: { type: string }
- *                       updatedBy: { type: string }
  *                       createdAt: { type: string, format: date-time }
  *                       updatedAt: { type: string, format: date-time }
  */

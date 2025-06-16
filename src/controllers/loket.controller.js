@@ -7,9 +7,10 @@ const {
 } = require("../auth/loket.auth");
 
 const addLoket = async (req, res, next) => {
-  const { branchId, name, username, password, createdBy } = req.body;
+  const adminUsername = req.user.username;
+  const { branchId, name, username, password } = req.body;
   try {
-    if (branchId == null || !name || !username || !password || !createdBy) {
+    if (branchId == null || !name || !username || !password) {
       const error = new Error("All fields are required.");
       error.status = 400;
       throw error;
@@ -29,8 +30,8 @@ const addLoket = async (req, res, next) => {
         name,
         username,
         passwordHash,
-        createdBy,
-        updatedBy: createdBy,
+        createdBy: adminUsername,
+        updatedBy: adminUsername,
       },
     });
     res.status(201).json({
@@ -43,8 +44,9 @@ const addLoket = async (req, res, next) => {
 };
 
 const editLoket = async (req, res, next) => {
+  const username = req.user.username;
   const { id } = req.params;
-  const { name, password, updatedBy } = req.body;
+  const { name, password } = req.body;
 
   try {
     const loket = await prisma.loket.findUnique({
@@ -57,7 +59,7 @@ const editLoket = async (req, res, next) => {
 
     const updateData = {
       name,
-      updatedBy,
+      updatedBy: username,
     };
 
     if (password) {
@@ -79,7 +81,7 @@ const editLoket = async (req, res, next) => {
         status: updatedLoket.status,
       },
     });
-  } catch (error) { 
+  } catch (error) {
     next(error);
   }
 };
@@ -110,7 +112,11 @@ const login = async (req, res, next) => {
       throw error;
     }
 
-    const token = generateToken({ loketId: loket.id, role: "loket" });
+    const token = generateToken({
+      loketId: loket.id,
+      username: loket.username,
+      role: "loket",
+    });
 
     res.json({
       message: "Login successful",

@@ -17,18 +17,10 @@ const { allowRoles } = require("../middlewares/auth");
  *             type: object
  *             required:
  *               - documentName
- *               - createdBy
- *               - updatedBy
  *             properties:
  *               documentName:
  *                 type: string
  *                 example: "Form Identitas Nasabah"
- *               createdBy:
- *                 type: string
- *                 example: "admin"
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       201:
  *         description: Document created
@@ -103,9 +95,6 @@ router.get(
  *               documentName:
  *                 type: string
  *                 example: "Form Pembukaan Rekening"
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       200:
  *         description: Document updated

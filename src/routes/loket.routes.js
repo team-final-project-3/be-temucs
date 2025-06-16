@@ -24,7 +24,6 @@ const { allowRoles } = require("../middlewares/auth");
  *               - username
  *               - password
  *               - status
- *               - createdBy
  *             properties:
  *               branchId:
  *                 type: integer
@@ -35,8 +34,6 @@ const { allowRoles } = require("../middlewares/auth");
  *               password:
  *                 type: string
  *               status:
- *                 type: string
- *               createdBy:
  *                 type: string
  *     responses:
  *       201:
@@ -68,7 +65,6 @@ router.post("/loket/add", allowRoles("admin"), loketController.addLoket);
  *             type: object
  *             required:
  *               - name
- *               - updatedBy
  *             properties:
  *               name:
  *                 type: string
@@ -76,9 +72,6 @@ router.post("/loket/add", allowRoles("admin"), loketController.addLoket);
  *               password:
  *                 type: string
  *                 example: "newPassword123"  # optional
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       200:
  *         description: Loket updated

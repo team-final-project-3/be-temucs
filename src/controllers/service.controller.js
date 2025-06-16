@@ -3,9 +3,10 @@ const prisma = new PrismaClient();
 
 const addService = async (req, res, next) => {
   try {
-    const { serviceName, estimatedTime, createdBy, updatedBy } = req.body;
+    const username = req.user.username;
+    const { serviceName, estimatedTime, documentIds } = req.body;
 
-    if (!serviceName || !estimatedTime || !createdBy || !updatedBy) {
+    if (!serviceName || !estimatedTime) {
       const error = new Error("All fields are required");
       error.status = 400;
       throw error;
@@ -15,8 +16,16 @@ const addService = async (req, res, next) => {
       data: {
         serviceName,
         estimatedTime,
-        createdBy,
-        updatedBy,
+        createdBy: username,
+        updatedBy: username,
+        status: true,
+        documents: {
+          create: documentIds.map((documentId) => ({
+            documentId,
+            createdBy: username,
+            updatedBy: username,
+          })),
+        },
       },
     });
 
@@ -56,15 +65,11 @@ const getAllService = async (req, res, next) => {
 
 const editService = async (req, res, next) => {
   try {
+    const username = req.user.username;
     const id = parseInt(req.params.id, 10);
-    const { serviceName, estimatedTime, updatedBy } = req.body;
+    const { serviceName, status, estimatedTime } = req.body;
 
-    if (
-      serviceName == null ||
-      estimatedTime == null ||
-      createdBy == null ||
-      updatedBy == null
-    ) {
+    if (serviceName == null || estimatedTime == null) {
       const error = new Error("All fields are required");
       error.status = 400;
       throw error;
@@ -72,7 +77,7 @@ const editService = async (req, res, next) => {
 
     const updatedService = await prisma.service.update({
       where: { id: Number(id) },
-      data: { serviceName, estimatedTime, updatedBy },
+      data: { serviceName, status, estimatedTime, updatedBy: username },
     });
 
     res.status(200).json({ message: "Service updated", updatedService });
