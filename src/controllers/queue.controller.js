@@ -41,6 +41,10 @@ const bookQueueOnline = async (req, res, next) => {
     updatedBy,
   } = req.body;
 
+  const prisma = new PrismaClient();
+
+  const tx = await prisma.$transaction();
+
   try {
     if (
       !userId ||
@@ -68,7 +72,7 @@ const bookQueueOnline = async (req, res, next) => {
     const endOfDay = new Date(bookingDateObj);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const activeQueues = await prisma.queue.findMany({
+    const activeQueues = await tx.queue.findMany({
       where: {
         branchId,
         bookingDate: {
@@ -99,7 +103,7 @@ const bookQueueOnline = async (req, res, next) => {
     const count = activeQueues.length;
     const notification = count < 5;
 
-    const queue = await prisma.queue.create({
+    const queue = await tx.queue.create({
       data: {
         userId,
         branchId,
@@ -125,9 +129,14 @@ const bookQueueOnline = async (req, res, next) => {
         services: true,
       },
     });
+
+    await tx.$commit();
     res.status(201).json({ message: "Queue booked (online)", queue });
   } catch (error) {
+    await tx.$rollback();
     next(error);
+  } finally {
+    await prisma.$disconnect();
   }
 };
 
@@ -143,6 +152,10 @@ const bookQueueOffline = async (req, res, next) => {
     createdBy,
     updatedBy,
   } = req.body;
+
+  const prisma = new PrismaClient();
+  const tx = await prisma.$transaction();
+
   try {
     if (
       loketId == null ||
@@ -170,7 +183,7 @@ const bookQueueOffline = async (req, res, next) => {
     const endOfDay = new Date(bookingDateObj);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const activeQueues = await prisma.queue.findMany({
+    const activeQueues = await tx.queue.findMany({
       where: {
         branchId,
         bookingDate: {
@@ -201,7 +214,7 @@ const bookQueueOffline = async (req, res, next) => {
     const count = activeQueues.length;
     const notification = count < 5;
 
-    const queue = await prisma.queue.create({
+    const queue = await tx.queue.create({
       data: {
         loketId,
         branchId,
@@ -227,22 +240,30 @@ const bookQueueOffline = async (req, res, next) => {
         services: true,
       },
     });
+
+    await tx.$commit();
     res.status(201).json({ message: "Queue booked (offline)", queue });
   } catch (error) {
+    await tx.$rollback();
     next(error);
+  } finally {
+    await prisma.$disconnect();
   }
 };
 
 const updateStatus = (newStatus) => async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
+  const prisma = new PrismaClient();
+  const tx = await prisma.$transaction();
+
   try {
-    const queue = await prisma.queue.update({
+    const queue = await tx.queue.update({
       where: { id: Number(id) },
       data: { status: newStatus },
     });
 
     if (["done", "skipped", "canceled"].includes(newStatus)) {
-      const nextQueues = await prisma.queue.findMany({
+      const nextQueues = await tx.queue.findMany({
         where: {
           branchId: queue.branchId,
           bookingDate: queue.bookingDate,
@@ -256,30 +277,42 @@ const updateStatus = (newStatus) => async (req, res, next) => {
       const nextIds = nextQueues.map((q) => q.id);
 
       if (nextIds.length > 0) {
-        await prisma.queue.updateMany({
+        await tx.queue.updateMany({
           where: { id: { in: nextIds } },
           data: { notification: true },
         });
       }
     }
 
+    await tx.$commit();
     res.json({ message: `Queue status updated to ${newStatus}`, queue });
   } catch (error) {
+    await tx.$rollback();
     next(error);
+  } finally {
+    await prisma.$disconnect();
   }
 };
 
 const takeQueue = async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
   const { csId } = req.body;
+  const prisma = new PrismaClient();
+  const tx = await prisma.$transaction();
+
   try {
-    const queue = await prisma.queue.update({
+    const queue = await tx.queue.update({
       where: { id: Number(id) },
       data: { status: "in progress", csId },
     });
+
+    await tx.$commit();
     res.json({ message: "Queue status updated to in progress", queue });
   } catch (error) {
+    await tx.$rollback();
     next(error);
+  } finally {
+    await prisma.$disconnect();
   }
 };
 
