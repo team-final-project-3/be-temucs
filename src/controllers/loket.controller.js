@@ -127,4 +127,37 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { addLoket, login, editLoket };
+const getLoket = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const loket = await prisma.loket.findUnique({
+      where: { id: Number(id) },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        status: true,
+        branchId: true,
+        branch: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    if (!loket) {
+      return res.status(404).json({ message: "Loket not found" });
+    }
+
+    res.status(200).json({ loket });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { addLoket, login, editLoket, getLoket };

@@ -153,4 +153,46 @@ router.put("/loket/:id", loketController.editLoket);
  */
 router.post("/loket/login", loketController.login);
 
+/**
+ * @swagger
+ * /api/loket/{id}/profile:
+ *   get:
+ *     summary: Get Loket profile by ID
+ *     tags: [Loket]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Loket profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 loket:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: integer }
+ *                     name: { type: string }
+ *                     username: { type: string }
+ *                     status: { type: boolean }
+ *                     branchId: { type: integer }
+ *                     branch:
+ *                       type: object
+ *                       properties:
+ *                         id: { type: integer }
+ *                         name: { type: string }
+ *                     createdAt: { type: string, format: date-time }
+ *                     updatedAt: { type: string, format: date-time }
+ *       404:
+ *         description: Loket not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/loket/:id/profile", loketController.getLoket);
+
 module.exports = router;
