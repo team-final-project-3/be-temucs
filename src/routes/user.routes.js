@@ -293,4 +293,45 @@ router.get("/users/profile", userController.getProfile);
  */
 router.post("/users/change-password", userController.changePassword);
 
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: A list of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   fullname:
+ *                     type: string
+ *                   username:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   phoneNumber:
+ *                     type: string
+ *                   role:
+ *                     type: string
+ *                   isVerified:
+ *                     type: boolean
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/users", userController.getAllUsers);
+
 module.exports = router;
