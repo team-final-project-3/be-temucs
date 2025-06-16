@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const serviceController = require("../controllers/service.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -16,8 +17,7 @@ const serviceController = require("../controllers/service.controller");
  *             type: object
  *             required:
  *               - serviceName
- *               - createdBy
- *               - updatedBy
+ *               - documentIds
  *             properties:
  *               serviceName:
  *                 type: string
@@ -26,12 +26,12 @@ const serviceController = require("../controllers/service.controller");
  *                 type: integer
  *                 nullable: true
  *                 example: 15
- *               createdBy:
- *                 type: string
- *                 example: "admin"
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
+ *               documentIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: List of document IDs to relate with this service
+ *                 example: [1, 2, 3]
  *     responses:
  *       201:
  *         description: Service created
@@ -42,10 +42,14 @@ const serviceController = require("../controllers/service.controller");
  *               properties:
  *                 message:
  *                   type: string
+ *                 service:
+ *                   type: object
+ *       400:
+ *         description: Validation error
  *       500:
  *         description: Internal server error
  */
-router.post("/service", serviceController.addService);
+router.post("/service", allowRoles("admin"), serviceController.addService);
 
 /**
  * @swagger
@@ -57,7 +61,11 @@ router.post("/service", serviceController.addService);
  *       200:
  *         description: A list of all services
  */
-router.get("/service", serviceController.getAllService);
+router.get(
+  "/service",
+  allowRoles("nasabah", "admin", "loket"),
+  serviceController.getAllService
+);
 
 /**
  * @swagger
@@ -77,7 +85,11 @@ router.get("/service", serviceController.getAllService);
  *       404:
  *         description: Service not found
  */
-router.get("/service/:id", serviceController.getService);
+router.get(
+  "/service/:id",
+  allowRoles("nasabah", "admin", "loket", "cs"),
+  serviceController.getService
+);
 
 /**
  * @swagger
@@ -104,14 +116,11 @@ router.get("/service/:id", serviceController.getService);
  *               estimatedTime:
  *                 type: integer
  *                 example: 20
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       200:
  *         description: Service updated
  */
-router.put("/service/:id", serviceController.editService);
+router.put("/service/:id", allowRoles("admin"), serviceController.editService);
 
 /**
  * @swagger
@@ -129,6 +138,10 @@ router.put("/service/:id", serviceController.editService);
  *       200:
  *         description: Service deleted
  */
-router.delete("/service/:id", serviceController.deleteService);
+router.delete(
+  "/service/:id",
+  allowRoles("admin"),
+  serviceController.deleteService
+);
 
 module.exports = router;

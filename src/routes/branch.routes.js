@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const branchController = require("../controllers/branch.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -22,13 +23,11 @@ const branchController = require("../controllers/branch.controller");
  *               latitude: { type: number }
  *               holiday: { type: boolean }
  *               status: { type: boolean }
- *               createdBy: { type: string }
- *               updatedBy: { type: string }
  *     responses:
  *       201:
  *         description: Branch created
  */
-router.post("/branch", branchController.addBranch);
+router.post("/branch", allowRoles("admin"), branchController.addBranch);
 
 /**
  * @swagger
@@ -56,12 +55,11 @@ router.post("/branch", branchController.addBranch);
  *               latitude: { type: number }
  *               holiday: { type: boolean }
  *               status: { type: boolean }
- *               updatedBy: { type: string }
  *     responses:
  *       200:
  *         description: Branch updated
  */
-router.put("/branch/:id", branchController.editBranch);
+router.put("/branch/:id", allowRoles("admin"), branchController.editBranch);
 
 /**
  * @swagger
@@ -73,7 +71,11 @@ router.put("/branch/:id", branchController.editBranch);
  *       200:
  *         description: List of branches
  */
-router.get("/branch", branchController.getAllBranch);
+router.get(
+  "/branch",
+  allowRoles("admin", "nasabah"),
+  branchController.getAllBranch
+);
 
 /**
  * @swagger
@@ -93,6 +95,10 @@ router.get("/branch", branchController.getAllBranch);
  *       404:
  *         description: Branch not found
  */
-router.get("/branch/:id", branchController.getBranch);
+router.get(
+  "/branch/:id",
+  allowRoles("admin", "nasabah"),
+  branchController.getBranch
+);
 
 module.exports = router;

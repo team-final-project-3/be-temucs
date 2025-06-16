@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const queueServiceController = require("../controllers/queueservice.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -17,8 +18,6 @@ const queueServiceController = require("../controllers/queueservice.controller")
  *             required:
  *               - queueId
  *               - serviceIds
- *               - createdBy
- *               - updatedBy
  *             properties:
  *               queueId:
  *                 type: integer
@@ -28,12 +27,6 @@ const queueServiceController = require("../controllers/queueservice.controller")
  *                 items:
  *                   type: integer
  *                 example: [1, 3, 5]
- *               createdBy:
- *                 type: string
- *                 example: "admin"
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       201:
  *         description: Data layanan untuk antrean berhasil disimpan
@@ -67,6 +60,7 @@ router.post("/queue-service", queueServiceController.createQueueService);
  */
 router.get(
   "/documents-by-queue/:queueId",
+  allowRoles("nasabah", "cs", "loket", "admin"),
   queueServiceController.getDocumentsByQueueId
 );
 
@@ -99,6 +93,7 @@ router.get(
  */
 router.get(
   "/queue-service/:queueId",
+  allowRoles("nasabah", "cs", "loket"),
   queueServiceController.getQueueServicesByQueueId
 );
 

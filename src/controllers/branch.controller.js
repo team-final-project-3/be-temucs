@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 
 const addBranch = async (req, res, next) => {
   try {
+    const username = req.user.username;
     const {
       name,
       branchCode,
@@ -11,8 +12,6 @@ const addBranch = async (req, res, next) => {
       latitude,
       holiday = false,
       status = true,
-      createdBy,
-      updatedBy,
     } = req.body;
 
     if (
@@ -20,9 +19,7 @@ const addBranch = async (req, res, next) => {
       !branchCode ||
       !address ||
       longitude == null ||
-      latitude == null ||
-      !createdBy ||
-      !updatedBy
+      latitude == null
     ) {
       const error = new Error("All required fields must be provided.");
       error.status = 400;
@@ -38,8 +35,8 @@ const addBranch = async (req, res, next) => {
         latitude,
         holiday,
         status,
-        createdBy,
-        updatedBy,
+        createdBy: username,
+        updatedBy: username,
       },
     });
 
@@ -52,24 +49,16 @@ const addBranch = async (req, res, next) => {
 const editBranch = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const {
-      name,
-      branchCode,
-      address,
-      longitude,
-      latitude,
-      holiday,
-      status,
-      updatedBy,
-    } = req.body;
+    const username = req.user.username;
+    const { name, branchCode, address, longitude, latitude, holiday, status } =
+      req.body;
 
     if (
       !name ||
       !branchCode ||
       !address ||
       longitude == null ||
-      latitude == null ||
-      !updatedBy
+      latitude == null
     ) {
       const error = new Error("All required fields must be provided.");
       error.status = 400;
@@ -86,7 +75,7 @@ const editBranch = async (req, res, next) => {
         latitude,
         holiday,
         status,
-        updatedBy,
+        updatedBy: username,
       },
     });
 

@@ -15,8 +15,8 @@ const unprotectedRoutes = [
   "/loket/login",
 ];
 
-module.exports = (req, res, next) => {
-  // Allow unprotected routes
+// Middleware utama untuk verifikasi token
+const authMiddleware = (req, res, next) => {
   if (unprotectedRoutes.includes(req.path)) {
     return next();
   }
@@ -33,3 +33,15 @@ module.exports = (req, res, next) => {
     next();
   });
 };
+
+const allowRoles =
+  (...roles) =>
+  (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden: insufficient role" });
+    }
+    next();
+  };
+
+module.exports = authMiddleware;
+module.exports.allowRoles = allowRoles;

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const holidayController = require("../controllers/holiday.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -24,18 +25,12 @@ const holidayController = require("../controllers/holiday.controller");
  *             required:
  *               - holidayName
  *               - date
- *               - createdBy
- *               - updatedBy
  *             properties:
  *               holidayName:
  *                 type: string
  *               date:
  *                 type: string
  *                 format: date
- *               createdBy:
- *                 type: string
- *               updatedBy:
- *                 type: string
  *     responses:
  *       201:
  *         description: Holiday added
@@ -67,8 +62,6 @@ router.post("/holiday", holidayController.addHoliday);
  *               date:
  *                 type: string
  *                 format: date
- *               updatedBy:
- *                 type: string
  *     responses:
  *       200:
  *         description: Holiday updated
@@ -121,14 +114,12 @@ router.delete("/holiday/:id", holidayController.deleteHoliday);
  *                     id: { type: integer }
  *                     holidayName: { type: string }
  *                     date: { type: string, format: date }
- *                     createdBy: { type: string }
- *                     updatedBy: { type: string }
  *                     createdAt: { type: string, format: date-time }
  *                     updatedAt: { type: string, format: date-time }
  *       404:
  *         description: Holiday not found
  */
-router.get("/holiday/:id", holidayController.getHoliday);
+router.get("/holiday/:id", allowRoles("admin"), holidayController.getHoliday);
 
 /**
  * @swagger
@@ -152,11 +143,9 @@ router.get("/holiday/:id", holidayController.getHoliday);
  *                       id: { type: integer }
  *                       holidayName: { type: string }
  *                       date: { type: string, format: date }
- *                       createdBy: { type: string }
- *                       updatedBy: { type: string }
  *                       createdAt: { type: string, format: date-time }
  *                       updatedAt: { type: string, format: date-time }
  */
-router.get("/holiday", holidayController.getAllHoliday);
+router.get("/holiday", allowRoles("admin"), holidayController.getAllHoliday);
 
 module.exports = router;

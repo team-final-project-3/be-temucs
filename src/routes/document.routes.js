@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const documentController = require("../controllers/document.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -16,25 +17,17 @@ const documentController = require("../controllers/document.controller");
  *             type: object
  *             required:
  *               - documentName
- *               - createdBy
- *               - updatedBy
  *             properties:
  *               documentName:
  *                 type: string
  *                 example: "Form Identitas Nasabah"
- *               createdBy:
- *                 type: string
- *                 example: "admin"
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       201:
  *         description: Document created
  *       500:
  *         description: Internal server error
  */
-router.post("/document", documentController.addDocument);
+router.post("/document", allowRoles("admin"), documentController.addDocument);
 
 /**
  * @swagger
@@ -48,7 +41,11 @@ router.post("/document", documentController.addDocument);
  *       500:
  *         description: Internal server error
  */
-router.get("/document", documentController.getAllDocument);
+router.get(
+  "/document",
+  allowRoles("admin", "nasabah", "loket"),
+  documentController.getAllDocument
+);
 
 /**
  * @swagger
@@ -70,7 +67,11 @@ router.get("/document", documentController.getAllDocument);
  *       500:
  *         description: Internal server error
  */
-router.get("/document/:id", documentController.getDocument);
+router.get(
+  "/document/:id",
+  allowRoles("admin", "nasabah", "loket"),
+  documentController.getDocument
+);
 
 /**
  * @swagger
@@ -94,16 +95,17 @@ router.get("/document/:id", documentController.getDocument);
  *               documentName:
  *                 type: string
  *                 example: "Form Pembukaan Rekening"
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       200:
  *         description: Document updated
  *       500:
  *         description: Internal server error
  */
-router.put("/document/:id", documentController.editDocument);
+router.put(
+  "/document/:id",
+  allowRoles("admin"),
+  documentController.editDocument
+);
 
 /**
  * @swagger
@@ -123,6 +125,10 @@ router.put("/document/:id", documentController.editDocument);
  *       500:
  *         description: Internal server error
  */
-router.delete("/document/:id", documentController.deleteDocument);
+router.delete(
+  "/document/:id",
+  allowRoles("admin"),
+  documentController.deleteDocument
+);
 
 module.exports = router;

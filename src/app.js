@@ -6,7 +6,6 @@ const authMiddleware = require("./middlewares/auth");
 const userRoutes = require("./routes/user.routes");
 const csRoutes = require("./routes/cs.routes");
 const loketRoutes = require("./routes/loket.routes");
-const dummyRoutes = require("./routes/dummy.routes");
 const branchRoutes = require("./routes/branch.routes");
 const queueRoutes = require("./routes/queue.routes");
 const queueServiceRoutes = require("./routes/queueservice.routes");
@@ -34,7 +33,6 @@ app.use(
   userRoutes,
   csRoutes,
   loketRoutes,
-  dummyRoutes,
   branchRoutes,
   queueRoutes,
   queueServiceRoutes,

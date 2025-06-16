@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const csController = require("../controllers/cs.controller");
 const { verifyCSToken } = require("../auth/cs.auth");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -22,7 +23,6 @@ const { verifyCSToken } = require("../auth/cs.auth");
  *               - name
  *               - username
  *               - password
- *               - createdBy
  *             properties:
  *               branchId:
  *                 type: integer
@@ -32,8 +32,6 @@ const { verifyCSToken } = require("../auth/cs.auth");
  *                 type: string
  *               password:
  *                 type: string
- *               createdBy:
- *                 type: string
  *     responses:
  *       201:
  *         description: CS created
@@ -42,7 +40,7 @@ const { verifyCSToken } = require("../auth/cs.auth");
  *       401:
  *         description: Unauthorized
  */
-router.post("/cs/add", csController.addCS);
+router.post("/cs/add", allowRoles("admin"), csController.addCS);
 
 /**
  * @swagger
@@ -64,7 +62,6 @@ router.post("/cs/add", csController.addCS);
  *             type: object
  *             required:
  *               - name
- *               - updatedBy
  *             properties:
  *               name:
  *                 type: string
@@ -72,9 +69,6 @@ router.post("/cs/add", csController.addCS);
  *               password:
  *                 type: string
  *                 example: "newPassword123"  # Optional
- *               updatedBy:
- *                 type: string
- *                 example: "admin"
  *     responses:
  *       200:
  *         description: CS updated
@@ -83,7 +77,7 @@ router.post("/cs/add", csController.addCS);
  *       500:
  *         description: Internal server error
  */
-router.put("/cs/:id", csController.editCS);
+router.put("/cs/:id", allowRoles("admin"), csController.editCS);
 
 /**
  * @swagger
@@ -105,7 +99,7 @@ router.put("/cs/:id", csController.editCS);
  *       500:
  *         description: Internal server error
  */
-router.delete("/cs/:id", csController.deleteCS);
+router.delete("/cs/:id", allowRoles("admin"), csController.deleteCS);
 
 /**
  * @swagger
@@ -182,6 +176,6 @@ router.post("/cs/login", csController.login);
  *       500:
  *         description: Internal server error
  */
-router.get("/cs/profile", verifyCSToken, csController.getCS);
+router.get("/cs/profile", allowRoles("cs"), verifyCSToken, csController.getCS);
 
 module.exports = router;

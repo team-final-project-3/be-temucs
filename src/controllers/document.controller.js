@@ -3,9 +3,10 @@ const prisma = new PrismaClient();
 
 const addDocument = async (req, res, next) => {
   try {
-    const { documentName, createdBy, updatedBy } = req.body;
+    const username = req.user.username;
+    const { documentName } = req.body;
 
-    if (documentName == null || createdBy == null || updatedBy == null) {
+    if (documentName == null) {
       const error = new Error("All fields are required.");
       error.status = 400;
       throw error;
@@ -14,8 +15,8 @@ const addDocument = async (req, res, next) => {
     const document = await prisma.document.create({
       data: {
         documentName,
-        createdBy,
-        updatedBy,
+        createdBy: username,
+        updatedBy: username,
       },
     });
 
