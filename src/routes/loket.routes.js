@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const loketController = require("../controllers/loket.controller");
 const { verifyLoketToken } = require("../auth/loket.auth");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -45,7 +46,7 @@ const { verifyLoketToken } = require("../auth/loket.auth");
  *       401:
  *         description: Unauthorized
  */
-router.post("/loket/add", loketController.addLoket);
+router.post("/loket/add", allowRoles("admin"), loketController.addLoket);
 
 /**
  * @swagger
@@ -86,7 +87,7 @@ router.post("/loket/add", loketController.addLoket);
  *       500:
  *         description: Internal server error
  */
-router.put("/loket/:id", loketController.editLoket);
+router.put("/loket/:id", allowRoles("admin"), loketController.editLoket);
 
 /**
  * @swagger

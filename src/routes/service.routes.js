@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const serviceController = require("../controllers/service.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -45,7 +46,7 @@ const serviceController = require("../controllers/service.controller");
  *       500:
  *         description: Internal server error
  */
-router.post("/service", serviceController.addService);
+router.post("/service", allowRoles("admin"), serviceController.addService);
 
 /**
  * @swagger
@@ -57,7 +58,11 @@ router.post("/service", serviceController.addService);
  *       200:
  *         description: A list of all services
  */
-router.get("/service", serviceController.getAllService);
+router.get(
+  "/service",
+  allowRoles("nasabah", "admin", "loket"),
+  serviceController.getAllService
+);
 
 /**
  * @swagger
@@ -77,7 +82,11 @@ router.get("/service", serviceController.getAllService);
  *       404:
  *         description: Service not found
  */
-router.get("/service/:id", serviceController.getService);
+router.get(
+  "/service/:id",
+  allowRoles("nasabah", "admin", "loket", "cs"),
+  serviceController.getService
+);
 
 /**
  * @swagger
@@ -111,7 +120,7 @@ router.get("/service/:id", serviceController.getService);
  *       200:
  *         description: Service updated
  */
-router.put("/service/:id", serviceController.editService);
+router.put("/service/:id", allowRoles("admin"), serviceController.editService);
 
 /**
  * @swagger
@@ -129,6 +138,10 @@ router.put("/service/:id", serviceController.editService);
  *       200:
  *         description: Service deleted
  */
-router.delete("/service/:id", serviceController.deleteService);
+router.delete(
+  "/service/:id",
+  allowRoles("admin"),
+  serviceController.deleteService
+);
 
 module.exports = router;

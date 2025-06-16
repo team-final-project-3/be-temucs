@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const queueController = require("../controllers/queue.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -39,7 +40,11 @@ const queueController = require("../controllers/queue.controller");
  *       201:
  *         description: Queue booked (online)
  */
-router.post("/queue/book-online", queueController.bookQueueOnline);
+router.post(
+  "/queue/book-online",
+  allowRoles("nasabah"),
+  queueController.bookQueueOnline
+);
 
 /**
  * @swagger
@@ -78,7 +83,11 @@ router.post("/queue/book-online", queueController.bookQueueOnline);
  *       201:
  *         description: Queue booked (offline)
  */
-router.post("/queue/book-offline", queueController.bookQueueOffline);
+router.post(
+  "/queue/book-offline",
+  allowRoles("loket"),
+  queueController.bookQueueOffline
+);
 
 /**
  * @swagger
@@ -98,7 +107,11 @@ router.post("/queue/book-offline", queueController.bookQueueOffline);
  *       200:
  *         description: Queue canceled
  */
-router.patch("/queue/:id/cancel", queueController.cancelQueue);
+router.patch(
+  "/queue/:id/cancel",
+  allowRoles("nasabah"),
+  queueController.cancelQueue
+);
 
 /**
  * @swagger
@@ -118,7 +131,7 @@ router.patch("/queue/:id/cancel", queueController.cancelQueue);
  *       200:
  *         description: Queue skipped
  */
-router.patch("/queue/:id/skip", queueController.skipQueue);
+router.patch("/queue/:id/skip", allowRoles("cs"), queueController.skipQueue);
 
 /**
  * @swagger
@@ -150,7 +163,7 @@ router.patch("/queue/:id/skip", queueController.skipQueue);
  *       200:
  *         description: Queue taken (in progress)
  */
-router.patch("/queue/:id/take", queueController.takeQueue);
+router.patch("/queue/:id/take", allowRoles("cs"), queueController.takeQueue);
 
 /**
  * @swagger
@@ -170,7 +183,7 @@ router.patch("/queue/:id/take", queueController.takeQueue);
  *       200:
  *         description: Queue done
  */
-router.patch("/queue/:id/done", queueController.doneQueue);
+router.patch("/queue/:id/done", allowRoles("cs"), queueController.doneQueue);
 
 /**
  * @swagger
@@ -202,7 +215,11 @@ router.patch("/queue/:id/done", queueController.doneQueue);
  *       500:
  *         description: Internal server error
  */
-router.get("/queue/count/:branchId", queueController.getQueueCountByBranchId);
+router.get(
+  "/queue/count/:branchId",
+  allowRoles("nasabah", "cs", "loket"),
+  queueController.getQueueCountByBranchId
+);
 
 /**
  * @swagger
@@ -238,7 +255,11 @@ router.get("/queue/count/:branchId", queueController.getQueueCountByBranchId);
  *       500:
  *         description: Internal server error
  */
-router.get("/queue/remaining/:queueId", queueController.getRemainingQueue);
+router.get(
+  "/queue/remaining/:queueId",
+  allowRoles("nasabah", "cs", "loket"),
+  queueController.getRemainingQueue
+);
 
 /**
  * @swagger
@@ -260,6 +281,7 @@ router.get("/queue/remaining/:queueId", queueController.getRemainingQueue);
  */
 router.get(
   "/queue/latest-inprogress",
+  allowRoles("nasabah", "cs", "loket"),
   queueController.getLatestInProgressQueue
 );
 
@@ -292,6 +314,7 @@ router.get(
  */
 router.get(
   "/queue/waiting/:branchId",
+  allowRoles("nasabah", "cs", "loket"),
   queueController.getWaitingQueuesByBranchId
 );
 
@@ -326,6 +349,10 @@ router.get(
  *       500:
  *         description: Internal server error
  */
-router.get("/queue/waiting-oldest", queueController.getOldestWaitingQueue);
+router.get(
+  "/queue/waiting-oldest",
+  allowRoles("nasabah", "cs", "loket"),
+  queueController.getOldestWaitingQueue
+);
 
 module.exports = router;

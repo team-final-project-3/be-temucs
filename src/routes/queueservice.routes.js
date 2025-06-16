@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const queueServiceController = require("../controllers/queueservice.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -67,6 +68,7 @@ router.post("/queue-service", queueServiceController.createQueueService);
  */
 router.get(
   "/documents-by-queue/:queueId",
+  allowRoles("nasabah", "cs", "loket", "admin"),
   queueServiceController.getDocumentsByQueueId
 );
 
@@ -99,6 +101,7 @@ router.get(
  */
 router.get(
   "/queue-service/:queueId",
+  allowRoles("nasabah", "cs", "loket"),
   queueServiceController.getQueueServicesByQueueId
 );
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const holidayController = require("../controllers/holiday.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -128,7 +129,7 @@ router.delete("/holiday/:id", holidayController.deleteHoliday);
  *       404:
  *         description: Holiday not found
  */
-router.get("/holiday/:id", holidayController.getHoliday);
+router.get("/holiday/:id", allowRoles("admin"), holidayController.getHoliday);
 
 /**
  * @swagger
@@ -157,6 +158,6 @@ router.get("/holiday/:id", holidayController.getHoliday);
  *                       createdAt: { type: string, format: date-time }
  *                       updatedAt: { type: string, format: date-time }
  */
-router.get("/holiday", holidayController.getAllHoliday);
+router.get("/holiday", allowRoles("admin"), holidayController.getAllHoliday);
 
 module.exports = router;
