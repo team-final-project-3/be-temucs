@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const csController = require("../controllers/cs.controller");
+const { verifyCSToken } = require("../auth/cs.auth");
 
 /**
  * @swagger
@@ -211,6 +212,6 @@ router.post("/cs/login", csController.login);
  *       500:
  *         description: Internal server error
  */
-router.get("/cs/:id/profile", csController.getCS);
+router.get("/cs/profile", verifyCSToken, csController.getCS);
 
 module.exports = router;

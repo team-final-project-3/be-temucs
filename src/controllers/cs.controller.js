@@ -134,10 +134,14 @@ const login = async (req, res, next) => {
 
 const getCS = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const csId = req.cs?.id;
+
+    if (!csId) {
+      return res.status(400).json({ message: "CS ID not found in token" });
+    }
 
     const cs = await prisma.cS.findUnique({
-      where: { id: Number(id) },
+      where: { id: csId },
       select: {
         id: true,
         name: true,
@@ -163,5 +167,6 @@ const getCS = async (req, res, next) => {
     next(error);
   }
 };
+
 
 module.exports = { addCS, login, editCS, deleteCS, getCS };
