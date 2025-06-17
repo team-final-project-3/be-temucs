@@ -2,28 +2,32 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function generateTicketNumber(branchId, bookingDate) {
-  const branch = await prisma.branch.findUnique({ where: { id: branchId } });
-  if (!branch) {
-    throw Object.assign(new Error(), { status: 404 });
-  }
+  try {
+    const branch = await prisma.branch.findUnique({ where: { id: branchId } });
+    if (!branch) {
+      throw Object.assign(new Error(), { status: 404 });
+    }
 
-  const startOfDay = new Date(bookingDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(bookingDate);
-  endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(bookingDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bookingDate);
+    endOfDay.setHours(23, 59, 59, 999);
 
-  const count = await prisma.queue.count({
-    where: {
-      branchId,
-      bookingDate: {
-        gte: startOfDay,
-        lte: endOfDay,
+    const count = await prisma.queue.count({
+      where: {
+        branchId,
+        bookingDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
-    },
-  });
+    });
 
-  const paddingNumber = String(count + 1).padStart(3, "0");
-  return `${branch.branchCode}-${paddingNumber}`;
+    const paddingNumber = String(count + 1).padStart(3, "0");
+    return `${branch.branchCode}-${paddingNumber}`;
+  } catch (error) {
+    next(error);
+  }
 }
 
 const bookQueueOnline = async (req, res, next) => {
@@ -349,8 +353,6 @@ const updateStatus = (newStatus) => async (req, res, next) => {
     });
   } catch (error) {
     next(error);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -403,8 +405,6 @@ const takeQueue = async (req, res, next) => {
     res.json({ message: "Queue status updated to in progress", queue });
   } catch (error) {
     next(error);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -615,6 +615,55 @@ const getAllQueues = async (req, res) => {
   }
 };
 
+const getActiveCSCustomer = async (req, res, next) => {
+  try {
+    const branchId = req.cs.branchId;
+
+    if (!branchId) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
+    const queues = await prisma.queue.findMany({
+      where: {
+        status: "in progress",
+        csId: { not: null },
+        branchId: branchId,
+      },
+      include: {
+        cs: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            fullname: true,
+            username: true,
+            email: true,
+            phoneNumber: true,
+          },
+        },
+      },
+    });
+
+    const result = queues.map((queue) => ({
+      queueId: queue.id,
+      ticketNumber: queue.ticketNumber,
+      cs: queue.cs,
+      nasabah: queue.user,
+      status: queue.status,
+      calledAt: queue.calledAt,
+    }));
+
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   bookQueueOnline,
   bookQueueOffline,
@@ -628,4 +677,5 @@ module.exports = {
   getWaitingQueuesByBranchId,
   getOldestWaitingQueue,
   getAllQueues,
+  getActiveCSCustomer,
 };

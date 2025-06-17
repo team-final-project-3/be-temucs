@@ -473,4 +473,58 @@ router.get(
  */
 router.get("/queue", queueController.getAllQueues);
 
+/**
+ * @swagger
+ * /api/queue/active-cs-customer/{branchId}:
+ *   get:
+ *     summary: Get list of CS who are currently serving which customer in a branch
+ *     tags: [Queue]
+ *     responses:
+ *       200:
+ *         description: List of active CS-customer pairs in the branch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   queueId:
+ *                     type: integer
+ *                   ticketNumber:
+ *                     type: string
+ *                   cs:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       username:
+ *                         type: string
+ *                   nasabah:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       fullname:
+ *                         type: string
+ *                       username:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       phoneNumber:
+ *                         type: string
+ *                   status:
+ *                     type: string
+ *                   calledAt:
+ *                     type: string
+ *                     format: date-time
+ *       400:
+ *         description: branchId is required
+ *       500:
+ *         description: Internal server
+ */
+router.get("/queue/active-cs-customer", queueController.getActiveCSCustomer);
+
 module.exports = router;
