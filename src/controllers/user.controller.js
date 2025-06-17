@@ -197,6 +197,7 @@ const login = async (req, res, next) => {
 
     const token = generateToken({
       userId: user.id,
+      fullname: user.fullname,
       username: user.username,
       role: user.role,
     });

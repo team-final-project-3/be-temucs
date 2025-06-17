@@ -3,6 +3,8 @@ const router = express.Router();
 const queueController = require("../controllers/queue.controller");
 const { allowRoles } = require("../middlewares/auth");
 const { verifyCSToken } = require("../auth/cs.auth");
+const { verifyLoketToken } = require("../auth/loket.auth");
+const { verifyUserToken } = require("../auth/user.auth");
 
 /**
  * @swagger
@@ -20,23 +22,10 @@ const { verifyCSToken } = require("../auth/cs.auth");
  *             type: object
  *             required:
  *               - branchId
- *               - bookingDate
- *               - name
- *               - email
- *               - phoneNumber
  *               - serviceIds
  *             properties:
  *               branchId:
  *                 type: integer
- *               bookingDate:
- *                 type: string
- *                 format: date-time
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               phoneNumber:
- *                 type: string
  *               serviceIds:
  *                 type: array
  *                 items:
@@ -60,6 +49,7 @@ const { verifyCSToken } = require("../auth/cs.auth");
 router.post(
   "/queue/book-online",
   allowRoles("nasabah"),
+  verifyUserToken,
   queueController.bookQueueOnline
 );
 
@@ -78,21 +68,11 @@ router.post(
  *           schema:
  *             type: object
  *             required:
- *               - loketId
- *               - branchId
- *               - bookingDate
  *               - name
  *               - email
  *               - phoneNumber
  *               - serviceIds
  *             properties:
- *               loketId:
- *                 type: integer
- *               branchId:
- *                 type: integer
- *               bookingDate:
- *                 type: string
- *                 format: date-time
  *               name:
  *                 type: string
  *               email:
@@ -122,6 +102,7 @@ router.post(
 router.post(
   "/queue/book-offline",
   allowRoles("loket"),
+  verifyLoketToken,
   queueController.bookQueueOffline
 );
 
@@ -146,6 +127,7 @@ router.post(
 router.patch(
   "/queue/:id/cancel",
   allowRoles("nasabah"),
+  verifyUserToken,
   queueController.cancelQueue
 );
 

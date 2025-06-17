@@ -83,8 +83,8 @@ model CS {
 
 model Queue {
   id            Int       @id @default(autoincrement())
-  user          User      @relation(fields: [userId], references: [id])
-  userId        Int
+  user          User?     @relation(fields: [userId], references: [id])
+  userId        Int?
   branch        Branch    @relation(fields: [branchId], references: [id])
   branchId      Int
   cs            CS?       @relation(fields: [csId], references: [id])

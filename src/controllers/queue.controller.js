@@ -29,14 +29,13 @@ async function generateTicketNumber(branchId, bookingDate) {
 }
 
 const bookQueueOnline = async (req, res, next) => {
-  const userId = req.user.userId;
-  const username = req.user.username;
-  const { branchId, name, email, phoneNumber, serviceIds } = req.body;
+  const { userId, username, fullname, email, phoneNumber } = req.user;
+  const { branchId, serviceIds } = req.body;
 
   try {
     if (
       !branchId ||
-      !name ||
+      !fullname ||
       !email ||
       !phoneNumber ||
       !Array.isArray(serviceIds) ||
@@ -95,7 +94,7 @@ const bookQueueOnline = async (req, res, next) => {
           userId,
           branchId,
           bookingDate: new Date(bookingDate),
-          name,
+          name: fullname,
           email,
           phoneNumber,
           ticketNumber,
@@ -136,13 +135,11 @@ const bookQueueOnline = async (req, res, next) => {
 };
 
 const bookQueueOffline = async (req, res, next) => {
-  const username = req.user.username;
-  const { loketId, branchId, name, email, phoneNumber, serviceIds } = req.body;
+  const { username, loketId, branchId } = req.loket;
+  const { name, email, phoneNumber, serviceIds } = req.body;
 
   try {
     if (
-      loketId == null ||
-      branchId == null ||
       !name ||
       !email ||
       !phoneNumber ||
@@ -244,18 +241,16 @@ const bookQueueOffline = async (req, res, next) => {
 
 const updateStatus = (newStatus) => async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
-  const branchIdParam = req.params.branchId
-    ? parseInt(req.params.branchId, 10)
-    : null;
-  const csBranchId = req.cs?.branchId !== undefined ? req.cs.branchId : null;
+  const csBranchId = req.cs?.branchId;
 
   try {
     let username;
     if (newStatus === "canceled") {
       username = req.user?.username;
     } else {
-      username = req.cs?.username || req.user?.username;
+      username = req.cs.username;
     }
+
     if (!username) {
       return res
         .status(403)
@@ -267,10 +262,7 @@ const updateStatus = (newStatus) => async (req, res, next) => {
       return res.status(404).json({ message: "Queue not found" });
     }
 
-    if (
-      (branchIdParam !== null && queueData.branchId !== branchIdParam) ||
-      (csBranchId !== null && queueData.branchId !== csBranchId)
-    ) {
+    if (newStatus !== "canceled" && queueData.branchId !== csBranchId) {
       return res.status(403).json({ message: "Forbidden: branchId mismatch" });
     }
 
@@ -330,12 +322,9 @@ const updateStatus = (newStatus) => async (req, res, next) => {
 
 const takeQueue = async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
-  const { csId, username, branchId: csBranchId } = req.cs || {};
-  const branchIdParam = req.params.branchId
-    ? parseInt(req.params.branchId, 10)
-    : null;
+  const { csId, username, branchId } = req.cs;
 
-  if (!csId || !username) {
+  if (!csId || !username || !branchId) {
     return res.status(403).json({ message: "CS not authorized or missing" });
   }
 
@@ -344,11 +333,7 @@ const takeQueue = async (req, res, next) => {
     if (!queueData) {
       return res.status(404).json({ message: "Queue not found" });
     }
-    if (
-      (typeof csBranchId !== "undefined" &&
-        queueData.branchId !== csBranchId) ||
-      (branchIdParam !== null && queueData.branchId !== branchIdParam)
-    ) {
+    if (queueData.branchId !== branchId) {
       return res.status(403).json({ message: "Forbidden: branchId mismatch" });
     }
 
@@ -568,7 +553,6 @@ const getAllQueues = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 
 module.exports = {
   bookQueueOnline,

@@ -114,6 +114,8 @@ const login = async (req, res, next) => {
 
     const token = generateToken({
       loketId: loket.id,
+      branchId: loket.branchId,
+      name: loket.name,
       username: loket.username,
       role: "loket",
     });

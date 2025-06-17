@@ -125,6 +125,8 @@ const login = async (req, res, next) => {
 
     const token = generateToken({
       csId: cs.id,
+      branchId: cs.branchId,
+      name: cs.name,
       username: cs.username,
       role: "cs",
     });
