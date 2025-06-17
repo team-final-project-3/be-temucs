@@ -152,8 +152,7 @@ const bookQueueOffline = async (req, res, next) => {
   try {
     if (
       !name ||
-      !email ||
-      !phoneNumber ||
+      (!email && !phoneNumber) ||
       !Array.isArray(serviceIds) ||
       serviceIds.length === 0
     ) {
@@ -163,7 +162,6 @@ const bookQueueOffline = async (req, res, next) => {
     const existingQueue = await prisma.queue.findFirst({
       where: {
         OR: [
-          { userId, status: { in: ["waiting", "in progress"] } },
           { email, phoneNumber, status: { in: ["waiting", "in progress"] } },
         ],
       },
