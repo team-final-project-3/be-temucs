@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user.controller");
+const { allowRoles } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -332,6 +333,6 @@ router.post("/users/change-password", userController.changePassword);
  *       500:
  *         description: Internal server error
  */
-router.get("/users", userController.getAllUsers);
+router.get("/users", allowRoles("admin"), userController.getAllUsers);
 
 module.exports = router;
