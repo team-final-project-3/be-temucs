@@ -489,6 +489,6 @@ router.get(
  *       500:
  *         description: Internal server error
  */
-router.get("/queues", queueController.getAllQueues);
+router.get("/queue", queueController.getAllQueues);
 
 module.exports = router;
