@@ -8,7 +8,7 @@ const { allowRoles } = require("../middlewares/auth");
  * /api/documents/by-services:
  *   post:
  *     summary: Get documents by selected service ID when book
- *     tags: [Documents]
+ *     tags: [ServiceDocument]
  *     requestBody:
  *       required: true
  *       content:
