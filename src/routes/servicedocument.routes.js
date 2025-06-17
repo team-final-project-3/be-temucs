@@ -34,3 +34,5 @@ router.post(
     allowRoles("nasabah", "admin", "loket"),
     serviceDocumentController.getDocumentsByServiceId
 );
+
+module.exports = router;
