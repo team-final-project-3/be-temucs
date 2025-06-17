@@ -4,18 +4,17 @@ const secret = process.env.JWT_SECRET || "secret_key";
 
 const verifyCSToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader)
-    return res.status(401).json({ message: "No token provided" });
+  if (!authHeader) throw Object.assign(new Error(), { status: 401 });
 
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, secret);
     if (decoded.role !== "cs")
-      return res.status(403).json({ message: "Forbidden" });
+      throw Object.assign(new Error(), { status: 403 });
     req.cs = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+    next(error);
   }
 };
 

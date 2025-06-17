@@ -43,11 +43,7 @@ const bookQueueOnline = async (req, res, next) => {
       !Array.isArray(serviceIds) ||
       serviceIds.length === 0
     ) {
-      const error = new Error(
-        "All fields are required and serviceIds must be a non-empty array."
-      );
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const existingQueue = await prisma.queue.findFirst({
@@ -615,6 +611,144 @@ const getAllQueues = async (req, res) => {
   }
 };
 
+const getTicketById = async (req, res, next) => {
+  try {
+    const queueId = parseInt(req.params.id, 10);
+    const userId = req.user.userId;
+    if (!queueId) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
+    if (!userId) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
+    const queue = await prisma.queue.findUnique({
+      where: { id: queueId },
+      include: {
+        services: { include: { service: true } },
+        branch: true,
+        cs: true,
+        user: true,
+      },
+    });
+
+    if (!queue) {
+      throw Object.assign(new Error(), { status: 404 });
+    }
+
+    if (req.user && queue.userId !== userId) {
+      throw Object.assign(new Error(), { status: 403 });
+    }
+
+    const services = Array.isArray(queue.services)
+      ? queue.services.map((qs) => qs.service)
+      : [];
+
+    res.status(200).json({
+      ticketNumber: queue.ticketNumber,
+      status: queue.status,
+      branch: queue.branch,
+      bookingDate: queue.bookingDate,
+      name: queue.name,
+      email: queue.email,
+      phoneNumber: queue.phoneNumber,
+      services,
+      estimatedTime: queue.estimatedTime,
+      calledAt: queue.calledAt,
+      createdAt: queue.createdAt,
+      cs: queue.cs,
+      user: queue.user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getLoketTicketById = async (req, res, next) => {
+  try {
+    const queueId = parseInt(req.params.id, 10);
+    const loketId = req.loket.loketId;
+    if (!queueId) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
+    if (!loketId) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
+    const queue = await prisma.queue.findUnique({
+      where: { id: queueId },
+      include: {
+        services: { include: { service: true } },
+        branch: true,
+        cs: true,
+        loket: true,
+      },
+    });
+
+    if (!queue) {
+      throw Object.assign(new Error(), { status: 404 });
+    }
+
+    if (req.loket && queue.loketId !== loketId) {
+      throw Object.assign(new Error(), { status: 403 });
+    }
+
+    const services = Array.isArray(queue.services)
+      ? queue.services.map((qs) => qs.service)
+      : [];
+
+    res.status(200).json({
+      ticketNumber: queue.ticketNumber,
+      status: queue.status,
+      branch: queue.branch,
+      bookingDate: queue.bookingDate,
+      name: queue.name,
+      email: queue.email,
+      phoneNumber: queue.phoneNumber,
+      services,
+      estimatedTime: queue.estimatedTime,
+      calledAt: queue.calledAt,
+      createdAt: queue.createdAt,
+      cs: queue.cs,
+      loket: queue.loket,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getUserQueueHistory = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
+    const queues = await prisma.queue.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        services: { include: { service: true } },
+        branch: true,
+        queueLogs: true,
+      },
+    });
+
+    const formattedQueues = queues.map((queue) => ({
+      ...queue,
+      services: Array.isArray(queue.services)
+        ? queue.services.map((qs) => qs.service)
+        : [],
+    }));
+
+    res.status(200).json({ success: true, data: formattedQueues });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getActiveCSCustomer = async (req, res, next) => {
   try {
     const branchId = req.cs.branchId;
@@ -677,5 +811,8 @@ module.exports = {
   getWaitingQueuesByBranchId,
   getOldestWaitingQueue,
   getAllQueues,
+  getTicketById,
+  getLoketTicketById,
+  getUserQueueHistory,
   getActiveCSCustomer,
 };

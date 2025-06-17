@@ -475,6 +475,162 @@ router.get("/queue", queueController.getAllQueues);
 
 /**
  * @swagger
+ * /api/queue/ticket/{id}:
+ *   get:
+ *     summary: Get ticket detail by queue ID
+ *     tags: [Queue]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Queue ID
+ *     responses:
+ *       200:
+ *         description: Ticket detail found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ticketNumber:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 branch:
+ *                   type: object
+ *                 bookingDate:
+ *                   type: string
+ *                   format: date-time
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 phoneNumber:
+ *                   type: string
+ *                 services:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 estimatedTime:
+ *                   type: string
+ *                   format: date-time
+ *                 calledAt:
+ *                   type: string
+ *                   format: date-time
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 cs:
+ *                   type: object
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: queueId is required
+ *       404:
+ *         description: Queue not found
+ */
+router.get("/queue/ticket/:id", verifyUserToken, queueController.getTicketById);
+
+/**
+ * @swagger
+ * /api/queue/loket-ticket/{id}:
+ *   get:
+ *     summary: Get loket ticket detail by queue ID
+ *     tags: [Queue]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Queue ID
+ *     responses:
+ *       200:
+ *         description: Ticket detail found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ticketNumber:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 branch:
+ *                   type: object
+ *                 bookingDate:
+ *                   type: string
+ *                   format: date-time
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 phoneNumber:
+ *                   type: string
+ *                 services:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 estimatedTime:
+ *                   type: string
+ *                   format: date-time
+ *                 calledAt:
+ *                   type: string
+ *                   format: date-time
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 cs:
+ *                   type: object
+ *                 loket:
+ *                   type: object
+ *       400:
+ *         description: queueId is required
+ *       404:
+ *         description: Queue not found
+ */
+router.get(
+  "/queue/loket-ticket/:id",
+  verifyLoketToken,
+  queueController.getLoketTicketById
+);
+
+/**
+ * @swagger
+ * /api/queue/history:
+ *   get:
+ *     summary: Get all queue tickets (history) for the current user
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all queue tickets for the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       400:
+ *         description: User not found in token
+ */
+router.get(
+  "/queue/history",
+  allowRoles("nasabah"),
+  verifyUserToken,
+  queueController.getUserQueueHistory
+);
+
+/**
+ * @swagger
  * /api/queue/active-cs-customer/{branchId}:
  *   get:
  *     summary: Get list of CS who are currently serving which customer in a branch
