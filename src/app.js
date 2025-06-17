@@ -9,6 +9,7 @@ const loketRoutes = require("./routes/loket.routes");
 const branchRoutes = require("./routes/branch.routes");
 const queueRoutes = require("./routes/queue.routes");
 const queueServiceRoutes = require("./routes/queueservice.routes");
+const queueDocumentRoutes = require("./routes/servicedocument.routes");
 
 const serviceRoutes = require("./routes/service.routes");
 const documentRoutes = require("./routes/document.routes");
@@ -38,7 +39,8 @@ app.use(
   queueServiceRoutes,
   documentRoutes,
   serviceRoutes,
-  holidayRoutes
+  holidayRoutes,
+  queueDocumentRoutes
 );
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
