@@ -7,9 +7,7 @@ const addService = async (req, res, next) => {
     const { serviceName, estimatedTime, documentIds } = req.body;
 
     if (!serviceName || !estimatedTime) {
-      const error = new Error("All fields are required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const service = await prisma.service.create({
@@ -50,9 +48,7 @@ const getService = async (req, res, next) => {
     });
 
     if (!service) {
-      const error = new Error("Service not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     const documents = service.documents.map((sd) => sd.document);
@@ -82,9 +78,7 @@ const editService = async (req, res, next) => {
     const { serviceName, status, estimatedTime } = req.body;
 
     if (serviceName == null || estimatedTime == null) {
-      const error = new Error("All fields are required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const updatedService = await prisma.service.update({
@@ -101,6 +95,10 @@ const editService = async (req, res, next) => {
 const deleteService = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
+
+    if (isNaN(id)) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
 
     await prisma.service.delete({ where: { id: Number(id) } });
 

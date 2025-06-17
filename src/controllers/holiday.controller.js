@@ -6,9 +6,7 @@ const addHoliday = async (req, res, next) => {
     const username = req.user.username;
     const { holidayName, date } = req.body;
     if (!holidayName || !date) {
-      const error = new Error("holidayName and date are required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
     const holiday = await prisma.holiday.create({
       data: {
@@ -29,6 +27,15 @@ const editHoliday = async (req, res, next) => {
     const username = req.user.username;
     const id = parseInt(req.params.id, 10);
     const { holidayName, date } = req.body;
+
+    if (isNaN(id)) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
+    if (!holidayName && !date) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
     const holiday = await prisma.holiday.update({
       where: { id },
       data: {
@@ -56,11 +63,12 @@ const deleteHoliday = async (req, res, next) => {
 const getHoliday = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
     const holiday = await prisma.holiday.findUnique({ where: { id } });
     if (!holiday) {
-      const error = new Error("Holiday not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
     res.json({ holiday });
   } catch (error) {

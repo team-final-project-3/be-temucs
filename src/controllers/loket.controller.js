@@ -11,16 +11,12 @@ const addLoket = async (req, res, next) => {
   const { branchId, name, username, password } = req.body;
   try {
     if (branchId == null || !name || !username || !password) {
-      const error = new Error("All fields are required.");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const existing = await prisma.loket.findUnique({ where: { username } });
     if (existing) {
-      const error = new Error("Username already exists");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const passwordHash = await hashPassword(password);
@@ -54,7 +50,7 @@ const editLoket = async (req, res, next) => {
     });
 
     if (!loket) {
-      return res.status(404).json({ message: "Loket not found" });
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     const updateData = {
@@ -90,9 +86,7 @@ const login = async (req, res, next) => {
   const { username, password } = req.body;
   try {
     if (!username || !password) {
-      const error = new Error("Username and password are required.");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const loket = await prisma.loket.findUnique({
@@ -100,16 +94,12 @@ const login = async (req, res, next) => {
       include: { branch: true },
     });
     if (!loket) {
-      const error = new Error("Invalid username or password");
-      error.status = 401;
-      throw error;
+      throw Object.assign(new Error(), { status: 401 });
     }
 
     const isMatch = await comparePassword(password, loket.passwordHash);
     if (!isMatch) {
-      const error = new Error("Invalid username or password");
-      error.status = 401;
-      throw error;
+      throw Object.assign(new Error(), { status: 401 });
     }
 
     const token = generateToken({
@@ -134,9 +124,7 @@ const getLoket = async (req, res, next) => {
     const loketId = req.loket.loketId;
 
     if (!loketId) {
-      const error = new Error("Loket ID not found in token");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const loket = await prisma.loket.findUnique({
@@ -154,9 +142,7 @@ const getLoket = async (req, res, next) => {
     });
 
     if (!loket) {
-      const error = new Error("Loket Not Found!");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     res.status(200).json({ loket });

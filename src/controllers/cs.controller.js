@@ -11,16 +11,12 @@ const addCS = async (req, res, next) => {
   const { branchId, name, username, password } = req.body;
   try {
     if (branchId == null || !name || !username || !password) {
-      const error = new Error("All fields are required.");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const existing = await prisma.cS.findUnique({ where: { username } });
     if (existing) {
-      const error = new Error("Username already exists");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const passwordHash = await hashPassword(password);
@@ -50,7 +46,7 @@ const editCS = async (req, res, next) => {
   try {
     const cs = await prisma.cS.findUnique({ where: { id: Number(id) } });
     if (!cs) {
-      return res.status(404).json({ message: "CS not found" });
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     const updateData = {
@@ -86,7 +82,7 @@ const deleteCS = async (req, res, next) => {
   try {
     const cs = await prisma.cS.findUnique({ where: { id: Number(id) } });
     if (!cs) {
-      return res.status(404).json({ message: "CS not found" });
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     await prisma.cS.delete({ where: { id: Number(id) } });
@@ -101,9 +97,7 @@ const login = async (req, res, next) => {
   const { username, password } = req.body;
   try {
     if (!username || !password) {
-      const error = new Error("Username and password are required.");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const cs = await prisma.cS.findUnique({
@@ -111,16 +105,12 @@ const login = async (req, res, next) => {
       include: { branch: true },
     });
     if (!cs) {
-      const error = new Error("Invalid username or password");
-      error.status = 401;
-      throw error;
+      throw Object.assign(new Error(), { status: 401 });
     }
 
     const isMatch = await comparePassword(password, cs.passwordHash);
     if (!isMatch) {
-      const error = new Error("Invalid username or password");
-      error.status = 401;
-      throw error;
+      throw Object.assign(new Error(), { status: 401 });
     }
 
     const token = generateToken({
@@ -144,9 +134,7 @@ const getCS = async (req, res, next) => {
     const csId = req.cs.csId;
 
     if (!csId) {
-      const error = new Error("CS ID not found in token");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const cs = await prisma.cS.findUnique({
@@ -163,9 +151,7 @@ const getCS = async (req, res, next) => {
     });
 
     if (!cs) {
-      const error = new Error("CS Not Found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     res.status(200).json({ cs });

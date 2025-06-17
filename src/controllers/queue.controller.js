@@ -4,9 +4,7 @@ const prisma = new PrismaClient();
 async function generateTicketNumber(branchId, bookingDate) {
   const branch = await prisma.branch.findUnique({ where: { id: branchId } });
   if (!branch) {
-    const error = new Error("Branch not found");
-    error.status = 404;
-    throw error;
+    throw Object.assign(new Error(), { status: 404 });
   }
 
   const startOfDay = new Date(bookingDate);
@@ -58,11 +56,7 @@ const bookQueueOnline = async (req, res, next) => {
     });
 
     if (existingQueue) {
-      const error = new Error(
-        "Nasabah sudah memiliki antrean aktif dan belum selesai."
-      );
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const bookingDate = new Date();
@@ -163,11 +157,7 @@ const bookQueueOffline = async (req, res, next) => {
       !Array.isArray(serviceIds) ||
       serviceIds.length === 0
     ) {
-      const error = new Error(
-        "All fields are required and serviceIds must be a non-empty array."
-      );
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const existingQueue = await prisma.queue.findFirst({
@@ -180,11 +170,7 @@ const bookQueueOffline = async (req, res, next) => {
     });
 
     if (existingQueue) {
-      const error = new Error(
-        "Nasabah sudah memiliki antrean aktif dan belum selesai."
-      );
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const bookingDate = new Date();
@@ -286,30 +272,22 @@ const updateStatus = (newStatus) => async (req, res, next) => {
     }
 
     if (!username) {
-      const error = new Error("Unauthorized: username not found");
-      error.status = 403;
-      throw error;
+      throw Object.assign(new Error(), { status: 403 });
     }
 
     const queueData = await prisma.queue.findUnique({ where: { id } });
     if (!queueData) {
-      const error = new Error("Queue not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     if (newStatus !== "canceled" && queueData.branchId !== csBranchId) {
-      const error = new Error("Forbidden: branchId mismatch");
-      error.status = 403;
-      throw error;
+      throw Object.assign(new Error(), { status: 403 });
     }
 
     const currentStatus = queueData.status;
 
     if (queueData.status === newStatus) {
-      const error = new Error(`Status is already '${newStatus}'`);
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     if (
@@ -319,11 +297,7 @@ const updateStatus = (newStatus) => async (req, res, next) => {
         newStatus === "canceled") ||
       (currentStatus === "in progress" && newStatus === "skipped")
     ) {
-      const error = new Error(
-        `Cannot change status from '${currentStatus}' to '${newStatus}'`
-      );
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -385,36 +359,24 @@ const takeQueue = async (req, res, next) => {
   const { csId, username, branchId } = req.cs;
 
   if (!csId || !username || !branchId) {
-    const error = new Error("CS not authorized or missing");
-    error.status = 403;
-    throw error;
+    throw Object.assign(new Error(), { status: 403 });
   }
 
   try {
     const queueData = await prisma.queue.findUnique({ where: { id } });
     if (!queueData) {
-      const error = new Error("Queue not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
     if (queueData.branchId !== branchId) {
-      const error = new Error("Forbidden: branchId mismatch");
-      error.status = 403;
-      throw error;
+      throw Object.assign(new Error(), { status: 403 });
     }
 
     if (queueData.status === "in progress") {
-      const error = new Error("Queue is already in progress");
-      error.status = 400;
-      return next(error);
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     if (queueData.status !== "waiting") {
-      const error = new Error(
-        `Cannot take queue with status '${queueData.status}'`
-      );
-      error.status = 400;
-      return next(error);
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const queue = await prisma.$transaction(async (tx) => {
@@ -451,9 +413,7 @@ const getQueueCountByBranchId = async (req, res, next) => {
     const branchId = parseInt(req.params.branchId, 10);
 
     if (!branchId) {
-      const error = new Error("branchId is required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const count = await prisma.queue.count({
@@ -479,9 +439,7 @@ const getRemainingQueue = async (req, res, next) => {
     const queueId = parseInt(req.params.queueId, 10);
 
     if (!queueId) {
-      const error = new Error("queueId is required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const myQueue = await prisma.queue.findUnique({
@@ -493,9 +451,7 @@ const getRemainingQueue = async (req, res, next) => {
     });
 
     if (!myQueue) {
-      const error = new Error("Queue not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     const remaining = await prisma.queue.count({
@@ -528,9 +484,7 @@ const getLatestInProgressQueue = async (req, res, next) => {
     });
 
     if (!queue) {
-      const error = new Error("No in-progress queue found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     res.status(200).json(queue);
@@ -544,9 +498,7 @@ const getWaitingQueuesByBranchId = async (req, res, next) => {
     const branchId = parseInt(req.params.branchId, 10);
 
     if (!branchId) {
-      const error = new Error("branchId is required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const queues = await prisma.queue.findMany({
@@ -582,9 +534,7 @@ const getOldestWaitingQueue = async (req, res, next) => {
     const branchId = parseInt(req.params.branchId, 10);
 
     if (!branchId) {
-      const error = new Error("branchId is required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const queue = await prisma.queue.findFirst({
@@ -605,9 +555,7 @@ const getOldestWaitingQueue = async (req, res, next) => {
     });
 
     if (!queue) {
-      const error = new Error("No waiting queue found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     res.status(200).json(queue);

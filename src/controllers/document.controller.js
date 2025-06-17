@@ -7,9 +7,7 @@ const addDocument = async (req, res, next) => {
     const { documentName } = req.body;
 
     if (documentName == null) {
-      const error = new Error("All fields are required.");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const document = await prisma.document.create({
@@ -34,9 +32,7 @@ const getDocument = async (req, res, next) => {
     });
 
     if (!document) {
-      const error = new Error("Document not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     res.status(200).json(document);
@@ -60,9 +56,7 @@ const editDocument = async (req, res, next) => {
     const { documentName, updatedBy } = req.body;
 
     if (documentName == null || updatedBy == null) {
-      const error = new Error("All fields are required.");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const updatedDocument = await prisma.document.update({

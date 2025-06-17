@@ -21,9 +21,7 @@ const addBranch = async (req, res, next) => {
       longitude == null ||
       latitude == null
     ) {
-      const error = new Error("All required fields must be provided.");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const branch = await prisma.branch.create({
@@ -60,9 +58,7 @@ const editBranch = async (req, res, next) => {
       longitude == null ||
       latitude == null
     ) {
-      const error = new Error("All required fields must be provided.");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const branch = await prisma.branch.update({
@@ -105,9 +101,7 @@ const getBranch = async (req, res, next) => {
       },
     });
     if (!branch) {
-      const error = new Error("Branch not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
     res.json({ branch });
   } catch (error) {

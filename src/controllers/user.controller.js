@@ -34,11 +34,7 @@ const register = async (req, res, next) => {
       where: { email },
     });
     if (!coreBanking) {
-      const error = new Error(
-        "Nasabah tidak terdaftar. Daftarkan diri Anda di Cabang terdekat."
-      );
-      error.status = 403;
-      throw error;
+      throw Object.assign(new Error(), { status: 403 });
     }
 
     const existingUser = await prisma.user.findFirst({
@@ -65,9 +61,7 @@ const register = async (req, res, next) => {
           userId: existingUser.id,
         });
       }
-      const error = new Error("User already exists");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const passwordHash = await hashPassword(password);
@@ -110,24 +104,16 @@ const verifyOtp = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      const error = new Error("User not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
     if (user.isVerified) {
-      const error = new Error("Already verified");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
     if (user.otp !== otp) {
-      const error = new Error("Invalid OTP");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
     if (user.otpExpiresAt < new Date()) {
-      const error = new Error("OTP expired");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     await prisma.user.update({
@@ -146,9 +132,7 @@ const resendOtp = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      const error = new Error("User not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -176,23 +160,17 @@ const login = async (req, res, next) => {
     });
 
     if (!user) {
-      const error = new Error("Invalid username or password");
-      error.status = 401;
-      throw error;
+      throw Object.assign(new Error(), { status: 401 });
     }
 
     if (!user.isVerified) {
-      const error = new Error("Please verify your email first");
-      error.status = 403;
-      throw error;
+      throw Object.assign(new Error(), { status: 403 });
     }
 
     const isMatch = await comparePassword(password, user.passwordHash);
 
     if (!isMatch) {
-      const error = new Error("Invalid username or password");
-      error.status = 401;
-      throw error;
+      throw Object.assign(new Error(), { status: 401 });
     }
 
     const token = generateToken({
@@ -218,9 +196,7 @@ const forgotPassword = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      const error = new Error("User not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -244,9 +220,7 @@ const resetPassword = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      const error = new Error("User not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     const passwordHash = await hashPassword(newPassword);
@@ -267,19 +241,13 @@ const verifyOtpForgotPassword = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      const error = new Error("User not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
     if (user.otp !== otp) {
-      const error = new Error("Invalid OTP");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
     if (user.otpExpiresAt < new Date()) {
-      const error = new Error("OTP expired");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     res.json({ message: "OTP verified. You can now reset your password." });
@@ -293,9 +261,7 @@ const getProfile = async (req, res, next) => {
     const userId = req.user.userId;
 
     if (!userId) {
-      const error = new Error("User ID not found in token");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -312,9 +278,7 @@ const getProfile = async (req, res, next) => {
       },
     });
     if (!user) {
-      const error = new Error("User not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
     res.json({ user });
   } catch (error) {
@@ -328,31 +292,21 @@ const changePassword = async (req, res, next) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
-      const error = new Error("Old password and new password are required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      const error = new Error("User not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error(), { status: 404 });
     }
 
     const isMatch = await comparePassword(oldPassword, user.passwordHash);
     if (!isMatch) {
-      const error = new Error("Old password is incorrect");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     if (oldPassword === newPassword) {
-      const error = new Error(
-        "New password must be different from old password"
-      );
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error(), { status: 400 });
     }
 
     const passwordHash = await hashPassword(newPassword);
@@ -368,13 +322,12 @@ const changePassword = async (req, res, next) => {
   }
 };
 
-const getAllUsers = async (req, res) => {
+const getAllUsers = async (req, res, next) => {
   try {
     const users = await prisma.user.findMany();
     res.json({ success: true, data: users });
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    next(error);
   }
 };
 
