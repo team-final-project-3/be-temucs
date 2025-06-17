@@ -557,25 +557,25 @@ const getAllQueues = async (req, res) => {
     });
 
     const censorEmail = (email) => {
-      const [user, domain] = email.split('@');
-      const censoredUser = user[0] + '*'.repeat(Math.max(1, user.length - 1));
+      const [user, domain] = email.split("@");
+      const censoredUser = user[0] + "*".repeat(Math.max(1, user.length - 1));
       const censoredDomain = domain
-        .split('.')
-        .map((part) => '*'.repeat(part.length))
-        .join('.');
+        .split(".")
+        .map((part) => "*".repeat(part.length))
+        .join(".");
       return `${censoredUser}@${censoredDomain}`;
     };
 
     const censorPhone = (phone) => {
-      return phone.slice(0, 2) + '*'.repeat(phone.length - 4) + phone.slice(-2);
+      return phone.slice(0, 2) + "*".repeat(phone.length - 4) + phone.slice(-2);
     };
 
     const queues = queuesRaw.map((queue) => ({
       ...queue,
       user: {
         ...queue.user,
-        email: censorEmail(queue.user.email),
-        phoneNumber: censorPhone(queue.user.phoneNumber),
+        email: censorEmail(queue.email),
+        phoneNumber: censorPhone(queue.phoneNumber),
       },
     }));
 
