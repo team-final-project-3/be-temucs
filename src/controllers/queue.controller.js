@@ -550,6 +550,26 @@ const getOldestWaitingQueue = async (req, res, next) => {
   }
 };
 
+const getAllQueues = async (req, res) => {
+  try {
+    const queues = await prisma.queue.findMany({
+      include: {
+        user: true,
+        branch: true,
+        cs: true,
+        loket: true,
+        queueLogs: true,
+        services: true,
+      },
+    });
+    res.json({ success: true, data: queues });
+  } catch (error) {
+    console.error("Error fetching queues:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+
 module.exports = {
   bookQueueOnline,
   bookQueueOffline,
@@ -562,4 +582,5 @@ module.exports = {
   getLatestInProgressQueue,
   getWaitingQueuesByBranchId,
   getOldestWaitingQueue,
+  getAllQueues,
 };

@@ -401,4 +401,94 @@ router.get(
   queueController.getOldestWaitingQueue
 );
 
+/**
+ * @swagger
+ * /api/queue:
+ *   get:
+ *     summary: Get all queue data
+ *     tags: [Queue]
+ *     responses:
+ *       200:
+ *         description: get all queue
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       userId:
+ *                         type: integer
+ *                       branchId:
+ *                         type: integer
+ *                       csId:
+ *                         type: integer
+ *                         nullable: true
+ *                       loketId:
+ *                         type: integer
+ *                         nullable: true
+ *                       bookingDate:
+ *                         type: string
+ *                         format: date-time
+ *                       ticketNumber:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       phoneNumber:
+ *                         type: string
+ *                       estimatedTime:
+ *                         type: string
+ *                         format: date-time
+ *                         nullable: true
+ *                       calledAt:
+ *                         type: string
+ *                         format: date-time
+ *                         nullable: true
+ *                       status:
+ *                         type: string
+ *                       notification:
+ *                         type: boolean
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       createdBy:
+ *                         type: string
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedBy:
+ *                         type: string
+ *                       user:
+ *                         type: object
+ *                       branch:
+ *                         type: object
+ *                       cs:
+ *                         type: object
+ *                         nullable: true
+ *                       loket:
+ *                         type: object
+ *                         nullable: true
+ *                       queueLogs:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                       services:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/queues", queueController.getAllQueues);
+
 module.exports = router;
