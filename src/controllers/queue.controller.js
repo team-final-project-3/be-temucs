@@ -33,8 +33,6 @@ const bookQueueOnline = async (req, res, next) => {
   const { branchId, serviceIds } = req.body;
 
   try {
-    console.log(req.user);
-    console.log(req.body);
     if (
       !branchId ||
       !fullname ||
@@ -45,6 +43,23 @@ const bookQueueOnline = async (req, res, next) => {
     ) {
       const error = new Error(
         "All fields are required and serviceIds must be a non-empty array."
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    const existingQueue = await prisma.queue.findFirst({
+      where: {
+        OR: [
+          { userId, status: { in: ["waiting", "in progress"] } },
+          { email, phoneNumber, status: { in: ["waiting", "in progress"] } },
+        ],
+      },
+    });
+
+    if (existingQueue) {
+      const error = new Error(
+        "Nasabah sudah memiliki antrean aktif dan belum selesai."
       );
       error.status = 400;
       throw error;
@@ -150,6 +165,23 @@ const bookQueueOffline = async (req, res, next) => {
     ) {
       const error = new Error(
         "All fields are required and serviceIds must be a non-empty array."
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    const existingQueue = await prisma.queue.findFirst({
+      where: {
+        OR: [
+          { userId, status: { in: ["waiting", "in progress"] } },
+          { email, phoneNumber, status: { in: ["waiting", "in progress"] } },
+        ],
+      },
+    });
+
+    if (existingQueue) {
+      const error = new Error(
+        "Nasabah sudah memiliki antrean aktif dan belum selesai."
       );
       error.status = 400;
       throw error;
