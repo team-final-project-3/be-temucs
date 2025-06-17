@@ -33,6 +33,8 @@ const bookQueueOnline = async (req, res, next) => {
   const { branchId, serviceIds } = req.body;
 
   try {
+    console.log(req.user);
+    console.log(req.body);
     if (
       !branchId ||
       !fullname ||
@@ -252,18 +254,44 @@ const updateStatus = (newStatus) => async (req, res, next) => {
     }
 
     if (!username) {
-      return res
-        .status(403)
-        .json({ message: "Unauthorized: username not found" });
+      const error = new Error("Unauthorized: username not found");
+      error.status = 403;
+      throw error;
     }
 
     const queueData = await prisma.queue.findUnique({ where: { id } });
     if (!queueData) {
-      return res.status(404).json({ message: "Queue not found" });
+      const error = new Error("Queue not found");
+      error.status = 404;
+      throw error;
     }
 
     if (newStatus !== "canceled" && queueData.branchId !== csBranchId) {
-      return res.status(403).json({ message: "Forbidden: branchId mismatch" });
+      const error = new Error("Forbidden: branchId mismatch");
+      error.status = 403;
+      throw error;
+    }
+
+    const currentStatus = queueData.status;
+
+    if (queueData.status === newStatus) {
+      const error = new Error(`Status is already '${newStatus}'`);
+      error.status = 400;
+      throw error;
+    }
+
+    if (
+      (currentStatus === "canceled" &&
+        ["in progress", "done", "skipped"].includes(newStatus)) ||
+      (["in progress", "done", "skipped"].includes(currentStatus) &&
+        newStatus === "canceled") ||
+      (currentStatus === "in progress" && newStatus === "skipped")
+    ) {
+      const error = new Error(
+        `Cannot change status from '${currentStatus}' to '${newStatus}'`
+      );
+      error.status = 400;
+      throw error;
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -325,16 +353,36 @@ const takeQueue = async (req, res, next) => {
   const { csId, username, branchId } = req.cs;
 
   if (!csId || !username || !branchId) {
-    return res.status(403).json({ message: "CS not authorized or missing" });
+    const error = new Error("CS not authorized or missing");
+    error.status = 403;
+    throw error;
   }
 
   try {
     const queueData = await prisma.queue.findUnique({ where: { id } });
     if (!queueData) {
-      return res.status(404).json({ message: "Queue not found" });
+      const error = new Error("Queue not found");
+      error.status = 404;
+      throw error;
     }
     if (queueData.branchId !== branchId) {
-      return res.status(403).json({ message: "Forbidden: branchId mismatch" });
+      const error = new Error("Forbidden: branchId mismatch");
+      error.status = 403;
+      throw error;
+    }
+
+    if (queueData.status === "in progress") {
+      const error = new Error("Queue is already in progress");
+      error.status = 400;
+      return next(error);
+    }
+
+    if (queueData.status !== "waiting") {
+      const error = new Error(
+        `Cannot take queue with status '${queueData.status}'`
+      );
+      error.status = 400;
+      return next(error);
     }
 
     const queue = await prisma.$transaction(async (tx) => {
@@ -342,6 +390,7 @@ const takeQueue = async (req, res, next) => {
         where: { id },
         data: {
           status: "in progress",
+          calledAt: new Date(),
           csId,
           updatedBy: username,
         },
