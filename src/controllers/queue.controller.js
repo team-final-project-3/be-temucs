@@ -579,6 +579,11 @@ const getAllQueues = async (req, res) => {
       },
     });
 
+    const censorPhone = (phone) => {
+      if (!phone || phone.length < 4) return phone;
+      return phone.slice(0, 2) + "*".repeat(phone.length - 4) + phone.slice(-2);
+    };
+
     const censorEmail = (email) => {
       if (!email || !email.includes("@")) return email;
 
@@ -625,7 +630,7 @@ const getAllQueues = async (req, res) => {
 
     res.json({ success: true, data: queues });
   } catch (error) {
-    console.error("Error fetching queues:", error);
+    console.error("Error fetching queues:", error.message, error.stack);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
