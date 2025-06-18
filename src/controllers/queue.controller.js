@@ -580,6 +580,7 @@ const getAllQueues = async (req, res) => {
     });
 
     const censorEmail = (email) => {
+      if (!email || !email.includes("@")) return email;
       const [user, domain] = email.split("@");
       const censoredUser = user[0] + "*".repeat(Math.max(1, user.length - 1));
       const censoredDomain = domain
@@ -590,16 +591,21 @@ const getAllQueues = async (req, res) => {
     };
 
     const censorPhone = (phone) => {
+      if (!phone || phone.length < 4) return phone;
       return phone.slice(0, 2) + "*".repeat(phone.length - 4) + phone.slice(-2);
     };
 
     const queues = queuesRaw.map((queue) => ({
       ...queue,
-      user: {
-        ...queue.user,
-        email: censorEmail(queue.email),
-        phoneNumber: censorPhone(queue.phoneNumber),
-      },
+      user: queue.user
+        ? {
+          ...queue.user,
+          email: censorEmail(queue.user.email),
+          phoneNumber: censorPhone(queue.user.phoneNumber),
+        }
+        : null,
+      email: censorEmail(queue.email),
+      phoneNumber: censorPhone(queue.phoneNumber),
     }));
 
     res.json({ success: true, data: queues });
@@ -788,12 +794,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
