@@ -205,23 +205,21 @@ router.patch(
   verifyCSToken,
   queueController.doneQueue
 );
+//////////////////////////////////////
+
 
 /**
  * @swagger
- * /api/queue/count/{branchId}:
+ * /api/queue/count:
  *   get:
- *     summary: Get total active queues (not done, skipped, or canceled) in a specific branch
+ *     summary: Get total active queues for CS's branch
  *     tags: [Queue]
- *     parameters:
- *       - in: path
- *         name: branchId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID of the branch
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by CS role. Automatically gets branch from CS's login data.
  *     responses:
  *       200:
- *         description: Total active queue count in the specified branch
+ *         description: Total active queue count for CS's branch
  *         content:
  *           application/json:
  *             schema:
@@ -231,16 +229,86 @@ router.patch(
  *                   type: integer
  *                 totalQueue:
  *                   type: integer
- *       400:
- *         description: branchId is missing or invalid
+ *       403:
+ *         description: CS not found or unauthorized
  *       500:
  *         description: Internal server error
  */
 router.get(
-  "/queue/count/:branchId",
-  allowRoles("nasabah", "cs", "loket"),
-  queueController.getQueueCountByBranchId
+  "/queue/count",
+  allowRoles("cs"),
+  verifyCSToken,
+  queueController.getQueueCountByBranchIdCS
 );
+
+
+/**
+ * @swagger
+ * /api/queue/count:
+ *   get:
+ *     summary: Get total active queues for Loket's branch
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by Loket role. Automatically gets branch from Loket's login data.
+ *     responses:
+ *       200:
+ *         description: Total active queue count for Loket's branch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 branchId:
+ *                   type: integer
+ *                 totalQueue:
+ *                   type: integer
+ *       403:
+ *         description: Loket not found or unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/count",
+  allowRoles("loket"),
+  verifyLoketToken,
+  queueController.getQueueCountByBranchIdLoket
+);
+
+
+/**
+ * @swagger
+ * /api/queue/count:
+ *   get:
+ *     summary: Get total active queues for user's latest visited branch
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by Nasabah. Gets branch based on user's last queue.
+ *     responses:
+ *       200:
+ *         description: Total active queue count for the user's branch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 branchId:
+ *                   type: integer
+ *                 totalQueue:
+ *                   type: integer
+ *       404:
+ *         description: No recent queue found for user
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/count",
+  allowRoles("nasabah"),
+  verifyUserToken,
+  queueController.getQueueCountByBranchIdUser
+);
+
 
 /**
  * @swagger
@@ -302,7 +370,8 @@ router.get(
  */
 router.get(
   "/queue/latest-inprogress",
-  allowRoles("nasabah", "cs", "loket"),
+  allowRoles("nasabah"),
+  verifyUserToken,
   queueController.getLatestInProgressQueue
 );
 
