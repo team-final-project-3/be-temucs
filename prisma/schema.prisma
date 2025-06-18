@@ -73,6 +73,7 @@ model CS {
   name         String
   username     String   @unique
   passwordHash String
+  status       Boolean  @default(true)
   createdAt    DateTime @default(now())
   createdBy    String
   updatedAt    DateTime @updatedAt
@@ -124,6 +125,7 @@ model Holiday {
   id          Int      @id @default(autoincrement())
   holidayName String
   date        DateTime @db.Date
+  status      Boolean  @default(true)
   createdAt   DateTime @default(now())
   createdBy   String
   updatedAt   DateTime @updatedAt
@@ -134,7 +136,7 @@ model Service {
   id            Int      @id @default(autoincrement())
   serviceName   String
   estimatedTime Int?
-  status        Boolean
+  status        Boolean  @default(true)
   createdAt     DateTime @default(now())
   createdBy     String
   updatedAt     DateTime @updatedAt
@@ -147,6 +149,7 @@ model Service {
 model Document {
   id           Int      @id @default(autoincrement())
   documentName String
+  status       Boolean  @default(true)
   createdAt    DateTime @default(now())
   createdBy    String
   updatedAt    DateTime @updatedAt

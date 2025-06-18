@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const documentController = require("../controllers/document.controller");
 const { allowRoles } = require("../middlewares/auth");
+const { verifyUserToken } = require("../auth/user.auth");
 
 /**
  * @swagger
@@ -27,7 +28,12 @@ const { allowRoles } = require("../middlewares/auth");
  *       500:
  *         description: Internal server error
  */
-router.post("/document", allowRoles("admin"), documentController.addDocument);
+router.post(
+  "/document",
+  allowRoles("admin"),
+  verifyUserToken,
+  documentController.addDocument
+);
 
 /**
  * @swagger
@@ -104,14 +110,15 @@ router.get(
 router.put(
   "/document/:id",
   allowRoles("admin"),
+  verifyUserToken,
   documentController.editDocument
 );
 
 /**
  * @swagger
- * /api/document/{id}:
- *   delete:
- *     summary: Delete document by ID
+ * /api/document/{id}/status:
+ *   put:
+ *     summary: Update Document Status (activate or deactivate)
  *     tags: [Document]
  *     parameters:
  *       - in: path
@@ -119,16 +126,22 @@ router.put(
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID dokumen
  *     responses:
  *       200:
- *         description: Document deleted
+ *         description: Status dokumen diperbarui
+ *       400:
+ *         description: Input tidak valid
+ *       404:
+ *         description: Dokumen tidak ditemukan
  *       500:
- *         description: Internal server error
+ *         description: Kesalahan server
  */
-router.delete(
-  "/document/:id",
+router.put(
+  "/document/:id/status",
   allowRoles("admin"),
-  documentController.deleteDocument
+  verifyUserToken,
+  documentController.updateDocumentStatus
 );
 
 module.exports = router;

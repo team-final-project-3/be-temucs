@@ -50,11 +50,31 @@ const editHoliday = async (req, res, next) => {
   }
 };
 
-const deleteHoliday = async (req, res, next) => {
+const updateHolidayStatus = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    await prisma.holiday.delete({ where: { id } });
-    res.json({ message: "Holiday deleted" });
+    const username = req.user.username;
+
+    const holiday = await prisma.holiday.findUnique({ where: { id } });
+
+    if (!holiday) {
+      throw Object.assign(new Error("Holiday not found"), { status: 404 });
+    }
+
+    const status = !holiday.status;
+
+    const updatedHoliday = await prisma.holiday.update({
+      where: { id },
+      data: {
+        status: status,
+        updatedBy: username,
+      },
+    });
+
+    res.status(200).json({
+      message: `Holiday ${status ? "activated" : "deactivated"} successfully`,
+      holiday: updatedHoliday,
+    });
   } catch (error) {
     next(error);
   }
@@ -90,7 +110,7 @@ const getAllHoliday = async (req, res, next) => {
 module.exports = {
   addHoliday,
   editHoliday,
-  deleteHoliday,
+  updateHolidayStatus,
   getHoliday,
   getAllHoliday,
 };

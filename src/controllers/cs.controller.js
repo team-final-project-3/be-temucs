@@ -77,17 +77,35 @@ const editCS = async (req, res, next) => {
   }
 };
 
-const deleteCS = async (req, res, next) => {
+const updateCSStatus = async (req, res, next) => {
   const { id } = req.params;
+  const username = req.user.username;
+
   try {
     const cs = await prisma.cS.findUnique({ where: { id: Number(id) } });
     if (!cs) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("CS not found"), { status: 404 });
     }
 
-    await prisma.cS.delete({ where: { id: Number(id) } });
+    const status = !cs.status;
 
-    res.status(200).json({ message: "CS deleted" });
+    const updatedCS = await prisma.cS.update({
+      where: { id: Number(id) },
+      data: {
+        status: status,
+        updatedBy: username,
+      },
+    });
+
+    res.status(200).json({
+      message: `CS ${status ? "activated" : "deactivated"} successfully`,
+      cs: {
+        id: updatedCS.id,
+        name: updatedCS.name,
+        username: updatedCS.username,
+        status: updatedCS.status,
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -160,4 +178,4 @@ const getCS = async (req, res, next) => {
   }
 };
 
-module.exports = { addCS, login, editCS, deleteCS, getCS };
+module.exports = { addCS, login, editCS, updateCSStatus, getCS };

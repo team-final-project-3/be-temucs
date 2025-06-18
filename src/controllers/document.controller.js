@@ -70,13 +70,31 @@ const editDocument = async (req, res, next) => {
   }
 };
 
-const deleteDocument = async (req, res, next) => {
+const updateDocumentStatus = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
+    const username = req.user.username;
 
-    await prisma.document.delete({ where: { id } });
+    const document = await prisma.document.findUnique({ where: { id } });
 
-    res.status(200).json({ message: "Document deleted" });
+    if (!document) {
+      throw Object.assign(new Error("Document not found"), { status: 404 });
+    }
+
+    const status = !document.status;
+
+    const updatedDocument = await prisma.document.update({
+      where: { id },
+      data: {
+        status: status,
+        updatedBy: username,
+      },
+    });
+
+    res.status(200).json({
+      message: `Document ${status ? "activated" : "deactivated"} successfully`,
+      document: updatedDocument,
+    });
   } catch (error) {
     next(error);
   }
@@ -87,5 +105,5 @@ module.exports = {
   getDocument,
   getAllDocument,
   editDocument,
-  deleteDocument,
+  updateDocumentStatus,
 };

@@ -74,6 +74,42 @@ const editLoket = async (req, res, next) => {
         id: updatedLoket.id,
         name: updatedLoket.name,
         username: updatedLoket.username,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateLoketStatus = async (req, res, next) => {
+  const username = req.user.username;
+  const { id } = req.params;
+
+  try {
+    const loket = await prisma.loket.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!loket) {
+      throw Object.assign(new Error("Loket not found"), { status: 404 });
+    }
+
+    const status = !loket.status;
+
+    const updatedLoket = await prisma.loket.update({
+      where: { id: Number(id) },
+      data: {
+        status: status,
+        updatedBy: username,
+      },
+    });
+
+    res.status(200).json({
+      message: `Loket ${status ? "diaktifkan" : "dinonaktifkan"} berhasil`,
+      loket: {
+        id: updatedLoket.id,
+        name: updatedLoket.name,
+        username: updatedLoket.username,
         status: updatedLoket.status,
       },
     });
@@ -151,4 +187,4 @@ const getLoket = async (req, res, next) => {
   }
 };
 
-module.exports = { addLoket, login, editLoket, getLoket };
+module.exports = { addLoket, login, editLoket, updateLoketStatus, getLoket };

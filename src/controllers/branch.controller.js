@@ -70,12 +70,43 @@ const editBranch = async (req, res, next) => {
         longitude,
         latitude,
         holiday,
-        status,
         updatedBy: username,
       },
     });
 
     res.json({ message: "Branch updated", branch });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateBranchStatus = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const username = req.user.username;
+
+    const branch = await prisma.branch.findUnique({
+      where: { id },
+    });
+
+    if (!branch) {
+      throw Object.assign(new Error("Branch not found"), { status: 404 });
+    }
+
+    const status = !branch.status;
+
+    const updatedBranch = await prisma.branch.update({
+      where: { id },
+      data: {
+        status: status,
+        updatedBy: username,
+      },
+    });
+
+    res.status(200).json({
+      message: `Branch status ${status ? "enabled" : "disabled"} successfully`,
+      branch: updatedBranch,
+    });
   } catch (error) {
     next(error);
   }
@@ -109,4 +140,10 @@ const getBranch = async (req, res, next) => {
   }
 };
 
-module.exports = { addBranch, editBranch, getBranch, getAllBranch };
+module.exports = {
+  addBranch,
+  editBranch,
+  updateBranchStatus,
+  getBranch,
+  getAllBranch,
+};

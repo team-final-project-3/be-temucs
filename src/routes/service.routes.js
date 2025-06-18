@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const serviceController = require("../controllers/service.controller");
 const { allowRoles } = require("../middlewares/auth");
+const { verifyUserToken } = require("../auth/user.auth");
 
 /**
  * @swagger
@@ -49,7 +50,12 @@ const { allowRoles } = require("../middlewares/auth");
  *       500:
  *         description: Internal server error
  */
-router.post("/service", allowRoles("admin"), serviceController.addService);
+router.post(
+  "/service",
+  allowRoles("admin"),
+  verifyUserToken,
+  serviceController.addService
+);
 
 /**
  * @swagger
@@ -120,13 +126,18 @@ router.get(
  *       200:
  *         description: Service updated
  */
-router.put("/service/:id", allowRoles("admin"), serviceController.editService);
+router.put(
+  "/service/:id",
+  allowRoles("admin"),
+  verifyUserToken,
+  serviceController.editService
+);
 
 /**
  * @swagger
- * /api/service/{id}:
- *   delete:
- *     summary: Delete service by ID
+ * /api/service/{id}/status:
+ *   put:
+ *     summary: Update Service Status (activate or deactivate)
  *     tags: [Service]
  *     parameters:
  *       - in: path
@@ -134,14 +145,22 @@ router.put("/service/:id", allowRoles("admin"), serviceController.editService);
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID layanan
  *     responses:
  *       200:
- *         description: Service deleted
+ *         description: Status layanan berhasil diperbarui
+ *       404:
+ *         description: Layanan tidak ditemukan
+ *       400:
+ *         description: Status tidak valid
+ *       500:
+ *         description: Kesalahan server
  */
-router.delete(
-  "/service/:id",
+router.put(
+  "/service/:id/status",
   allowRoles("admin"),
-  serviceController.deleteService
+  verifyUserToken,
+  serviceController.updateServiceStatus
 );
 
 module.exports = router;

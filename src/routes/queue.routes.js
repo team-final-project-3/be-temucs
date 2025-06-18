@@ -531,7 +531,12 @@ router.get("/queue", queueController.getAllQueues);
  *       404:
  *         description: Queue not found
  */
-router.get("/queue/ticket/:id", verifyUserToken, queueController.getTicketById);
+router.get(
+  "/queue/ticket/:id",
+  allowRoles("nasabah"),
+  verifyUserToken,
+  queueController.getTicketById
+);
 
 /**
  * @swagger
@@ -593,6 +598,7 @@ router.get("/queue/ticket/:id", verifyUserToken, queueController.getTicketById);
  */
 router.get(
   "/queue/loket-ticket/:id",
+  allowRoles("loket"),
   verifyLoketToken,
   queueController.getLoketTicketById
 );
@@ -697,6 +703,7 @@ router.get(
  */
 router.get(
   "/queue/active-cs-customer",
+  allowRoles("cs"),
   verifyCSToken,
   queueController.getActiveCSCustomer
 );

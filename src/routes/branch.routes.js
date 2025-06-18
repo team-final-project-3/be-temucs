@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const branchController = require("../controllers/branch.controller");
 const { allowRoles } = require("../middlewares/auth");
+const { verifyUserToken } = require("../auth/user.auth");
 
 /**
  * @swagger
@@ -27,7 +28,12 @@ const { allowRoles } = require("../middlewares/auth");
  *       201:
  *         description: Branch created
  */
-router.post("/branch", allowRoles("admin"), branchController.addBranch);
+router.post(
+  "/branch",
+  allowRoles("admin"),
+  verifyUserToken,
+  branchController.addBranch
+);
 
 /**
  * @swagger
@@ -54,12 +60,44 @@ router.post("/branch", allowRoles("admin"), branchController.addBranch);
  *               longitude: { type: number }
  *               latitude: { type: number }
  *               holiday: { type: boolean }
- *               status: { type: boolean }
  *     responses:
  *       200:
  *         description: Branch updated
  */
-router.put("/branch/:id", allowRoles("admin"), branchController.editBranch);
+router.put(
+  "/branch/:id",
+  allowRoles("admin"),
+  verifyUserToken,
+  branchController.editBranch
+);
+
+/**
+ * @swagger
+ * /api/branch/{id}/status:
+ *   put:
+ *     summary: Update Branch Status (active or deactive)
+ *     tags: [Branch]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID Cabang
+ *     responses:
+ *       200:
+ *         description: Status cabang diperbarui
+ *       404:
+ *         description: Cabang tidak ditemukan
+ *       500:
+ *         description: Kesalahan server
+ */
+router.put(
+  "/branch/:id/status",
+  allowRoles("admin"),
+  verifyUserToken,
+  branchController.updateBranchStatus
+);
 
 /**
  * @swagger
@@ -98,6 +136,7 @@ router.get(
 router.get(
   "/branch/:id",
   allowRoles("admin", "nasabah"),
+  verifyUserToken,
   branchController.getBranch
 );
 

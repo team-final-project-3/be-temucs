@@ -3,6 +3,7 @@ const router = express.Router();
 const loketController = require("../controllers/loket.controller");
 const { verifyLoketToken } = require("../auth/loket.auth");
 const { allowRoles } = require("../middlewares/auth");
+const { verifyUserToken } = require("../auth/user.auth");
 
 /**
  * @swagger
@@ -43,7 +44,12 @@ const { allowRoles } = require("../middlewares/auth");
  *       401:
  *         description: Unauthorized
  */
-router.post("/loket/add", allowRoles("admin"), loketController.addLoket);
+router.post(
+  "/loket/add",
+  allowRoles("admin"),
+  verifyUserToken,
+  loketController.addLoket
+);
 
 /**
  * @swagger
@@ -80,7 +86,40 @@ router.post("/loket/add", allowRoles("admin"), loketController.addLoket);
  *       500:
  *         description: Internal server error
  */
-router.put("/loket/:id", allowRoles("admin"), loketController.editLoket);
+router.put(
+  "/loket/:id",
+  allowRoles("admin"),
+  verifyUserToken,
+  loketController.editLoket
+);
+
+/**
+ * @swagger
+ * /api/loket/{id}/status:
+ *   put:
+ *     summary: Update Loket Status (active or deactive)
+ *     tags: [Loket]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID Loket
+ *     responses:
+ *       200:
+ *         description: Status loket diperbarui
+ *       404:
+ *         description: Loket tidak ditemukan
+ *       500:
+ *         description: Kesalahan server
+ */
+router.put(
+  "/loket/:id/status",
+  allowRoles("admin"),
+  verifyUserToken,
+  loketController.updateLoketStatus
+);
 
 /**
  * @swagger

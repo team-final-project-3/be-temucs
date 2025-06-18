@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const holidayController = require("../controllers/holiday.controller");
 const { allowRoles } = require("../middlewares/auth");
+const { verifyUserToken } = require("../auth/user.auth");
 
 /**
  * @swagger
@@ -35,7 +36,12 @@ const { allowRoles } = require("../middlewares/auth");
  *       201:
  *         description: Holiday added
  */
-router.post("/holiday", holidayController.addHoliday);
+router.post(
+  "/holiday",
+  allowRoles("admin"),
+  verifyUserToken,
+  holidayController.addHoliday
+);
 
 /**
  * @swagger
@@ -66,26 +72,42 @@ router.post("/holiday", holidayController.addHoliday);
  *       200:
  *         description: Holiday updated
  */
-router.put("/holiday/:id", holidayController.editHoliday);
+router.put(
+  "/holiday/:id",
+  allowRoles("admin"),
+  verifyUserToken,
+  holidayController.editHoliday
+);
 
 /**
  * @swagger
- * /api/holiday/{id}:
- *   delete:
- *     summary: Delete a holiday
+ * /api/holiday/{id}/status:
+ *   put:
+ *     summary: Update Holiday Status (activate or deactivate)
  *     tags: [Holiday]
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: integer
- *         required: true
- *         description: Holiday ID
+ *         description: ID hari libur
  *     responses:
  *       200:
- *         description: Holiday deleted
+ *         description: Status hari libur berhasil diperbarui
+ *       400:
+ *         description: Status tidak valid
+ *       404:
+ *         description: Hari libur tidak ditemukan
+ *       500:
+ *         description: Kesalahan server
  */
-router.delete("/holiday/:id", holidayController.deleteHoliday);
+router.put(
+  "/holiday/:id/status",
+  allowRoles("admin"),
+  verifyUserToken,
+  holidayController.updateHolidayStatus
+);
 
 /**
  * @swagger
@@ -119,7 +141,12 @@ router.delete("/holiday/:id", holidayController.deleteHoliday);
  *       404:
  *         description: Holiday not found
  */
-router.get("/holiday/:id", allowRoles("admin"), holidayController.getHoliday);
+router.get(
+  "/holiday/:id",
+  allowRoles("admin"),
+  verifyUserToken,
+  holidayController.getHoliday
+);
 
 /**
  * @swagger
@@ -146,6 +173,11 @@ router.get("/holiday/:id", allowRoles("admin"), holidayController.getHoliday);
  *                       createdAt: { type: string, format: date-time }
  *                       updatedAt: { type: string, format: date-time }
  */
-router.get("/holiday", allowRoles("admin"), holidayController.getAllHoliday);
+router.get(
+  "/holiday",
+  allowRoles("admin"),
+  verifyUserToken,
+  holidayController.getAllHoliday
+);
 
 module.exports = router;

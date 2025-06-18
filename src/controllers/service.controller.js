@@ -92,17 +92,31 @@ const editService = async (req, res, next) => {
   }
 };
 
-const deleteService = async (req, res, next) => {
+const updateServiceStatus = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
+    const username = req.user.username;
 
-    if (isNaN(id)) {
-      throw Object.assign(new Error(), { status: 400 });
+    const service = await prisma.service.findUnique({ where: { id } });
+
+    if (!service) {
+      throw Object.assign(new Error("Service not found"), { status: 404 });
     }
 
-    await prisma.service.delete({ where: { id: Number(id) } });
+    const status = !service.status;
 
-    res.status(200).json({ message: "Service deleted" });
+    const updatedService = await prisma.service.update({
+      where: { id },
+      data: {
+        status: status,
+        updatedBy: username,
+      },
+    });
+
+    res.status(200).json({
+      message: `Service ${status ? "activated" : "deactivated"} successfully`,
+      service: updatedService,
+    });
   } catch (error) {
     next(error);
   }
@@ -113,5 +127,5 @@ module.exports = {
   getService,
   getAllService,
   editService,
-  deleteService,
+  updateServiceStatus,
 };
