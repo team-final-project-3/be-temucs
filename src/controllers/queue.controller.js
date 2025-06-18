@@ -785,7 +785,15 @@ const getActiveCSCustomer = async (req, res, next) => {
       queueId: queue.id,
       ticketNumber: queue.ticketNumber,
       cs: queue.cs,
-      nasabah: queue.user,
+      nasabah: queue.user
+        ? queue.user
+        : {
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
