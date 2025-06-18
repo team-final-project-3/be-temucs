@@ -9,6 +9,21 @@ const getDocumentsByServiceId = async (req, res, next) => {
       throw Object.assign(new Error(), { status: 400 });
     }
 
+    const services = await prisma.service.findMany({
+      where: { id: { in: serviceIds } },
+      select: { id: true, status: true, serviceName: true },
+    });
+
+    const inactive = services.filter((s) => s.status === false);
+    if (inactive.length > 0) {
+      throw Object.assign(
+        new Error(
+          `Service nonaktif: ${inactive.map((s) => s.serviceName).join(", ")}`
+        ),
+        { status: 400 }
+      );
+    }
+
     const serviceDocuments = await prisma.serviceDocument.findMany({
       where: {
         serviceId: { in: serviceIds },

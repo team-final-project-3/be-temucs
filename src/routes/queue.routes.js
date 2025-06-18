@@ -631,10 +631,12 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/active-cs-customer/{branchId}:
+ * /api/queue/active-cs-customer:
  *   get:
- *     summary: Get list of CS who are currently serving which customer in a branch
+ *     summary: Get list of CS who are currently serving which customer in their branch
  *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of active CS-customer pairs in the branch
@@ -647,40 +649,56 @@ router.get(
  *                 properties:
  *                   queueId:
  *                     type: integer
+ *                     example: 12
  *                   ticketNumber:
  *                     type: string
+ *                     example: "A-001"
  *                   cs:
  *                     type: object
  *                     properties:
  *                       id:
  *                         type: integer
+ *                         example: 3
  *                       name:
  *                         type: string
+ *                         example: "CS Budi"
  *                       username:
  *                         type: string
+ *                         example: "csbudi"
  *                   nasabah:
  *                     type: object
  *                     properties:
  *                       id:
  *                         type: integer
+ *                         example: 7
  *                       fullname:
  *                         type: string
+ *                         example: "Andi"
  *                       username:
  *                         type: string
+ *                         example: "andi123"
  *                       email:
  *                         type: string
+ *                         example: "andi@email.com"
  *                       phoneNumber:
  *                         type: string
+ *                         example: "08123456789"
  *                   status:
  *                     type: string
+ *                     example: "in progress"
  *                   calledAt:
  *                     type: string
  *                     format: date-time
+ *                     example: "2024-06-17T10:00:00.000Z"
  *       400:
  *         description: branchId is required
  *       500:
- *         description: Internal server
+ *         description: Internal server error
  */
-router.get("/queue/active-cs-customer", queueController.getActiveCSCustomer);
+router.get(
+  "/queue/active-cs-customer",
+  verifyCSToken,
+  queueController.getActiveCSCustomer
+);
 
 module.exports = router;
