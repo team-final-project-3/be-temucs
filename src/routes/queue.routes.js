@@ -205,7 +205,6 @@ router.patch(
   verifyCSToken,
   queueController.doneQueue
 );
-//////////////////////////////////////
 
 
 /**
