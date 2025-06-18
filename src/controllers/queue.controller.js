@@ -581,18 +581,33 @@ const getAllQueues = async (req, res) => {
 
     const censorEmail = (email) => {
       if (!email || !email.includes("@")) return email;
-      const [user, domain] = email.split("@");
-      const censoredUser = user[0] + "*".repeat(Math.max(1, user.length - 1));
-      const censoredDomain = domain
-        .split(".")
-        .map((part) => "*".repeat(part.length))
-        .join(".");
-      return `${censoredUser}@${censoredDomain}`;
-    };
 
-    const censorPhone = (phone) => {
-      if (!phone || phone.length < 4) return phone;
-      return phone.slice(0, 2) + "*".repeat(phone.length - 4) + phone.slice(-2);
+      const [user, domain] = email.split("@");
+
+      let censoredUser;
+      if (user.length <= 3) {
+        censoredUser = user[0] + "*".repeat(user.length - 1);
+      } else {
+        const visible = user.slice(0, 2);
+        const hidden = "*".repeat(user.length - 2);
+        censoredUser = visible + hidden;
+      }
+
+      const domainParts = domain.split(".");
+      const domainMain = domainParts[0];
+      const domainExt = domainParts[1] || "";
+
+      const censoredDomainMain = domainMain.length <= 2
+        ? "*".repeat(domainMain.length)
+        : domainMain[0] + "*".repeat(domainMain.length - 2) + domainMain.slice(-1);
+
+      const censoredDomainExt = domainExt.length <= 2
+        ? "*".repeat(domainExt.length)
+        : "*".repeat(domainExt.length - 1) + domainExt.slice(-1);
+
+      const censoredDomain = `${censoredDomainMain}.${censoredDomainExt}`;
+
+      return `${censoredUser}@${censoredDomain}`;
     };
 
     const queues = queuesRaw.map((queue) => ({
