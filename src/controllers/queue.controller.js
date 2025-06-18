@@ -9,9 +9,9 @@ async function generateTicketNumber(branchId, bookingDate) {
     }
 
     const startOfDay = new Date(bookingDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setHours(8, 0, 0, 0);
     const endOfDay = new Date(bookingDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    endOfDay.setHours(15, 0, 0, 0);
 
     const count = await prisma.queue.count({
       where: {
@@ -59,11 +59,14 @@ const bookQueueOnline = async (req, res, next) => {
       throw Object.assign(new Error(), { status: 400 });
     }
 
-    const bookingDate = new Date();
+    const now = new Date();
+    let bookingDate = new Date(now);
+    if (now.getHours() >= 15) {
+      bookingDate.setDate(bookingDate.getDate() + 1);
+      bookingDate.setHours(8, 0, 0, 0);
+    }
 
     const queue = await prisma.$transaction(async (tx) => {
-      const ticketNumber = await generateTicketNumber(branchId, bookingDate);
-
       const bookingDateObj = new Date(bookingDate);
       bookingDateObj.setHours(0, 0, 0, 0);
       const endOfDay = new Date(bookingDateObj);
@@ -76,9 +79,9 @@ const bookQueueOnline = async (req, res, next) => {
             gte: bookingDateObj,
             lte: endOfDay,
           },
-          status: { notIn: ["done", "skipped", "canceled"] },
+          status: "waiting",
         },
-        orderBy: { id: "asc" },
+        orderBy: { createdAt: "asc" },
         include: {
           services: {
             include: { service: { select: { estimatedTime: true } } },
@@ -94,11 +97,12 @@ const bookQueueOnline = async (req, res, next) => {
       }
 
       const estimatedTimeDate = new Date(
-        new Date(bookingDate).getTime() + totalMinutes * 60000
+        bookingDate.getTime() + totalMinutes * 60000
       );
 
-      const count = activeQueues.length;
-      const notification = count < 5;
+      const ticketNumber = await generateTicketNumber(branchId, bookingDate);
+
+      const notification = activeQueues.length < 5;
 
       const queue = await tx.queue.create({
         data: {
@@ -156,7 +160,15 @@ const bookQueueOffline = async (req, res, next) => {
       !Array.isArray(serviceIds) ||
       serviceIds.length === 0
     ) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Data tidak lengkap"), { status: 400 });
+    }
+
+    const now = new Date();
+    if (now.getHours() >= 15) {
+      throw Object.assign(
+        new Error("Booking offline hanya bisa dilakukan sebelum jam 15.00"),
+        { status: 403 }
+      );
     }
 
     const existingQueue = await prisma.queue.findFirst({
@@ -168,10 +180,12 @@ const bookQueueOffline = async (req, res, next) => {
     });
 
     if (existingQueue) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Sudah ada antrian aktif"), {
+        status: 400,
+      });
     }
 
-    const bookingDate = new Date();
+    let bookingDate = new Date(now);
 
     const queue = await prisma.$transaction(async (tx) => {
       const ticketNumber = await generateTicketNumber(branchId, bookingDate);
@@ -188,9 +202,9 @@ const bookQueueOffline = async (req, res, next) => {
             gte: bookingDateObj,
             lte: endOfDay,
           },
-          status: { notIn: ["done", "skipped", "canceled"] },
+          status: "waiting",
         },
-        orderBy: { id: "asc" },
+        orderBy: { createdAt: "asc" },
         include: {
           services: {
             include: { service: { select: { estimatedTime: true } } },
@@ -206,11 +220,10 @@ const bookQueueOffline = async (req, res, next) => {
       }
 
       const estimatedTimeDate = new Date(
-        new Date(bookingDate).getTime() + totalMinutes * 60000
+        bookingDate.getTime() + totalMinutes * 60000
       );
 
-      const count = activeQueues.length;
-      const notification = count < 5;
+      const notification = activeQueues.length < 5;
 
       const queue = await tx.queue.create({
         data: {
@@ -602,13 +615,17 @@ const getAllQueues = async (req, res) => {
       const domainMain = domainParts[0];
       const domainExt = domainParts[1] || "";
 
-      const censoredDomainMain = domainMain.length <= 2
-        ? "*".repeat(domainMain.length)
-        : domainMain[0] + "*".repeat(domainMain.length - 2) + domainMain.slice(-1);
+      const censoredDomainMain =
+        domainMain.length <= 2
+          ? "*".repeat(domainMain.length)
+          : domainMain[0] +
+            "*".repeat(domainMain.length - 2) +
+            domainMain.slice(-1);
 
-      const censoredDomainExt = domainExt.length <= 2
-        ? "*".repeat(domainExt.length)
-        : "*".repeat(domainExt.length - 1) + domainExt.slice(-1);
+      const censoredDomainExt =
+        domainExt.length <= 2
+          ? "*".repeat(domainExt.length)
+          : "*".repeat(domainExt.length - 1) + domainExt.slice(-1);
 
       const censoredDomain = `${censoredDomainMain}.${censoredDomainExt}`;
 
@@ -619,10 +636,10 @@ const getAllQueues = async (req, res) => {
       ...queue,
       user: queue.user
         ? {
-          ...queue.user,
-          email: censorEmail(queue.user.email),
-          phoneNumber: censorPhone(queue.user.phoneNumber),
-        }
+            ...queue.user,
+            email: censorEmail(queue.user.email),
+            phoneNumber: censorPhone(queue.user.phoneNumber),
+          }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -814,12 +831,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     }));

@@ -35,12 +35,12 @@ const holidayBlock = async (req, res, next) => {
     if (isHolidayCache) {
       const role = req.user?.role;
       if (role !== "admin") {
-        return res
-          .status(503)
-          .json({
-            message:
-              "Hari ini libur, hanya admin yang dapat mengakses layanan.",
-          });
+        throw Object.assign(
+          new Error(
+            "Hari ini libur, hanya admin yang dapat mengakses layanan."
+          ),
+          { status: 503 }
+        );
       }
     }
     next();

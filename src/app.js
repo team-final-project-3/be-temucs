@@ -28,6 +28,7 @@ app.use(logger);
 
 app.use(cors());
 app.use(express.json());
+require("./middlewares/queueRescheduler");
 app.use(holidayCron);
 app.use(
   "/api",
