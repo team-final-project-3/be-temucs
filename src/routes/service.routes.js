@@ -3,6 +3,7 @@ const router = express.Router();
 const serviceController = require("../controllers/service.controller");
 const { allowRoles } = require("../middlewares/auth");
 const { verifyUserToken } = require("../auth/user.auth");
+const { verifyLoketToken } = require("../auth/loket.auth");
 
 /**
  * @swagger
@@ -59,25 +60,47 @@ router.post(
 
 /**
  * @swagger
- * /api/service:
+ * /api/service/user:
  *   get:
- *     summary: Get all services
+ *     summary: Get all active services for user (admin & nasabah)
  *     tags: [Service]
  *     responses:
  *       200:
- *         description: A list of all services
+ *         description: List of active services for user
+ *       500:
+ *         description: Internal server error
  */
 router.get(
-  "/service",
-  allowRoles("nasabah", "admin", "loket"),
-  serviceController.getAllService
+  "/service/user",
+  verifyUserToken,
+  allowRoles("admin", "nasabah"),
+  serviceController.getAllServiceForUser
+);
+
+/**
+ * @swagger
+ * /api/service/loket:
+ *   get:
+ *     summary: Get all active services for loket
+ *     tags: [Service]
+ *     responses:
+ *       200:
+ *         description: List of active services for loket
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/service/loket",
+  verifyLoketToken,
+  allowRoles("loket"),
+  serviceController.getAllServiceForLoket
 );
 
 /**
  * @swagger
  * /api/service/{id}:
  *   get:
- *     summary: Get service by ID
+ *     summary: Get active service by ID for user (admin)
  *     tags: [Service]
  *     parameters:
  *       - in: path
@@ -89,12 +112,13 @@ router.get(
  *       200:
  *         description: Service data
  *       404:
- *         description: Service not found
+ *         description: Service not found or inactive
  */
 router.get(
   "/service/:id",
-  allowRoles("nasabah", "admin", "loket", "cs"),
-  serviceController.getService
+  verifyUserToken,
+  allowRoles("admin"),
+  serviceController.getServiceForUser
 );
 
 /**

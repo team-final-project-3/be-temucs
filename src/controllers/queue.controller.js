@@ -1,34 +1,16 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const {
+  generateTicketNumberAndEstimate,
+} = require("../helpers/generateTicketNumberAndEstimate");
 
-async function generateTicketNumber(branchId, bookingDate) {
-  try {
-    const branch = await prisma.branch.findUnique({ where: { id: branchId } });
-    if (!branch) {
-      throw Object.assign(new Error(), { status: 404 });
-    }
-
-    const startOfDay = new Date(bookingDate);
-    startOfDay.setHours(8, 0, 0, 0);
-    const endOfDay = new Date(bookingDate);
-    endOfDay.setHours(15, 0, 0, 0);
-
-    const count = await prisma.queue.count({
-      where: {
-        branchId,
-        bookingDate: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-      },
-    });
-
-    const paddingNumber = String(count + 1).padStart(3, "0");
-    return `${branch.branchCode}-${paddingNumber}`;
-  } catch (error) {
-    next(error);
-  }
-}
+const allowedTransitions = {
+  waiting: ["in progress", "canceled", "skipped"],
+  "in progress": ["done"],
+  done: [],
+  canceled: [],
+  skipped: [],
+};
 
 const bookQueueOnline = async (req, res, next) => {
   const { userId, username, fullname, email, phoneNumber } = req.user;
@@ -67,42 +49,14 @@ const bookQueueOnline = async (req, res, next) => {
     }
 
     const queue = await prisma.$transaction(async (tx) => {
-      const bookingDateObj = new Date(bookingDate);
-      bookingDateObj.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(bookingDateObj);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const activeQueues = await tx.queue.findMany({
-        where: {
+      const { ticketNumber, estimatedTimeDate, notification } =
+        await generateTicketNumberAndEstimate(
+          tx,
           branchId,
-          bookingDate: {
-            gte: bookingDateObj,
-            lte: endOfDay,
-          },
-          status: "waiting",
-        },
-        orderBy: { createdAt: "asc" },
-        include: {
-          services: {
-            include: { service: { select: { estimatedTime: true } } },
-          },
-        },
-      });
-
-      let totalMinutes = 0;
-      for (const q of activeQueues) {
-        for (const s of q.services) {
-          totalMinutes += s.service.estimatedTime || 0;
-        }
-      }
-
-      const estimatedTimeDate = new Date(
-        bookingDate.getTime() + totalMinutes * 60000
-      );
-
-      const ticketNumber = await generateTicketNumber(branchId, bookingDate);
-
-      const notification = activeQueues.length < 5;
+          bookingDate,
+          serviceIds,
+          username
+        );
 
       const queue = await tx.queue.create({
         data: {
@@ -188,42 +142,14 @@ const bookQueueOffline = async (req, res, next) => {
     let bookingDate = new Date(now);
 
     const queue = await prisma.$transaction(async (tx) => {
-      const ticketNumber = await generateTicketNumber(branchId, bookingDate);
-
-      const bookingDateObj = new Date(bookingDate);
-      bookingDateObj.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(bookingDateObj);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const activeQueues = await tx.queue.findMany({
-        where: {
+      const { ticketNumber, estimatedTimeDate, notification } =
+        await generateTicketNumberAndEstimate(
+          tx,
           branchId,
-          bookingDate: {
-            gte: bookingDateObj,
-            lte: endOfDay,
-          },
-          status: "waiting",
-        },
-        orderBy: { createdAt: "asc" },
-        include: {
-          services: {
-            include: { service: { select: { estimatedTime: true } } },
-          },
-        },
-      });
-
-      let totalMinutes = 0;
-      for (const q of activeQueues) {
-        for (const s of q.services) {
-          totalMinutes += s.service.estimatedTime || 0;
-        }
-      }
-
-      const estimatedTimeDate = new Date(
-        bookingDate.getTime() + totalMinutes * 60000
-      );
-
-      const notification = activeQueues.length < 5;
+          bookingDate,
+          serviceIds,
+          username
+        );
 
       const queue = await tx.queue.create({
         data: {
@@ -297,18 +223,26 @@ const updateStatus = (newStatus) => async (req, res, next) => {
 
     const currentStatus = queueData.status;
 
-    if (queueData.status === newStatus) {
+    if (["done", "canceled", "skipped"].includes(currentStatus)) {
+      throw Object.assign(
+        new Error(
+          "Antrian sudah selesai atau dibatalkan, tidak bisa diubah statusnya."
+        ),
+        { status: 400 }
+      );
+    }
+
+    if (currentStatus === newStatus) {
       throw Object.assign(new Error(), { status: 400 });
     }
 
-    if (
-      (currentStatus === "canceled" &&
-        ["in progress", "done", "skipped"].includes(newStatus)) ||
-      (["in progress", "done", "skipped"].includes(currentStatus) &&
-        newStatus === "canceled") ||
-      (currentStatus === "in progress" && newStatus === "skipped")
-    ) {
-      throw Object.assign(new Error(), { status: 400 });
+    if (!allowedTransitions[currentStatus]?.includes(newStatus)) {
+      throw Object.assign(
+        new Error(
+          `Transisi status dari '${currentStatus}' ke '${newStatus}' tidak diperbolehkan.`
+        ),
+        { status: 400 }
+      );
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -372,6 +306,23 @@ const takeQueue = async (req, res, next) => {
   }
 
   try {
+    const existingInProgress = await prisma.queue.findFirst({
+      where: {
+        csId,
+        branchId,
+        status: "in progress",
+      },
+    });
+
+    if (existingInProgress) {
+      throw Object.assign(
+        new Error(
+          "Anda masih memiliki antrian yang sedang berjalan. Selesaikan terlebih dahulu sebelum mengambil antrian baru."
+        ),
+        { status: 400 }
+      );
+    }
+
     const queueData = await prisma.queue.findUnique({ where: { id } });
     if (!queueData) {
       throw Object.assign(new Error(), { status: 404 });
@@ -380,12 +331,11 @@ const takeQueue = async (req, res, next) => {
       throw Object.assign(new Error(), { status: 403 });
     }
 
-    if (queueData.status === "in progress") {
-      throw Object.assign(new Error(), { status: 400 });
-    }
-
     if (queueData.status !== "waiting") {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(
+        new Error("Antrian hanya bisa diambil jika statusnya masih waiting."),
+        { status: 400 }
+      );
     }
 
     const queue = await prisma.$transaction(async (tx) => {
@@ -538,7 +488,9 @@ const getLatestInProgressQueueCS = async (req, res, next) => {
     const branchId = req.cs?.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error("Branch ID not found in CS session."), { status: 400 });
+      throw Object.assign(new Error("Branch ID not found in CS session."), {
+        status: 400,
+      });
     }
 
     const queue = await prisma.queue.findFirst({
@@ -552,7 +504,10 @@ const getLatestInProgressQueueCS = async (req, res, next) => {
     });
 
     if (!queue) {
-      throw Object.assign(new Error("No in-progress queue found for this branch."), { status: 404 });
+      throw Object.assign(
+        new Error("No in-progress queue found for this branch."),
+        { status: 404 }
+      );
     }
 
     res.status(200).json(queue);
@@ -566,7 +521,9 @@ const getLatestInProgressQueueLoket = async (req, res, next) => {
     const branchId = req.loket?.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error("Branch ID not found in Loket session."), { status: 400 });
+      throw Object.assign(new Error("Branch ID not found in Loket session."), {
+        status: 400,
+      });
     }
 
     const queue = await prisma.queue.findFirst({
@@ -580,7 +537,10 @@ const getLatestInProgressQueueLoket = async (req, res, next) => {
     });
 
     if (!queue) {
-      throw Object.assign(new Error("No in-progress queue found for this branch."), { status: 404 });
+      throw Object.assign(
+        new Error("No in-progress queue found for this branch."),
+        { status: 404 }
+      );
     }
 
     res.status(200).json(queue);
@@ -594,7 +554,9 @@ const getLatestInProgressQueueUser = async (req, res, next) => {
     const branchId = req.user?.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error("Branch ID not found in Loket session."), { status: 400 });
+      throw Object.assign(new Error("Branch ID not found in Loket session."), {
+        status: 400,
+      });
     }
 
     const queue = await prisma.queue.findFirst({
@@ -608,7 +570,10 @@ const getLatestInProgressQueueUser = async (req, res, next) => {
     });
 
     if (!queue) {
-      throw Object.assign(new Error("No in-progress queue found for this branch."), { status: 404 });
+      throw Object.assign(
+        new Error("No in-progress queue found for this branch."),
+        { status: 404 }
+      );
     }
 
     res.status(200).json(queue);
@@ -618,7 +583,6 @@ const getLatestInProgressQueueUser = async (req, res, next) => {
 };
 
 //#endregion
-
 
 const getWaitingQueuesByBranchIdLoket = async (req, res, next) => {
   try {
@@ -691,8 +655,6 @@ const getWaitingQueuesByBranchIdCS = async (req, res, next) => {
     next(error);
   }
 };
-
-
 
 const getOldestWaitingQueue = async (req, res, next) => {
   try {
@@ -781,8 +743,8 @@ const getAllQueues = async (req, res) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-          "*".repeat(Math.max(domainMain.length - 2, 0)) +
-          domainMain.slice(-1);
+            "*".repeat(Math.max(domainMain.length - 2, 0)) +
+            domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -799,10 +761,10 @@ const getAllQueues = async (req, res) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-          ...queue.user,
-          email: censorEmail(queue.user.email),
-          phoneNumber: censorPhone(queue.user.phoneNumber),
-        }
+            ...queue.user,
+            email: censorEmail(queue.user.email),
+            phoneNumber: censorPhone(queue.user.phoneNumber),
+          }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -814,7 +776,6 @@ const getAllQueues = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 
 const getTicketById = async (req, res, next) => {
   try {
@@ -995,12 +956,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     }));

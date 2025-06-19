@@ -1,7 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const getDocumentsByServiceId = async (req, res, next) => {
+const getDocumentsByServiceIdForUser = async (req, res, next) => {
   try {
     const { serviceIds } = req.body;
 
@@ -10,27 +10,20 @@ const getDocumentsByServiceId = async (req, res, next) => {
     }
 
     const services = await prisma.service.findMany({
-      where: { id: { in: serviceIds } },
-      select: { id: true, status: true, serviceName: true },
+      where: { id: { in: serviceIds }, status: true },
+      select: { id: true, serviceName: true },
     });
 
-    const inactive = services.filter((s) => s.status === false);
-    if (inactive.length > 0) {
+    if (services.length !== serviceIds.length) {
       throw Object.assign(
-        new Error(
-          `Service nonaktif: ${inactive.map((s) => s.serviceName).join(", ")}`
-        ),
+        new Error("Terdapat service yang tidak aktif atau tidak ditemukan"),
         { status: 400 }
       );
     }
 
     const serviceDocuments = await prisma.serviceDocument.findMany({
-      where: {
-        serviceId: { in: serviceIds },
-      },
-      include: {
-        document: true,
-      },
+      where: { serviceId: { in: serviceIds } },
+      include: { document: true },
     });
 
     const uniqueDocsMap = new Map();
@@ -44,7 +37,48 @@ const getDocumentsByServiceId = async (req, res, next) => {
     }
 
     const documents = Array.from(uniqueDocsMap.values());
+    res.json({ success: true, data: documents });
+  } catch (error) {
+    next(error);
+  }
+};
 
+const getDocumentsByServiceIdForLoket = async (req, res, next) => {
+  try {
+    const { serviceIds } = req.body;
+
+    if (!Array.isArray(serviceIds) || serviceIds.length === 0) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
+    const services = await prisma.service.findMany({
+      where: { id: { in: serviceIds }, status: true },
+      select: { id: true, serviceName: true },
+    });
+
+    if (services.length !== serviceIds.length) {
+      throw Object.assign(
+        new Error("Terdapat service yang tidak aktif atau tidak ditemukan"),
+        { status: 400 }
+      );
+    }
+
+    const serviceDocuments = await prisma.serviceDocument.findMany({
+      where: { serviceId: { in: serviceIds } },
+      include: { document: true },
+    });
+
+    const uniqueDocsMap = new Map();
+    for (const sd of serviceDocuments) {
+      if (!uniqueDocsMap.has(sd.document.id)) {
+        uniqueDocsMap.set(sd.document.id, {
+          id: sd.document.id,
+          name: sd.document.documentName,
+        });
+      }
+    }
+
+    const documents = Array.from(uniqueDocsMap.values());
     res.json({ success: true, data: documents });
   } catch (error) {
     next(error);
@@ -52,5 +86,6 @@ const getDocumentsByServiceId = async (req, res, next) => {
 };
 
 module.exports = {
-  getDocumentsByServiceId,
+  getDocumentsByServiceIdForUser,
+  getDocumentsByServiceIdForLoket,
 };

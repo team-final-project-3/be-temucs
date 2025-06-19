@@ -33,43 +33,73 @@ const addService = async (req, res, next) => {
   }
 };
 
-const getService = async (req, res, next) => {
+const getAllServiceForUser = async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    const service = await prisma.service.findUnique({
-      where: { id: Number(id) },
-      include: {
-        documents: {
-          include: {
-            document: true,
-          },
-        },
-      },
+    const services = await prisma.service.findMany({
+      where: { status: true },
     });
-
-    if (!service) {
-      throw Object.assign(new Error(), { status: 404 });
-    }
-
-    const documents = service.documents.map((sd) => sd.document);
-
-    res.status(200).json({
-      ...service,
-      documents,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getAllService = async (req, res, next) => {
-  try {
-    const services = await prisma.service.findMany();
     res.status(200).json(services);
   } catch (error) {
+    throw Object.assign(new Error("Gagal mengambil service untuk user"), {
+      status: 500,
+    });
+  }
+};
+
+const getAllServiceForLoket = async (req, res, next) => {
+  try {
+    const services = await prisma.service.findMany({
+      where: { status: true },
+    });
+    res.status(200).json(services);
+  } catch (error) {
+    throw Object.assign(new Error("Gagal mengambil service untuk loket"), {
+      status: 500,
+    });
+  }
+};
+
+const getServiceForUser = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const service = await prisma.service.findFirst({
+      where: { id, status: true },
+      include: {
+        documents: { include: { document: true } },
+      },
+    });
+    if (!service) {
+      throw Object.assign(new Error("Service not found or inactive"), {
+        status: 404,
+      });
+    }
+    const documents = service.documents.map((sd) => sd.document);
+    res.status(200).json({ ...service, documents });
+  } catch (error) {
     next(error);
   }
 };
+
+// const getServiceForLoket = async (req, res, next) => {
+//   try {
+//     const id = parseInt(req.params.id, 10);
+//     const service = await prisma.service.findFirst({
+//       where: { id, status: true },
+//       include: {
+//         documents: { include: { document: true } },
+//       },
+//     });
+//     if (!service) {
+//       throw Object.assign(new Error("Service not found or inactive"), {
+//         status: 404,
+//       });
+//     }
+//     const documents = service.documents.map((sd) => sd.document);
+//     res.status(200).json({ ...service, documents });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 const editService = async (req, res, next) => {
   try {
@@ -124,8 +154,10 @@ const updateServiceStatus = async (req, res, next) => {
 
 module.exports = {
   addService,
-  getService,
-  getAllService,
+  getAllServiceForUser,
+  getAllServiceForLoket,
+  getServiceForUser,
+  // getServiceForLoket,
   editService,
   updateServiceStatus,
 };

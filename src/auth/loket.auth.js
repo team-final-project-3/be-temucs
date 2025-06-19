@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const secret = process.env.JWT_SECRET || "secret_key";
 
-const verifyLoketToken = (req, res, next) => {
+const verifyLoketToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) throw Object.assign(new Error(), { status: 401 });
 
@@ -11,6 +11,25 @@ const verifyLoketToken = (req, res, next) => {
     const decoded = jwt.verify(token, secret);
     if (decoded.role !== "loket")
       throw Object.assign(new Error(), { status: 403 });
+
+    const loket = await prisma.loket.findUnique({
+      where: { id: decoded.loketId },
+    });
+    if (!loket)
+      throw Object.assign(new Error("Loket not found"), { status: 401 });
+
+    const branch = await prisma.branch.findUnique({
+      where: { id: loket.branchId },
+    });
+    if (!branch || branch.status === false) {
+      throw Object.assign(
+        new Error(
+          "Branch tidak aktif, loket tidak dapat login atau mengakses layanan"
+        ),
+        { status: 403 }
+      );
+    }
+
     req.loket = decoded;
     next();
   } catch (error) {

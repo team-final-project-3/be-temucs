@@ -3,6 +3,7 @@ const router = express.Router();
 const documentController = require("../controllers/document.controller");
 const { allowRoles } = require("../middlewares/auth");
 const { verifyUserToken } = require("../auth/user.auth");
+const { verifyLoketToken } = require("../auth/loket.auth");
 
 /**
  * @swagger
@@ -37,27 +38,47 @@ router.post(
 
 /**
  * @swagger
- * /api/document:
+ * /api/document/user:
  *   get:
- *     summary: Get all documents
+ *     summary: Get all active documents for user (nasabah and admin)
  *     tags: [Document]
  *     responses:
  *       200:
- *         description: A list of all documents
+ *         description: List of active documents for user
  *       500:
  *         description: Internal server error
  */
 router.get(
-  "/document",
-  allowRoles("admin", "nasabah", "loket"),
-  documentController.getAllDocument
+  "/document/user",
+  verifyUserToken,
+  allowRoles("nasabah", "admin"),
+  documentController.getAllDocumentForUser
+);
+
+/**
+ * @swagger
+ * /api/document/loket:
+ *   get:
+ *     summary: Get all active documents for loket
+ *     tags: [Document]
+ *     responses:
+ *       200:
+ *         description: List of active documents for loket
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/document/loket",
+  verifyLoketToken,
+  allowRoles("loket"),
+  documentController.getAllDocumentForLoket
 );
 
 /**
  * @swagger
  * /api/document/{id}:
  *   get:
- *     summary: Get document by ID
+ *     summary: Get active document by ID for user (admin)
  *     tags: [Document]
  *     parameters:
  *       - in: path
@@ -69,14 +90,15 @@ router.get(
  *       200:
  *         description: Document data
  *       404:
- *         description: Document not found
+ *         description: Document not found or inactive
  *       500:
  *         description: Internal server error
  */
 router.get(
   "/document/:id",
-  allowRoles("admin", "nasabah", "loket"),
-  documentController.getDocument
+  verifyUserToken,
+  allowRoles("admin"),
+  documentController.getDocumentForUser
 );
 
 /**

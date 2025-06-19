@@ -24,15 +24,17 @@ const addDocument = async (req, res, next) => {
   }
 };
 
-const getDocument = async (req, res, next) => {
+const getDocumentForUser = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const document = await prisma.document.findUnique({
-      where: { id },
+    const document = await prisma.document.findFirst({
+      where: { id, status: true },
     });
 
     if (!document) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("Document not found or inactive"), {
+        status: 404,
+      });
     }
 
     res.status(200).json(document);
@@ -41,12 +43,48 @@ const getDocument = async (req, res, next) => {
   }
 };
 
-const getAllDocument = async (req, res, next) => {
+// const getDocumentForLoket = async (req, res, next) => {
+//   try {
+//     const id = parseInt(req.params.id, 10);
+//     const document = await prisma.document.findFirst({
+//       where: { id, status: true },
+//     });
+
+//     if (!document) {
+//       throw Object.assign(new Error("Document not found or inactive"), {
+//         status: 404,
+//       });
+//     }
+
+//     res.status(200).json(document);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+const getAllDocumentForUser = async (req, res, next) => {
   try {
-    const document = await prisma.document.findMany();
-    res.status(200).json(document);
+    const documents = await prisma.document.findMany({
+      where: { status: true },
+    });
+    res.status(200).json(documents);
   } catch (error) {
-    next(error);
+    throw Object.assign(new Error("Gagal mengambil dokumen untuk user"), {
+      status: 500,
+    });
+  }
+};
+
+const getAllDocumentForLoket = async (req, res, next) => {
+  try {
+    const documents = await prisma.document.findMany({
+      where: { status: true },
+    });
+    res.status(200).json(documents);
+  } catch (error) {
+    throw Object.assign(new Error("Gagal mengambil dokumen untuk loket"), {
+      status: 500,
+    });
   }
 };
 
@@ -102,8 +140,10 @@ const updateDocumentStatus = async (req, res, next) => {
 
 module.exports = {
   addDocument,
-  getDocument,
-  getAllDocument,
+  getDocumentForUser,
+  // getDocumentForLoket,
+  getAllDocumentForUser,
+  getAllDocumentForLoket,
   editDocument,
   updateDocumentStatus,
 };
