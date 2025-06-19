@@ -605,6 +605,7 @@ router.get(
 router.get(
   "/queue/oldest-waiting/loket",
   allowRoles("loket"),
+  verifyLoketToken,
   queueController.getOldestWaitingQueueLoket
 );
 
@@ -650,6 +651,7 @@ router.get(
 router.get(
   "/queue/oldest-waiting/cs",
   allowRoles("cs"),
+  verifyCSToken,
   queueController.getOldestWaitingQueueCS
 );
 
