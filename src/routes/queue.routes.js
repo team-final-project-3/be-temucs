@@ -568,21 +568,16 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/waiting-oldest/{branchId}:
+ * /api/queue/oldest-waiting/loket:
  *   get:
- *     summary: Get the next customer queue to be served for CS
+ *     summary: Get the oldest waiting queue in the Loket's branch
  *     tags: [Queue]
- *     description: Returns the earliest queue entry with status 'waiting'. Used by CS to call the next customer.
- *     parameters:
- *       - in: path
- *         name: branchId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID of the branch
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by Loket. Automatically determines branch from Loket login session.
  *     responses:
  *       200:
- *         description: The next waiting queue found
+ *         description: The oldest waiting queue in the branch
  *         content:
  *           application/json:
  *             schema:
@@ -592,22 +587,118 @@ router.get(
  *                   type: integer
  *                 ticketNumber:
  *                   type: string
- *                 name:
- *                   type: string
- *                 createdAt:
- *                   type: string
- *                   format: date-time
  *                 status:
  *                   type: string
+ *                 services:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       serviceName:
+ *                         type: string
+ *       400:
+ *         description: Branch ID missing
  *       404:
- *         description: No waiting queue available
+ *         description: No waiting queue found
  *       500:
  *         description: Internal server error
  */
 router.get(
-  "/queue/waiting-oldest/:branchId",
-  allowRoles("nasabah", "cs", "loket"),
-  queueController.getOldestWaitingQueue
+  "/queue/oldest-waiting/loket",
+  allowRoles("loket"),
+  queueController.getOldestWaitingQueueLoket
+);
+
+/**
+ * @swagger
+ * /api/queue/oldest-waiting/cs:
+ *   get:
+ *     summary: Get the oldest waiting queue in the CS's branch
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by CS. Automatically determines branch from CS login session.
+ *     responses:
+ *       200:
+ *         description: The oldest waiting queue in the branch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 ticketNumber:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 services:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       serviceName:
+ *                         type: string
+ *       400:
+ *         description: Branch ID missing
+ *       404:
+ *         description: No waiting queue found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/oldest-waiting/cs",
+  allowRoles("cs"),
+  queueController.getOldestWaitingQueueCS
+);
+
+/**
+ * @swagger
+ * /api/queue/oldest-waiting/user:
+ *   get:
+ *     summary: Get the oldest waiting queue in the CS's branch
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by CS. Automatically determines branch from CS login session.
+ *     responses:
+ *       200:
+ *         description: The oldest waiting queue in the branch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 ticketNumber:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 services:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       serviceName:
+ *                         type: string
+ *       400:
+ *         description: Branch ID missing
+ *       404:
+ *         description: No waiting queue found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/oldest-waiting/user",
+  allowRoles("nasabah"),
+  queueController.getOldestWaitingQueueUser
 );
 
 /**

@@ -655,40 +655,87 @@ const getWaitingQueuesByBranchIdCS = async (req, res, next) => {
   }
 };
 
-const getOldestWaitingQueue = async (req, res, next) => {
+const getOldestWaitingQueueCS = async (req, res, next) => {
   try {
-    const branchId = parseInt(req.params.branchId, 10);
-
-    if (!branchId) {
-      throw Object.assign(new Error(), { status: 400 });
-    }
+    const branchId = req.cs?.branchId;
+    if (!branchId) throw Object.assign(new Error("Branch ID missing."), { status: 400 });
 
     const queue = await prisma.queue.findFirst({
       where: {
-        branchId: branchId,
+        branchId,
         status: "waiting",
       },
       include: {
-        services: {
-          include: {
-            service: true,
-          },
-        },
+        services: { include: { service: true } },
       },
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: { createdAt: "asc" },
     });
 
-    if (!queue) {
-      throw Object.assign(new Error(), { status: 404 });
-    }
+    if (!queue) throw Object.assign(new Error("No waiting queue found."), { status: 404 });
 
     res.status(200).json(queue);
   } catch (error) {
     next(error);
   }
 };
+
+const getOldestWaitingQueueLoket = async (req, res, next) => {
+  try {
+    const branchId = req.loket?.branchId;
+    if (!branchId) throw Object.assign(new Error("Branch ID missing."), { status: 400 });
+
+    const queue = await prisma.queue.findFirst({
+      where: {
+        branchId,
+        status: "waiting",
+      },
+      include: {
+        services: { include: { service: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (!queue) throw Object.assign(new Error("No waiting queue found."), { status: 404 });
+
+    res.status(200).json(queue);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getOldestWaitingQueueUser = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) throw Object.assign(new Error("User not authenticated."), { status: 401 });
+
+    const latestUserQueue = await prisma.queue.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!latestUserQueue || !latestUserQueue.branchId)
+      throw Object.assign(new Error("No recent queue found for user."), { status: 404 });
+
+    const queue = await prisma.queue.findFirst({
+      where: {
+        branchId: latestUserQueue.branchId,
+        status: "waiting",
+      },
+      include: {
+        services: { include: { service: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (!queue) throw Object.assign(new Error("No waiting queue found in user's branch."), { status: 404 });
+
+    res.status(200).json(queue);
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 const getAllQueues = async (req, res) => {
   try {
@@ -742,8 +789,8 @@ const getAllQueues = async (req, res) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-            "*".repeat(Math.max(domainMain.length - 2, 0)) +
-            domainMain.slice(-1);
+          "*".repeat(Math.max(domainMain.length - 2, 0)) +
+          domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -760,10 +807,10 @@ const getAllQueues = async (req, res) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-            ...queue.user,
-            email: censorEmail(queue.user.email),
-            phoneNumber: censorPhone(queue.user.phoneNumber),
-          }
+          ...queue.user,
+          email: censorEmail(queue.user.email),
+          phoneNumber: censorPhone(queue.user.phoneNumber),
+        }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -955,12 +1002,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
@@ -987,7 +1034,9 @@ module.exports = {
   getLatestInProgressQueueUser,
   getWaitingQueuesByBranchIdLoket,
   getWaitingQueuesByBranchIdCS,
-  getOldestWaitingQueue,
+  getOldestWaitingQueueCS,
+  getOldestWaitingQueueLoket,
+  getOldestWaitingQueueUser,
   getAllQueues,
   getTicketById,
   getLoketTicketById,
