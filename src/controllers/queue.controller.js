@@ -746,7 +746,11 @@ const getAllQueues = async (req, res) => {
         cs: true,
         loket: true,
         queueLogs: true,
-        services: true,
+        services: {
+          include: {
+            service: true,
+          },
+        },
       },
     });
 
@@ -776,9 +780,7 @@ const getAllQueues = async (req, res) => {
       const censoredDomainMain =
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
-          : domainMain[0] +
-          "*".repeat(domainMain.length - 2) +
-          domainMain.slice(-1);
+          : domainMain[0] + "*".repeat(domainMain.length - 2) + domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -792,6 +794,7 @@ const getAllQueues = async (req, res) => {
 
     const queues = queuesRaw.map((queue) => ({
       ...queue,
+      services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
           ...queue.user,
@@ -809,6 +812,7 @@ const getAllQueues = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
 
 const getTicketById = async (req, res, next) => {
   try {
