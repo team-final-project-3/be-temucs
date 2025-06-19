@@ -233,7 +233,7 @@ router.patch(
  *         description: Internal server error
  */
 router.get(
-  "/queue/count",
+  "/queue/count/cs",
   allowRoles("cs"),
   verifyCSToken,
   queueController.getQueueCountByBranchIdCS
@@ -266,7 +266,7 @@ router.get(
  *         description: Internal server error
  */
 router.get(
-  "/queue/count",
+  "/queue/count/loket",
   allowRoles("loket"),
   verifyLoketToken,
   queueController.getQueueCountByBranchIdLoket
@@ -299,7 +299,7 @@ router.get(
  *         description: Internal server error
  */
 router.get(
-  "/queue/count",
+  "/queue/count/user",
   allowRoles("nasabah"),
   verifyUserToken,
   queueController.getQueueCountByBranchIdUser
