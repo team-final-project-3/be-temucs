@@ -307,20 +307,18 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/remaining/{queueId}:
+ * /api/queue/remaining/cs:
  *   get:
- *     summary: Get number of active queues in front of specific queue
+ *     summary: Get remaining queues before the cs's current queue
  *     tags: [Queue]
- *     parameters:
- *       - in: path
- *         name: queueId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID of the current queue
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Hanya untuk Nasabah. Menggunakan `queueId` dan `branchId` dari data login cs.
+ *       Mengembalikan jumlah antrian yang masih menunggu di depan antrian cs tersebut.
  *     responses:
  *       200:
- *         description: Number of active queues before this queue
+ *         description: Remaining queue count returned successfully
  *         content:
  *           application/json:
  *             schema:
@@ -333,16 +331,89 @@ router.get(
  *                 remainingInFront:
  *                   type: integer
  *       400:
- *         description: queueId tidak ditemukan
- *       404:
- *         description: Queue tidak ditemukan
+ *         description: Data tidak valid dalam session cs
  *       500:
  *         description: Internal server error
  */
 router.get(
-  "/queue/remaining/:queueId",
-  allowRoles("nasabah", "cs", "loket"),
-  queueController.getRemainingQueue
+  "/queue/remaining/cs",
+  verifyCSToken,
+  allowRoles("cs"),
+  queueController.getRemainingQueueCS
+);
+
+/**
+ * @swagger
+ * /api/queue/remaining/loket:
+ *   get:
+ *     summary: Get remaining queues before the loket's current queue
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Hanya untuk Nasabah. Menggunakan `queueId` dan `branchId` dari data login loket.
+ *       Mengembalikan jumlah antrian yang masih menunggu di depan antrian loket tersebut.
+ *     responses:
+ *       200:
+ *         description: Remaining queue count returned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 queueId:
+ *                   type: integer
+ *                 branchId:
+ *                   type: integer
+ *                 remainingInFront:
+ *                   type: integer
+ *       400:
+ *         description: Data tidak valid dalam session loket
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/remaining/loket",
+  verifyLoketToken,
+  allowRoles("loket"),
+  queueController.getRemainingQueueLoket
+);
+
+/**
+ * @swagger
+ * /api/queue/remaining/user:
+ *   get:
+ *     summary: Get remaining queues before the user's current queue
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Hanya untuk Nasabah. Menggunakan `queueId` dan `branchId` dari data login user.
+ *       Mengembalikan jumlah antrian yang masih menunggu di depan antrian user tersebut.
+ *     responses:
+ *       200:
+ *         description: Remaining queue count returned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 queueId:
+ *                   type: integer
+ *                 branchId:
+ *                   type: integer
+ *                 remainingInFront:
+ *                   type: integer
+ *       400:
+ *         description: Data tidak valid dalam session user
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/remaining/user",
+  verifyUserToken,
+  allowRoles("nasabah"),
+  queueController.getRemainingQueueUser
 );
 
 /**
@@ -696,6 +767,7 @@ router.get(
  */
 router.get(
   "/queue/oldest-waiting/user",
+   verifyUserToken,
   allowRoles("nasabah"),
   queueController.getOldestWaitingQueueUser
 );
