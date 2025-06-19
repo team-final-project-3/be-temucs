@@ -15,7 +15,6 @@ const unprotectedRoutes = [
   "/loket/login",
 ];
 
-// Middleware utama untuk verifikasi token
 const authMiddleware = (req, res, next) => {
   if (unprotectedRoutes.includes(req.path)) {
     return next();

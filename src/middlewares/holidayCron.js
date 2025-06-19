@@ -5,7 +5,6 @@ const cron = require("node-cron");
 let isHolidayCache = false;
 let todayStr = null;
 
-// Fungsi untuk update cache holiday
 const updateHolidayCache = async () => {
   const today = new Date();
   const yyyy = today.getFullYear();

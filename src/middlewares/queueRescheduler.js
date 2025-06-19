@@ -85,7 +85,6 @@ const rescheduleWaitingQueues = async () => {
 
       currentTime = new Date(currentTime.getTime() + totalMinutes * 60000);
 
-      // (Opsional) Kirim notifikasi ke user
       // await sendRescheduleNotification(queue.userId, {...});
     }
   }

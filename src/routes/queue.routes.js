@@ -205,8 +205,6 @@ router.patch(
   verifyCSToken,
   queueController.doneQueue
 );
-//////////////////////////////////////
-
 
 /**
  * @swagger
@@ -241,7 +239,6 @@ router.get(
   queueController.getQueueCountByBranchIdCS
 );
 
-
 /**
  * @swagger
  * /api/queue/count:
@@ -275,7 +272,6 @@ router.get(
   queueController.getQueueCountByBranchIdLoket
 );
 
-
 /**
  * @swagger
  * /api/queue/count:
@@ -308,7 +304,6 @@ router.get(
   verifyUserToken,
   queueController.getQueueCountByBranchIdUser
 );
-
 
 /**
  * @swagger

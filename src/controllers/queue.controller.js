@@ -417,7 +417,7 @@ const takeQueue = async (req, res, next) => {
 
 const getQueueCountByBranchIdCS = async (req, res, next) => {
   try {
-    const branchId = req.cs.branchId
+    const branchId = req.cs.branchId;
 
     if (!branchId) {
       throw Object.assign(new Error(), { status: 400 });
@@ -443,7 +443,7 @@ const getQueueCountByBranchIdCS = async (req, res, next) => {
 
 const getQueueCountByBranchIdLoket = async (req, res, next) => {
   try {
-    const branchId = req.loket.branchId
+    const branchId = req.loket.branchId;
 
     if (!branchId) {
       throw Object.assign(new Error(), { status: 400 });
@@ -469,7 +469,7 @@ const getQueueCountByBranchIdLoket = async (req, res, next) => {
 
 const getQueueCountByBranchIdUser = async (req, res, next) => {
   try {
-    const branchId = req.user.branchId
+    const branchId = req.user.branchId;
 
     if (!branchId) {
       throw Object.assign(new Error(), { status: 400 });
@@ -493,7 +493,6 @@ const getQueueCountByBranchIdUser = async (req, res, next) => {
   }
 };
 
-///////////////////////////////////////////////////////////////////////
 const getRemainingQueue = async (req, res, next) => {
   try {
     const queueId = parseInt(req.params.queueId, 10);
@@ -672,8 +671,8 @@ const getAllQueues = async (req, res) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-          "*".repeat(domainMain.length - 2) +
-          domainMain.slice(-1);
+            "*".repeat(domainMain.length - 2) +
+            domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -689,10 +688,10 @@ const getAllQueues = async (req, res) => {
       ...queue,
       user: queue.user
         ? {
-          ...queue.user,
-          email: censorEmail(queue.user.email),
-          phoneNumber: censorPhone(queue.user.phoneNumber),
-        }
+            ...queue.user,
+            email: censorEmail(queue.user.email),
+            phoneNumber: censorPhone(queue.user.phoneNumber),
+          }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -884,12 +883,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
