@@ -10,12 +10,16 @@ const addLoket = async (req, res, next) => {
   const { branchId, name, username, password } = req.body;
   try {
     if (branchId == null || !name || !username || !password) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Data loket tidak lengkap"), {
+        status: 400,
+      });
     }
 
     const existing = await prisma.loket.findUnique({ where: { username } });
     if (existing) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Username sudah terdaftar"), {
+        status: 400,
+      });
     }
 
     const passwordHash = await hashPassword(password);
@@ -49,7 +53,7 @@ const editLoket = async (req, res, next) => {
     });
 
     if (!loket) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("Loket tidak ditemukan"), { status: 404 });
     }
 
     const updateData = {
@@ -90,7 +94,7 @@ const updateLoketStatus = async (req, res, next) => {
     });
 
     if (!loket) {
-      throw Object.assign(new Error("Loket not found"), { status: 404 });
+      throw Object.assign(new Error("Loket tidak ditemukan"), { status: 404 });
     }
 
     const status = !loket.status;
@@ -121,7 +125,9 @@ const login = async (req, res, next) => {
   const { username, password } = req.body;
   try {
     if (!username || !password) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Username dan password wajib diisi"), {
+        status: 400,
+      });
     }
 
     const loket = await prisma.loket.findUnique({
@@ -129,12 +135,12 @@ const login = async (req, res, next) => {
       include: { branch: true },
     });
     if (!loket) {
-      throw Object.assign(new Error(), { status: 401 });
+      throw Object.assign(new Error("Loket tidak ditemukan"), { status: 401 });
     }
 
     const isMatch = await comparePassword(password, loket.passwordHash);
     if (!isMatch) {
-      throw Object.assign(new Error(), { status: 401 });
+      throw Object.assign(new Error("Password salah"), { status: 401 });
     }
 
     const token = generateToken({
@@ -159,7 +165,7 @@ const getLoket = async (req, res, next) => {
     const loketId = req.loket.loketId;
 
     if (!loketId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Loket tidak ditemukan"), { status: 400 });
     }
 
     const loket = await prisma.loket.findUnique({
@@ -177,7 +183,7 @@ const getLoket = async (req, res, next) => {
     });
 
     if (!loket) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("Loket tidak ditemukan"), { status: 404 });
     }
 
     res.status(200).json({ loket });

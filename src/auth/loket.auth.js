@@ -17,7 +17,7 @@ const verifyLoketToken = async (req, res, next) => {
       where: { id: decoded.loketId },
     });
     if (!loket)
-      throw Object.assign(new Error("Loket not found"), { status: 401 });
+      throw Object.assign(new Error("Loket tidak ditemukan"), { status: 401 });
 
     const branch = await prisma.branch.findUnique({
       where: { id: loket.branchId },

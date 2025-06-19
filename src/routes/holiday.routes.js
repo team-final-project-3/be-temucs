@@ -139,7 +139,7 @@ router.put(
  *                     createdAt: { type: string, format: date-time }
  *                     updatedAt: { type: string, format: date-time }
  *       404:
- *         description: Holiday not found
+ *         description: Holiday tidak ditemukan
  */
 router.get(
   "/holiday/:id",

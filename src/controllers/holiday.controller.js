@@ -5,7 +5,10 @@ const addHoliday = async (req, res, next) => {
     const username = req.user.username;
     const { holidayName, date } = req.body;
     if (!holidayName || !date) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(
+        new Error("Nama hari libur atau tanggal wajib diisi"),
+        { status: 400 }
+      );
     }
     const holiday = await prisma.holiday.create({
       data: {
@@ -28,11 +31,16 @@ const editHoliday = async (req, res, next) => {
     const { holidayName, date } = req.body;
 
     if (isNaN(id)) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("ID hari libur tidak valid"), {
+        status: 400,
+      });
     }
 
     if (!holidayName && !date) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(
+        new Error("Nama hari libur dan tanggal wajib diisi"),
+        { status: 400 }
+      );
     }
 
     const holiday = await prisma.holiday.update({
@@ -57,7 +65,9 @@ const updateHolidayStatus = async (req, res, next) => {
     const holiday = await prisma.holiday.findUnique({ where: { id } });
 
     if (!holiday) {
-      throw Object.assign(new Error("Holiday not found"), { status: 404 });
+      throw Object.assign(new Error("Holiday tidak ditemukan"), {
+        status: 404,
+      });
     }
 
     const status = !holiday.status;
@@ -83,11 +93,15 @@ const getHoliday = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("ID hari libur tidak valid"), {
+        status: 400,
+      });
     }
     const holiday = await prisma.holiday.findUnique({ where: { id } });
     if (!holiday) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("Holiday tidak ditemukan"), {
+        status: 404,
+      });
     }
     res.json({ holiday });
   } catch (error) {

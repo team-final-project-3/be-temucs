@@ -79,7 +79,7 @@ router.post(
  *       200:
  *         description: CS updated
  *       404:
- *         description: CS not found
+ *         description: CS tidak ditemukan
  *       500:
  *         description: Internal server error
  */
@@ -189,7 +189,7 @@ router.post("/cs/login", csController.login);
  *                     createdAt: { type: string, format: date-time }
  *                     updatedAt: { type: string, format: date-time }
  *       404:
- *         description: CS not found
+ *         description: CS tidak ditemukan
  *       500:
  *         description: Internal server error
  */

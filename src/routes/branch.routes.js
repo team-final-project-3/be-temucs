@@ -131,7 +131,7 @@ router.get(
  *       200:
  *         description: Branch detail
  *       404:
- *         description: Branch not found
+ *         description: Cabang tidak ditemukan
  */
 router.get(
   "/branch/:id",

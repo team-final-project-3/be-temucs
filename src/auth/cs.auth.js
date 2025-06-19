@@ -14,7 +14,8 @@ const verifyCSToken = async (req, res, next) => {
       throw Object.assign(new Error(), { status: 403 });
 
     const cs = await prisma.cS.findUnique({ where: { id: decoded.csId } });
-    if (!cs) throw Object.assign(new Error("CS not found"), { status: 401 });
+    if (!cs)
+      throw Object.assign(new Error("CS tidak ditemukan"), { status: 401 });
 
     const branch = await prisma.branch.findUnique({
       where: { id: cs.branchId },

@@ -10,12 +10,12 @@ const addCS = async (req, res, next) => {
   const { branchId, name, username, password } = req.body;
   try {
     if (branchId == null || !name || !username || !password) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Data CS tidak lengkap"), { status: 400 });
     }
 
     const existing = await prisma.cS.findUnique({ where: { username } });
     if (existing) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("CS sudah terdaftar"), { status: 400 });
     }
 
     const passwordHash = await hashPassword(password);
@@ -40,17 +40,18 @@ const addCS = async (req, res, next) => {
 
 const editCS = async (req, res, next) => {
   const { id } = req.params;
-  const { name, password, updatedBy } = req.body;
+  const username = req.user.username;
+  const { name, password } = req.body;
 
   try {
     const cs = await prisma.cS.findUnique({ where: { id: Number(id) } });
     if (!cs) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("CS tidak ditemukan"), { status: 404 });
     }
 
     const updateData = {
       name,
-      updatedBy,
+      updatedBy: username,
     };
 
     if (password) {
@@ -83,7 +84,7 @@ const updateCSStatus = async (req, res, next) => {
   try {
     const cs = await prisma.cS.findUnique({ where: { id: Number(id) } });
     if (!cs) {
-      throw Object.assign(new Error("CS not found"), { status: 404 });
+      throw Object.assign(new Error("CS tidak ditemukan"), { status: 404 });
     }
 
     const status = !cs.status;
@@ -114,7 +115,9 @@ const login = async (req, res, next) => {
   const { username, password } = req.body;
   try {
     if (!username || !password) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Username dan password wajib diisi"), {
+        status: 400,
+      });
     }
 
     const cs = await prisma.cS.findUnique({
@@ -122,12 +125,12 @@ const login = async (req, res, next) => {
       include: { branch: true },
     });
     if (!cs) {
-      throw Object.assign(new Error(), { status: 401 });
+      throw Object.assign(new Error("CS tidak ditemukan"), { status: 401 });
     }
 
     const isMatch = await comparePassword(password, cs.passwordHash);
     if (!isMatch) {
-      throw Object.assign(new Error(), { status: 401 });
+      throw Object.assign(new Error("Password salah"), { status: 401 });
     }
 
     const token = generateToken({
@@ -151,7 +154,7 @@ const getCS = async (req, res, next) => {
     const csId = req.cs.csId;
 
     if (!csId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("CS ID tidak valid"), { status: 400 });
     }
 
     const cs = await prisma.cS.findUnique({
@@ -168,7 +171,7 @@ const getCS = async (req, res, next) => {
     });
 
     if (!cs) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("CS tidak ditemukan"), { status: 404 });
     }
 
     res.status(200).json({ cs });

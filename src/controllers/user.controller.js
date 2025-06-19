@@ -33,7 +33,14 @@ const register = async (req, res, next) => {
       where: { email },
     });
     if (!coreBanking) {
-      throw Object.assign(new Error(), { status: 403 });
+      throw Object.assign(
+        new Error(
+          "Anda belum menjadi nasabah. Silahkan datang ke cabang terdekat"
+        ),
+        {
+          status: 403,
+        }
+      );
     }
 
     const existingUser = await prisma.user.findFirst({
@@ -60,7 +67,10 @@ const register = async (req, res, next) => {
           userId: existingUser.id,
         });
       }
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(
+        new Error("Username, email, atau nomor telepon sudah terdaftar"),
+        { status: 400 }
+      );
     }
 
     const passwordHash = await hashPassword(password);
@@ -103,16 +113,18 @@ const verifyOtp = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
     }
     if (user.isVerified) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("User sudah terdaftar"), {
+        status: 400,
+      });
     }
     if (user.otp !== otp) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("OTP salah"), { status: 400 });
     }
     if (user.otpExpiresAt < new Date()) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("OTP expired"), { status: 400 });
     }
 
     await prisma.user.update({
@@ -120,7 +132,7 @@ const verifyOtp = async (req, res, next) => {
       data: { isVerified: true, otp: null, otpExpiresAt: null },
     });
 
-    res.json({ message: "Email verified, registration complete." });
+    res.json({ message: "Email verified, registrasi berhasil." });
   } catch (error) {
     next(error);
   }
@@ -131,7 +143,7 @@ const resendOtp = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -159,17 +171,19 @@ const login = async (req, res, next) => {
     });
 
     if (!user) {
-      throw Object.assign(new Error(), { status: 401 });
+      throw Object.assign(new Error("User tidak ditemukan"), { status: 401 });
     }
 
     if (!user.isVerified) {
-      throw Object.assign(new Error(), { status: 403 });
+      throw Object.assign(new Error("User belum verifikasi email"), {
+        status: 403,
+      });
     }
 
     const isMatch = await comparePassword(password, user.passwordHash);
 
     if (!isMatch) {
-      throw Object.assign(new Error(), { status: 401 });
+      throw Object.assign(new Error("Password salah"), { status: 401 });
     }
 
     const token = generateToken({
@@ -195,7 +209,7 @@ const forgotPassword = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -219,7 +233,7 @@ const resetPassword = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
     }
 
     const passwordHash = await hashPassword(newPassword);
@@ -240,13 +254,13 @@ const verifyOtpForgotPassword = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
     }
     if (user.otp !== otp) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("OTP salah"), { status: 404 });
     }
     if (user.otpExpiresAt < new Date()) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("OTP expired"), { status: 400 });
     }
 
     res.json({ message: "OTP verified. You can now reset your password." });
@@ -260,7 +274,7 @@ const getProfile = async (req, res, next) => {
     const userId = req.user.userId;
 
     if (!userId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("User tidak ditemukan"), { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -277,7 +291,7 @@ const getProfile = async (req, res, next) => {
       },
     });
     if (!user) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
     }
     res.json({ user });
   } catch (error) {
@@ -291,21 +305,26 @@ const changePassword = async (req, res, next) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Password lama dan baru wajib diisi"), {
+        status: 400,
+      });
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
     }
 
     const isMatch = await comparePassword(oldPassword, user.passwordHash);
     if (!isMatch) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Password lama salah"), { status: 400 });
     }
 
     if (oldPassword === newPassword) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(
+        new Error("Password baru tidak boleh sama dengan lama"),
+        { status: 400 }
+      );
     }
 
     const passwordHash = await hashPassword(newPassword);
@@ -315,7 +334,7 @@ const changePassword = async (req, res, next) => {
       data: { passwordHash },
     });
 
-    res.json({ message: "Password changed successfully." });
+    res.json({ message: "Password berhasil diubah." });
   } catch (error) {
     next(error);
   }

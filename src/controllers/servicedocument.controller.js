@@ -5,7 +5,10 @@ const getDocumentsByServiceIdForUser = async (req, res, next) => {
     const { serviceIds } = req.body;
 
     if (!Array.isArray(serviceIds) || serviceIds.length === 0) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(
+        new Error("serviceIds wajib diisi dan berupa array"),
+        { status: 400 }
+      );
     }
 
     const services = await prisma.service.findMany({
@@ -47,7 +50,10 @@ const getDocumentsByServiceIdForLoket = async (req, res, next) => {
     const { serviceIds } = req.body;
 
     if (!Array.isArray(serviceIds) || serviceIds.length === 0) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(
+        new Error("serviceIds wajib diisi dan berupa array"),
+        { status: 400 }
+      );
     }
 
     const services = await prisma.service.findMany({

@@ -82,7 +82,7 @@ router.post(
  *       200:
  *         description: Loket updated
  *       404:
- *         description: Loket not found
+ *         description: Loket tidak ditemukan
  *       500:
  *         description: Internal server error
  */
@@ -204,7 +204,7 @@ router.post("/loket/login", loketController.login);
  *                       type: string
  *                       format: date-time
  *       404:
- *         description: Loket not found
+ *         description: Loket tidak ditemukan
  *       500:
  *         description: Internal server error
  */

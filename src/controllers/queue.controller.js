@@ -24,7 +24,7 @@ const bookQueueOnline = async (req, res, next) => {
       !Array.isArray(serviceIds) ||
       serviceIds.length === 0
     ) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Data tidak lengkap"), { status: 400 });
     }
 
     const existingQueue = await prisma.queue.findFirst({
@@ -37,7 +37,9 @@ const bookQueueOnline = async (req, res, next) => {
     });
 
     if (existingQueue) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Sudah ada antrian aktif"), {
+        status: 400,
+      });
     }
 
     const now = new Date();
@@ -217,7 +219,9 @@ const updateStatus = (newStatus) => async (req, res, next) => {
     }
 
     if (newStatus !== "canceled" && queueData.branchId !== csBranchId) {
-      throw Object.assign(new Error(), { status: 403 });
+      throw Object.assign(new Error("Antrian tidak bisa diubah statusnya."), {
+        status: 403,
+      });
     }
 
     const currentStatus = queueData.status;
@@ -369,7 +373,9 @@ const getQueueCountByBranchIdCS = async (req, res, next) => {
     const branchId = req.cs.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Cabang tidak ditemukan pada akun CS"), {
+        status: 400,
+      });
     }
 
     const count = await prisma.queue.count({
@@ -395,7 +401,9 @@ const getQueueCountByBranchIdLoket = async (req, res, next) => {
     const branchId = req.loket.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Cabang tidak ditemukan pada akun Loket"), {
+        status: 400,
+      });
     }
 
     const count = await prisma.queue.count({
@@ -421,7 +429,9 @@ const getQueueCountByBranchIdUser = async (req, res, next) => {
     const branchId = req.user.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Cabang tidak ditemukan pada akun Anda"), {
+        status: 400,
+      });
     }
 
     const count = await prisma.queue.count({
@@ -447,7 +457,9 @@ const getRemainingQueue = async (req, res, next) => {
     const queueId = parseInt(req.params.queueId, 10);
 
     if (!queueId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Antrian tidak ditemukan"), {
+        status: 400,
+      });
     }
 
     const myQueue = await prisma.queue.findUnique({
@@ -459,7 +471,9 @@ const getRemainingQueue = async (req, res, next) => {
     });
 
     if (!myQueue) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("Antrian tidak ditemukan"), {
+        status: 404,
+      });
     }
 
     const remaining = await prisma.queue.count({
@@ -487,7 +501,7 @@ const getLatestInProgressQueueCS = async (req, res, next) => {
     const branchId = req.cs?.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error("Branch ID not found in CS session."), {
+      throw Object.assign(new Error("ID Cabang tidak ditemukan di akun CS."), {
         status: 400,
       });
     }
@@ -504,7 +518,7 @@ const getLatestInProgressQueueCS = async (req, res, next) => {
 
     if (!queue) {
       throw Object.assign(
-        new Error("No in-progress queue found for this branch."),
+        new Error("Tidak ada antrian yang sedang dilayani."),
         { status: 404 }
       );
     }
@@ -520,9 +534,12 @@ const getLatestInProgressQueueLoket = async (req, res, next) => {
     const branchId = req.loket?.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error("Branch ID not found in Loket session."), {
-        status: 400,
-      });
+      throw Object.assign(
+        new Error("ID Cabang tidak ditemukan di akun Loket."),
+        {
+          status: 400,
+        }
+      );
     }
 
     const queue = await prisma.queue.findFirst({
@@ -537,7 +554,7 @@ const getLatestInProgressQueueLoket = async (req, res, next) => {
 
     if (!queue) {
       throw Object.assign(
-        new Error("No in-progress queue found for this branch."),
+        new Error("Tidak ada antrian yang sedang dilayani."),
         { status: 404 }
       );
     }
@@ -553,9 +570,12 @@ const getLatestInProgressQueueUser = async (req, res, next) => {
     const branchId = req.user?.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error("Branch ID not found in Loket session."), {
-        status: 400,
-      });
+      throw Object.assign(
+        new Error("ID Cabang tidak ditemukan di akun Loket."),
+        {
+          status: 400,
+        }
+      );
     }
 
     const queue = await prisma.queue.findFirst({
@@ -570,7 +590,7 @@ const getLatestInProgressQueueUser = async (req, res, next) => {
 
     if (!queue) {
       throw Object.assign(
-        new Error("No in-progress queue found for this branch."),
+        new Error("Tidak ada antrian yang sedang dilayani."),
         { status: 404 }
       );
     }
@@ -588,7 +608,9 @@ const getWaitingQueuesByBranchIdLoket = async (req, res, next) => {
     const branchId = req.loket.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Cabang tidak ditemukan."), {
+        status: 400,
+      });
     }
 
     const queues = await prisma.queue.findMany({
@@ -624,7 +646,9 @@ const getWaitingQueuesByBranchIdCS = async (req, res, next) => {
     const branchId = req.cs.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Cabang tidak ditemukan."), {
+        status: 400,
+      });
     }
 
     const queues = await prisma.queue.findMany({
@@ -658,7 +682,10 @@ const getWaitingQueuesByBranchIdCS = async (req, res, next) => {
 const getOldestWaitingQueueCS = async (req, res, next) => {
   try {
     const branchId = req.cs?.branchId;
-    if (!branchId) throw Object.assign(new Error("Branch ID missing."), { status: 400 });
+    if (!branchId)
+      throw Object.assign(new Error("Cabang tidak ditemukan pada akun CS."), {
+        status: 400,
+      });
 
     const queue = await prisma.queue.findFirst({
       where: {
@@ -671,7 +698,13 @@ const getOldestWaitingQueueCS = async (req, res, next) => {
       orderBy: { createdAt: "asc" },
     });
 
-    if (!queue) throw Object.assign(new Error("No waiting queue found."), { status: 404 });
+    if (!queue)
+      throw Object.assign(
+        new Error("Tidak ada antrian yang sedang menunggu."),
+        {
+          status: 404,
+        }
+      );
 
     res.status(200).json(queue);
   } catch (error) {
@@ -682,7 +715,10 @@ const getOldestWaitingQueueCS = async (req, res, next) => {
 const getOldestWaitingQueueLoket = async (req, res, next) => {
   try {
     const branchId = req.loket?.branchId;
-    if (!branchId) throw Object.assign(new Error("Branch ID missing."), { status: 400 });
+    if (!branchId)
+      throw Object.assign(new Error("Cabang tidak ditemukan pada akun CS."), {
+        status: 400,
+      });
 
     const queue = await prisma.queue.findFirst({
       where: {
@@ -695,7 +731,13 @@ const getOldestWaitingQueueLoket = async (req, res, next) => {
       orderBy: { createdAt: "asc" },
     });
 
-    if (!queue) throw Object.assign(new Error("No waiting queue found."), { status: 404 });
+    if (!queue)
+      throw Object.assign(
+        new Error("Tidak ada antrian yang sedang menunggu."),
+        {
+          status: 404,
+        }
+      );
 
     res.status(200).json(queue);
   } catch (error) {
@@ -707,7 +749,10 @@ const getOldestWaitingQueueUser = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
 
-    if (!userId) throw Object.assign(new Error("User not authenticated."), { status: 401 });
+    if (!userId)
+      throw Object.assign(new Error("User not authenticated."), {
+        status: 401,
+      });
 
     const latestUserQueue = await prisma.queue.findFirst({
       where: { userId },
@@ -715,7 +760,9 @@ const getOldestWaitingQueueUser = async (req, res, next) => {
     });
 
     if (!latestUserQueue || !latestUserQueue.branchId)
-      throw Object.assign(new Error("No recent queue found for user."), { status: 404 });
+      throw Object.assign(new Error("Tidak ada antrian saat ini."), {
+        status: 404,
+      });
 
     const queue = await prisma.queue.findFirst({
       where: {
@@ -728,14 +775,17 @@ const getOldestWaitingQueueUser = async (req, res, next) => {
       orderBy: { createdAt: "asc" },
     });
 
-    if (!queue) throw Object.assign(new Error("No waiting queue found in user's branch."), { status: 404 });
+    if (!queue)
+      throw Object.assign(
+        new Error("Tidak ada antrian yang sedang menunggu."),
+        { status: 404 }
+      );
 
     res.status(200).json(queue);
   } catch (error) {
     next(error);
   }
 };
-
 
 const getAllQueues = async (req, res) => {
   try {
@@ -789,8 +839,8 @@ const getAllQueues = async (req, res) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-          "*".repeat(Math.max(domainMain.length - 2, 0)) +
-          domainMain.slice(-1);
+            "*".repeat(Math.max(domainMain.length - 2, 0)) +
+            domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -807,10 +857,10 @@ const getAllQueues = async (req, res) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-          ...queue.user,
-          email: censorEmail(queue.user.email),
-          phoneNumber: censorPhone(queue.user.phoneNumber),
-        }
+            ...queue.user,
+            email: censorEmail(queue.user.email),
+            phoneNumber: censorPhone(queue.user.phoneNumber),
+          }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -828,11 +878,11 @@ const getTicketById = async (req, res, next) => {
     const queueId = parseInt(req.params.id, 10);
     const userId = req.user.userId;
     if (!queueId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("queueId wajib diisi"), { status: 400 });
     }
 
     if (!userId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("User tidak ditemukan."), { status: 400 });
     }
 
     const queue = await prisma.queue.findUnique({
@@ -846,11 +896,15 @@ const getTicketById = async (req, res, next) => {
     });
 
     if (!queue) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("Antrian tidak ditemukan"), {
+        status: 404,
+      });
     }
 
     if (req.user && queue.userId !== userId) {
-      throw Object.assign(new Error(), { status: 403 });
+      throw Object.assign(new Error("Tidak berhak mengakses tiket ini"), {
+        status: 403,
+      });
     }
 
     const services = Array.isArray(queue.services)
@@ -882,11 +936,11 @@ const getLoketTicketById = async (req, res, next) => {
     const queueId = parseInt(req.params.id, 10);
     const loketId = req.loket.loketId;
     if (!queueId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("queueId wajib diisi"), { status: 400 });
     }
 
     if (!loketId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Loket tidak ditemukan."), { status: 400 });
     }
 
     const queue = await prisma.queue.findUnique({
@@ -900,11 +954,15 @@ const getLoketTicketById = async (req, res, next) => {
     });
 
     if (!queue) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("Antrian tidak ditemukan"), {
+        status: 404,
+      });
     }
 
     if (req.loket && queue.loketId !== loketId) {
-      throw Object.assign(new Error(), { status: 403 });
+      throw Object.assign(new Error("Tidak berhak mengakses tiket ini"), {
+        status: 403,
+      });
     }
 
     const services = Array.isArray(queue.services)
@@ -935,7 +993,7 @@ const getUserQueueHistory = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("User tidak ditemukan."), { status: 400 });
     }
 
     const queues = await prisma.queue.findMany({
@@ -966,7 +1024,9 @@ const getActiveCSCustomer = async (req, res, next) => {
     const branchId = req.cs.branchId;
 
     if (!branchId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Cabang tidak ditemukan pada akun CS."), {
+        status: 400,
+      });
     }
 
     const queues = await prisma.queue.findMany({
@@ -1002,12 +1062,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     }));

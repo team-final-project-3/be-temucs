@@ -20,7 +20,9 @@ const addBranch = async (req, res, next) => {
       longitude == null ||
       latitude == null
     ) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Data branch tidak lengkap"), {
+        status: 400,
+      });
     }
 
     const branch = await prisma.branch.create({
@@ -57,7 +59,9 @@ const editBranch = async (req, res, next) => {
       longitude == null ||
       latitude == null
     ) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Data branch tidak lengkap"), {
+        status: 400,
+      });
     }
 
     const branch = await prisma.branch.update({
@@ -89,7 +93,7 @@ const updateBranchStatus = async (req, res, next) => {
     });
 
     if (!branch) {
-      throw Object.assign(new Error("Branch not found"), { status: 404 });
+      throw Object.assign(new Error("Cabang tidak ditemukan"), { status: 404 });
     }
 
     const status = !branch.status;
@@ -131,7 +135,7 @@ const getBranch = async (req, res, next) => {
       },
     });
     if (!branch) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("Branch tidak ditemukan"), { status: 404 });
     }
     res.json({ branch });
   } catch (error) {

@@ -6,7 +6,9 @@ const createQueueService = async (req, res, next) => {
     const { queueId, serviceIds } = req.body;
 
     if (!queueId || !Array.isArray(serviceIds)) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("queueId dan serviceIds wajib diisi"), {
+        status: 400,
+      });
     }
 
     const dataToInsert = serviceIds.map((serviceId) => ({
@@ -39,7 +41,9 @@ const getDocumentsByQueueId = async (req, res, next) => {
     const serviceIds = queueServices.map((q) => q.serviceId);
 
     if (serviceIds.length === 0) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("Tidak ada layanan pada antrian ini"), {
+        status: 404,
+      });
     }
 
     const documents = await prisma.document.findMany({
@@ -64,7 +68,7 @@ const getQueueServicesByQueueId = async (req, res, next) => {
     const { queueId } = req.params;
 
     if (!queueId) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("queueId wajib diisi"), { status: 400 });
     }
 
     const queueServices = await prisma.queueService.findMany({

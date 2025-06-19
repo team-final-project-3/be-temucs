@@ -228,7 +228,7 @@ router.patch(
  *                 totalQueue:
  *                   type: integer
  *       403:
- *         description: CS not found or unauthorized
+ *         description: CS tidak ditemukan atau unauthorized
  *       500:
  *         description: Internal server error
  */
@@ -261,7 +261,7 @@ router.get(
  *                 totalQueue:
  *                   type: integer
  *       403:
- *         description: Loket not found or unauthorized
+ *         description: Loket tidak ditemukan atau unauthorized
  *       500:
  *         description: Internal server error
  */
@@ -333,9 +333,9 @@ router.get(
  *                 remainingInFront:
  *                   type: integer
  *       400:
- *         description: queueId is missing or invalid
+ *         description: queueId tidak ditemukan
  *       404:
- *         description: Queue not found
+ *         description: Queue tidak ditemukan
  *       500:
  *         description: Internal server error
  */
@@ -471,8 +471,6 @@ router.get(
   queueController.getLatestInProgressQueueUser
 );
 
-
-
 /**
  * @swagger
  * /api/queue/waiting/loket:
@@ -508,7 +506,7 @@ router.get(
  *                         serviceName:
  *                           type: string
  *       403:
- *         description: Loket not found or unauthorized
+ *         description: Loket tidak ditemukan atau unauthorized
  *       500:
  *         description: Internal server error
  */
@@ -554,7 +552,7 @@ router.get(
  *                         serviceName:
  *                           type: string
  *       403:
- *         description: CS not found or unauthorized
+ *         description: CS tidak ditemukan atau unauthorized
  *       500:
  *         description: Internal server error
  */
@@ -564,7 +562,6 @@ router.get(
   verifyCSToken,
   queueController.getWaitingQueuesByBranchIdCS
 );
-
 
 /**
  * @swagger
@@ -845,9 +842,9 @@ router.get("/queue", queueController.getAllQueues);
  *                 user:
  *                   type: object
  *       400:
- *         description: queueId is required
+ *         description: queueId dibutuhkan
  *       404:
- *         description: Queue not found
+ *         description: Queue tidak ditemukan
  */
 router.get(
   "/queue/ticket/:id",
@@ -912,7 +909,7 @@ router.get(
  *       400:
  *         description: queueId is required
  *       404:
- *         description: Queue not found
+ *         description: Queue tidak ditemukan
  */
 router.get(
   "/queue/loket-ticket/:id",
@@ -944,7 +941,7 @@ router.get(
  *                   items:
  *                     type: object
  *       400:
- *         description: User not found in token
+ *         description: User tidak ditemukan dalam token
  */
 router.get(
   "/queue/history",

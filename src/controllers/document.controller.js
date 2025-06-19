@@ -6,7 +6,9 @@ const addDocument = async (req, res, next) => {
     const { documentName } = req.body;
 
     if (documentName == null) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Nama dokumen wajib diisi"), {
+        status: 400,
+      });
     }
 
     const document = await prisma.document.create({
@@ -31,7 +33,7 @@ const getDocumentForUser = async (req, res, next) => {
     });
 
     if (!document) {
-      throw Object.assign(new Error("Document not found or inactive"), {
+      throw Object.assign(new Error("Document tidak ditemukan"), {
         status: 404,
       });
     }
@@ -76,9 +78,7 @@ const getAllDocumentForUser = async (req, res, next) => {
 
     res.status(200).json(documents);
   } catch (error) {
-    throw Object.assign(new Error("Gagal mengambil dokumen untuk user"), {
-      status: 500,
-    });
+    next(error);
   }
 };
 
@@ -89,24 +89,25 @@ const getAllDocumentForLoket = async (req, res, next) => {
     });
     res.status(200).json(documents);
   } catch (error) {
-    throw Object.assign(new Error("Gagal mengambil dokumen untuk loket"), {
-      status: 500,
-    });
+    next(error);
   }
 };
 
 const editDocument = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { documentName, updatedBy } = req.body;
+    const username = req.user.username;
+    const { documentName } = req.body;
 
     if (documentName == null || updatedBy == null) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error("Nama dokumen dan updatedBy wajib diisi"), {
+        status: 400,
+      });
     }
 
     const updatedDocument = await prisma.document.update({
       where: { id },
-      data: { documentName, updatedBy },
+      data: { documentName, updatedBy: username },
     });
 
     res.status(200).json({ message: "Document updated", updatedDocument });
@@ -123,7 +124,9 @@ const updateDocumentStatus = async (req, res, next) => {
     const document = await prisma.document.findUnique({ where: { id } });
 
     if (!document) {
-      throw Object.assign(new Error("Document not found"), { status: 404 });
+      throw Object.assign(new Error("Document tidak ditemukan"), {
+        status: 404,
+      });
     }
 
     const status = !document.status;

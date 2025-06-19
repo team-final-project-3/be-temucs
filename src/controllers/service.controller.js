@@ -6,7 +6,10 @@ const addService = async (req, res, next) => {
     const { serviceName, estimatedTime, documentIds } = req.body;
 
     if (!serviceName || !estimatedTime) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(
+        new Error("Nama layanan dan estimasi waktu wajib diisi"),
+        { status: 400 }
+      );
     }
 
     const service = await prisma.service.create({
@@ -76,7 +79,7 @@ const getServiceForUser = async (req, res, next) => {
       },
     });
     if (!service) {
-      throw Object.assign(new Error("Service not found or inactive"), {
+      throw Object.assign(new Error("Layanan tidak ditemukan"), {
         status: 404,
       });
     }
@@ -97,7 +100,7 @@ const getServiceForUser = async (req, res, next) => {
 //       },
 //     });
 //     if (!service) {
-//       throw Object.assign(new Error("Service not found or inactive"), {
+//       throw Object.assign(new Error("Layanan tidak ditemukan"), {
 //         status: 404,
 //       });
 //     }
@@ -115,7 +118,10 @@ const editService = async (req, res, next) => {
     const { serviceName, status, estimatedTime } = req.body;
 
     if (serviceName == null || estimatedTime == null) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(
+        new Error("Nama layanan dan estimasi waktu wajib diisi"),
+        { status: 400 }
+      );
     }
 
     const updatedService = await prisma.service.update({
@@ -123,7 +129,9 @@ const editService = async (req, res, next) => {
       data: { serviceName, status, estimatedTime, updatedBy: username },
     });
 
-    res.status(200).json({ message: "Service updated", updatedService });
+    res
+      .status(200)
+      .json({ message: "Service berhasil diupdate", updatedService });
   } catch (error) {
     next(error);
   }
@@ -137,7 +145,9 @@ const updateServiceStatus = async (req, res, next) => {
     const service = await prisma.service.findUnique({ where: { id } });
 
     if (!service) {
-      throw Object.assign(new Error("Service not found"), { status: 404 });
+      throw Object.assign(new Error("Layanan tidak ditemukan"), {
+        status: 404,
+      });
     }
 
     const status = !service.status;

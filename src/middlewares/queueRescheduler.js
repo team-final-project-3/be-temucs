@@ -3,7 +3,7 @@ const cron = require("node-cron");
 
 async function generateTicketNumberForReschedule(branchId, bookingDate, index) {
   const branch = await prisma.branch.findUnique({ where: { id: branchId } });
-  if (!branch) throw new Error("Branch not found");
+  if (!branch) throw new Error("Cabang tidak ditemukan");
   const paddingNumber = String(index + 1).padStart(3, "0");
   return `${branch.branchCode}-${paddingNumber}`;
 }

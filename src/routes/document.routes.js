@@ -90,7 +90,7 @@ router.get(
  *       200:
  *         description: Document data
  *       404:
- *         description: Document not found or inactive
+ *         description: Document tidak ditemukan
  *       500:
  *         description: Internal server error
  */

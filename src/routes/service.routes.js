@@ -112,7 +112,7 @@ router.get(
  *       200:
  *         description: Service data
  *       404:
- *         description: Service not found or inactive
+ *         description: Service tidak ditemukan
  */
 router.get(
   "/service/:id",

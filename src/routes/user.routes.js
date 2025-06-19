@@ -75,7 +75,7 @@ router.post("/users/register", userController.register);
  *       400:
  *         description: Invalid OTP or already verified
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/verify-otp", userController.verifyOtp);
 
@@ -102,7 +102,7 @@ router.post("/users/verify-otp", userController.verifyOtp);
  *       400:
  *         description: User already verified
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/resend-otp", userController.resendOtp);
 
@@ -155,7 +155,7 @@ router.post("/users/login", userController.login);
  *       200:
  *         description: OTP sent to email for password reset.
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/forgot-password", userController.forgotPassword);
 
@@ -183,7 +183,7 @@ router.post("/users/forgot-password", userController.forgotPassword);
  *       200:
  *         description: Password reset successful.
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/reset-password", userController.resetPassword);
 
@@ -209,11 +209,11 @@ router.post("/users/reset-password", userController.resetPassword);
  *                 type: string
  *     responses:
  *       200:
- *         description: OTP verified. You can now reset your password.
+ *         description: OTP verified. Sekarang bisa reset password.
  *       400:
- *         description: Invalid OTP or OTP expired
+ *         description: Invalid OTP atau OTP expired
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/verify-otp-forgot", userController.verifyOtpForgotPassword);
 
@@ -286,9 +286,9 @@ router.get("/users/profile", userController.getProfile);
  *                 description: Password baru user
  *     responses:
  *       200:
- *         description: Password changed successfully.
+ *         description: Password berhasil diubah.
  *       400:
- *         description: Validation error or old password incorrect
+ *         description: Validation error atau password lama salah
  *       401:
  *         description: Unauthorized
  */
