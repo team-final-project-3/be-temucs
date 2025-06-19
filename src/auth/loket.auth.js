@@ -30,7 +30,7 @@ const verifyLoketToken = async (req, res, next) => {
         { status: 403 }
       );
     }
-
+    console.log(req.loket);
     req.loket = decoded;
     next();
   } catch (error) {

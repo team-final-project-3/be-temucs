@@ -48,8 +48,8 @@ const { verifyUserToken } = require("../auth/user.auth");
  */
 router.post(
   "/queue/book-online",
-  allowRoles("nasabah"),
   verifyUserToken,
+  allowRoles("nasabah"),
   queueController.bookQueueOnline
 );
 
@@ -101,8 +101,8 @@ router.post(
  */
 router.post(
   "/queue/book-offline",
-  allowRoles("loket"),
   verifyLoketToken,
+  allowRoles("loket"),
   queueController.bookQueueOffline
 );
 
@@ -126,8 +126,8 @@ router.post(
  */
 router.patch(
   "/queue/:id/cancel",
-  allowRoles("nasabah"),
   verifyUserToken,
+  allowRoles("nasabah"),
   queueController.cancelQueue
 );
 
@@ -151,8 +151,8 @@ router.patch(
  */
 router.patch(
   "/queue/:id/skip",
-  allowRoles("cs"),
   verifyCSToken,
+  allowRoles("cs"),
   queueController.skipQueue
 );
 
@@ -176,8 +176,8 @@ router.patch(
  */
 router.patch(
   "/queue/:id/take",
-  allowRoles("cs"),
   verifyCSToken,
+  allowRoles("cs"),
   queueController.takeQueue
 );
 
@@ -201,8 +201,8 @@ router.patch(
  */
 router.patch(
   "/queue/:id/done",
-  allowRoles("cs"),
   verifyCSToken,
+  allowRoles("cs"),
   queueController.doneQueue
 );
 
@@ -234,8 +234,8 @@ router.patch(
  */
 router.get(
   "/queue/count/cs",
-  allowRoles("cs"),
   verifyCSToken,
+  allowRoles("cs"),
   queueController.getQueueCountByBranchIdCS
 );
 
@@ -267,8 +267,8 @@ router.get(
  */
 router.get(
   "/queue/count/loket",
-  allowRoles("loket"),
   verifyLoketToken,
+  allowRoles("loket"),
   queueController.getQueueCountByBranchIdLoket
 );
 
@@ -300,8 +300,8 @@ router.get(
  */
 router.get(
   "/queue/count/user",
-  allowRoles("nasabah"),
   verifyUserToken,
+  allowRoles("nasabah"),
   queueController.getQueueCountByBranchIdUser
 );
 
@@ -382,8 +382,8 @@ router.get(
  */
 router.get(
   "/queue/inprogress/loket",
-  allowRoles("cs"),
   verifyCSToken,
+  allowRoles("cs"),
   queueController.getLatestInProgressQueueCS
 );
 
@@ -424,8 +424,8 @@ router.get(
  */
 router.get(
   "/queue/inprogress/loket",
-  allowRoles("loket"),
   verifyLoketToken,
+  allowRoles("loket"),
   queueController.getLatestInProgressQueueLoket
 );
 
@@ -466,8 +466,8 @@ router.get(
  */
 router.get(
   "/queue/inprogress/user",
-  allowRoles("nasabah"),
   verifyUserToken,
+  allowRoles("nasabah"),
   queueController.getLatestInProgressQueueUser
 );
 
@@ -512,8 +512,8 @@ router.get(
  */
 router.get(
   "/queue/waiting/loket",
-  allowRoles("loket"),
   verifyLoketToken,
+  allowRoles("loket"),
   queueController.getWaitingQueuesByBranchIdLoket
 );
 
@@ -558,8 +558,8 @@ router.get(
  */
 router.get(
   "/queue/waiting/cs",
-  allowRoles("cs"),
   verifyCSToken,
+  allowRoles("cs"),
   queueController.getWaitingQueuesByBranchIdCS
 );
 
@@ -604,8 +604,8 @@ router.get(
  */
 router.get(
   "/queue/oldest-waiting/loket",
-  allowRoles("loket"),
   verifyLoketToken,
+  allowRoles("loket"),
   queueController.getOldestWaitingQueueLoket
 );
 
@@ -650,8 +650,8 @@ router.get(
  */
 router.get(
   "/queue/oldest-waiting/cs",
-  allowRoles("cs"),
   verifyCSToken,
+  allowRoles("cs"),
   queueController.getOldestWaitingQueueCS
 );
 
@@ -850,8 +850,8 @@ router.get("/queue", queueController.getAllQueues);
  */
 router.get(
   "/queue/ticket/:id",
-  allowRoles("nasabah"),
   verifyUserToken,
+  allowRoles("nasabah"),
   queueController.getTicketById
 );
 
@@ -915,8 +915,8 @@ router.get(
  */
 router.get(
   "/queue/loket-ticket/:id",
-  allowRoles("loket"),
   verifyLoketToken,
+  allowRoles("loket"),
   queueController.getLoketTicketById
 );
 
@@ -947,8 +947,8 @@ router.get(
  */
 router.get(
   "/queue/history",
-  allowRoles("nasabah"),
   verifyUserToken,
+  allowRoles("nasabah"),
   queueController.getUserQueueHistory
 );
 
@@ -1020,8 +1020,8 @@ router.get(
  */
 router.get(
   "/queue/active-cs-customer",
-  allowRoles("cs"),
   verifyCSToken,
+  allowRoles("cs"),
   queueController.getActiveCSCustomer
 );
 
