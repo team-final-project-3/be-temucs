@@ -514,6 +514,13 @@ const getLatestInProgressQueueCS = async (req, res, next) => {
       orderBy: {
         calledAt: "desc",
       },
+      include: {
+        services: {
+          include: {
+            service: true,
+          },
+        },
+      },
     });
 
     if (!queue) {
