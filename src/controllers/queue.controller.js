@@ -531,11 +531,20 @@ const getRemainingQueue = async (req, res, next) => {
   }
 };
 
-const getLatestInProgressQueue = async (req, res, next) => {
+//#region getLatestInProgressQueue
+
+const getLatestInProgressQueueCS = async (req, res, next) => {
   try {
+    const branchId = req.cs?.branchId;
+
+    if (!branchId) {
+      throw Object.assign(new Error("Branch ID not found in CS session."), { status: 400 });
+    }
+
     const queue = await prisma.queue.findFirst({
       where: {
         status: "in progress",
+        branchId: Number(branchId),
       },
       orderBy: {
         calledAt: "desc",
@@ -543,7 +552,7 @@ const getLatestInProgressQueue = async (req, res, next) => {
     });
 
     if (!queue) {
-      throw Object.assign(new Error(), { status: 404 });
+      throw Object.assign(new Error("No in-progress queue found for this branch."), { status: 404 });
     }
 
     res.status(200).json(queue);
@@ -551,6 +560,65 @@ const getLatestInProgressQueue = async (req, res, next) => {
     next(error);
   }
 };
+
+const getLatestInProgressQueueLoket = async (req, res, next) => {
+  try {
+    const branchId = req.loket?.branchId;
+
+    if (!branchId) {
+      throw Object.assign(new Error("Branch ID not found in Loket session."), { status: 400 });
+    }
+
+    const queue = await prisma.queue.findFirst({
+      where: {
+        status: "in progress",
+        branchId: Number(branchId),
+      },
+      orderBy: {
+        calledAt: "desc",
+      },
+    });
+
+    if (!queue) {
+      throw Object.assign(new Error("No in-progress queue found for this branch."), { status: 404 });
+    }
+
+    res.status(200).json(queue);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getLatestInProgressQueueUser = async (req, res, next) => {
+  try {
+    const branchId = req.user?.branchId;
+
+    if (!branchId) {
+      throw Object.assign(new Error("Branch ID not found in Loket session."), { status: 400 });
+    }
+
+    const queue = await prisma.queue.findFirst({
+      where: {
+        status: "in progress",
+        branchId: Number(branchId),
+      },
+      orderBy: {
+        calledAt: "desc",
+      },
+    });
+
+    if (!queue) {
+      throw Object.assign(new Error("No in-progress queue found for this branch."), { status: 404 });
+    }
+
+    res.status(200).json(queue);
+  } catch (error) {
+    next(error);
+  }
+};
+
+//#endregion
+
 
 const getWaitingQueuesByBranchIdLoket = async (req, res, next) => {
   try {
@@ -948,7 +1016,9 @@ module.exports = {
   getQueueCountByBranchIdLoket,
   getQueueCountByBranchIdUser,
   getRemainingQueue,
-  getLatestInProgressQueue,
+  getLatestInProgressQueueCS,
+  getLatestInProgressQueueLoket,
+  getLatestInProgressQueueUser,
   getWaitingQueuesByBranchIdLoket,
   getWaitingQueuesByBranchIdCS,
   getOldestWaitingQueue,

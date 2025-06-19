@@ -347,28 +347,131 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/latest-inprogress:
+ * /api/queue/inprogress/cs:
  *   get:
- *     summary: Get the latest queue that is currently in progress
+ *     summary: Get the latest "in progress" queue for CS branch
  *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Only accessible by CS. Automatically gets the branch from CS's login data.
+ *       Returns the most recent queue with status "in progress", ordered by the latest call time (`calledAt`).
  *     responses:
  *       200:
- *         description: Latest in-progress queue
+ *         description: Latest in-progress queue in the CS's branch
  *         content:
  *           application/json:
  *             schema:
  *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 ticketNumber:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 calledAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Branch ID missing from CS's session
  *       404:
  *         description: No in-progress queue found
  *       500:
  *         description: Internal server error
  */
 router.get(
-  "/queue/latest-inprogress",
+  "/queue/inprogress/loket",
+  allowRoles("cs"),
+  verifyCSToken,
+  queueController.getLatestInProgressQueueCS
+);
+
+/**
+ * @swagger
+ * /api/queue/inprogress/loket:
+ *   get:
+ *     summary: Get the latest "in progress" queue for Loket's branch
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Only accessible by Loket. Automatically gets the branch from Loket's login data.
+ *       Returns the most recent queue with status "in progress", ordered by the latest call time (`calledAt`).
+ *     responses:
+ *       200:
+ *         description: Latest in-progress queue in the Loket's branch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 ticketNumber:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 calledAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Branch ID missing from Loket's session
+ *       404:
+ *         description: No in-progress queue found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/inprogress/loket",
+  allowRoles("loket"),
+  verifyLoketToken,
+  queueController.getLatestInProgressQueueLoket
+);
+
+/**
+ * @swagger
+ * /api/queue/inprogress/user:
+ *   get:
+ *     summary: Get the latest "in progress" queue for the user's branch
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Only accessible by Nasabah. Automatically gets the branch from the user's login session.
+ *       Returns the most recent queue with status "in progress", ordered by the latest call time (`calledAt`).
+ *     responses:
+ *       200:
+ *         description: Latest in-progress queue in the user's branch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 ticketNumber:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 calledAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Branch ID missing from user's session
+ *       404:
+ *         description: No in-progress queue found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/inprogress/user",
   allowRoles("nasabah"),
   verifyUserToken,
-  queueController.getLatestInProgressQueue
+  queueController.getLatestInProgressQueueUser
 );
+
+
 
 /**
  * @swagger
