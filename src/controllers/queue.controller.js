@@ -766,26 +766,28 @@ const getAllQueues = async (req, res) => {
 
       let censoredUser;
       if (user.length <= 3) {
-        censoredUser = user[0] + "*".repeat(user.length - 1);
+        censoredUser = user[0] + "*".repeat(Math.max(user.length - 1, 0));
       } else {
         const visible = user.slice(0, 2);
-        const hidden = "*".repeat(user.length - 2);
+        const hidden = "*".repeat(Math.max(user.length - 2, 0));
         censoredUser = visible + hidden;
       }
 
       const domainParts = domain.split(".");
-      const domainMain = domainParts[0];
+      const domainMain = domainParts[0] || "";
       const domainExt = domainParts[1] || "";
 
       const censoredDomainMain =
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
-          : domainMain[0] + "*".repeat(domainMain.length - 2) + domainMain.slice(-1);
+          : domainMain[0] +
+          "*".repeat(Math.max(domainMain.length - 2, 0)) +
+          domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
           ? "*".repeat(domainExt.length)
-          : "*".repeat(domainExt.length - 1) + domainExt.slice(-1);
+          : "*".repeat(Math.max(domainExt.length - 1, 0)) + domainExt.slice(-1);
 
       const censoredDomain = `${censoredDomainMain}.${censoredDomainExt}`;
 
