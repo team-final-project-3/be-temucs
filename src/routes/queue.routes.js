@@ -381,7 +381,7 @@ router.get(
  *         description: Internal server error
  */
 router.get(
-  "/queue/inprogress/loket",
+  "/queue/inprogress/cs",
   verifyCSToken,
   allowRoles("cs"),
   queueController.getLatestInProgressQueueCS
