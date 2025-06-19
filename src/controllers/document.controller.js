@@ -63,9 +63,17 @@ const getDocumentForUser = async (req, res, next) => {
 
 const getAllDocumentForUser = async (req, res, next) => {
   try {
-    const documents = await prisma.document.findMany({
-      where: { status: true },
-    });
+    const role = req.user.role;
+    let documents;
+
+    if (role === "admin") {
+      documents = await prisma.document.findMany();
+    } else {
+      documents = await prisma.document.findMany({
+        where: { status: true },
+      });
+    }
+
     res.status(200).json(documents);
   } catch (error) {
     throw Object.assign(new Error("Gagal mengambil dokumen untuk user"), {

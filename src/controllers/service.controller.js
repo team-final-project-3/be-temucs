@@ -34,9 +34,17 @@ const addService = async (req, res, next) => {
 
 const getAllServiceForUser = async (req, res, next) => {
   try {
-    const services = await prisma.service.findMany({
-      where: { status: true },
-    });
+    const role = req.user.role;
+    let services;
+
+    if (role === "admin") {
+      services = await prisma.service.findMany();
+    } else {
+      services = await prisma.service.findMany({
+        where: { status: true },
+      });
+    }
+
     res.status(200).json(services);
   } catch (error) {
     throw Object.assign(new Error("Gagal mengambil service untuk user"), {
