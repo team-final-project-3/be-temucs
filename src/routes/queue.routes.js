@@ -372,36 +372,96 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/waiting/{branchId}:
+ * /api/queue/waiting/loket:
  *   get:
- *     summary: Get all waiting queues in a specific branch For CS
+ *     summary: Get all waiting queues for Loket's branch
  *     tags: [Queue]
- *     parameters:
- *       - in: path
- *         name: branchId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID of the branch
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by Loket. Automatically gets branch from Loket's login data. Returns list of waiting queues ordered by creation time.
  *     responses:
  *       200:
- *         description: List of waiting queues
+ *         description: List of waiting queues in the Loket's branch
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
  *                 type: object
- *       400:
- *         description: branchId is required
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   ticketNumber:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ *                   services:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         serviceName:
+ *                           type: string
+ *       403:
+ *         description: Loket not found or unauthorized
  *       500:
  *         description: Internal server error
  */
 router.get(
-  "/queue/waiting/:branchId",
-  allowRoles("nasabah", "cs", "loket"),
-  queueController.getWaitingQueuesByBranchId
+  "/queue/waiting/loket",
+  allowRoles("loket"),
+  verifyLoketToken,
+  queueController.getWaitingQueuesByBranchIdLoket
 );
+
+/**
+ * @swagger
+ * /api/queue/waiting/cs:
+ *   get:
+ *     summary: Get all waiting queues for CS's branch
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by CS. Automatically gets branch from CS's login data. Returns list of waiting queues ordered by creation time.
+ *     responses:
+ *       200:
+ *         description: List of waiting queues in the CS's branch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   ticketNumber:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ *                   services:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         serviceName:
+ *                           type: string
+ *       403:
+ *         description: CS not found or unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/waiting/cs",
+  allowRoles("cs"),
+  verifyCSToken,
+  queueController.getWaitingQueuesByBranchIdCS
+);
+
 
 /**
  * @swagger

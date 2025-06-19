@@ -552,9 +552,9 @@ const getLatestInProgressQueue = async (req, res, next) => {
   }
 };
 
-const getWaitingQueuesByBranchId = async (req, res, next) => {
+const getWaitingQueuesByBranchIdLoket = async (req, res, next) => {
   try {
-    const branchId = parseInt(req.params.branchId, 10);
+    const branchId = req.loket.branchId;
 
     if (!branchId) {
       throw Object.assign(new Error(), { status: 400 });
@@ -587,6 +587,44 @@ const getWaitingQueuesByBranchId = async (req, res, next) => {
     next(error);
   }
 };
+
+const getWaitingQueuesByBranchIdCS = async (req, res, next) => {
+  try {
+    const branchId = req.cs.branchId;
+
+    if (!branchId) {
+      throw Object.assign(new Error(), { status: 400 });
+    }
+
+    const queues = await prisma.queue.findMany({
+      where: {
+        branchId: Number(branchId),
+        status: "waiting",
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      include: {
+        services: {
+          include: {
+            service: true,
+          },
+        },
+      },
+    });
+
+    const formattedQueues = queues.map((queue) => ({
+      ...queue,
+      services: queue.services.map((qs) => qs.service),
+    }));
+
+    res.status(200).json(formattedQueues);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 
 const getOldestWaitingQueue = async (req, res, next) => {
   try {
@@ -671,8 +709,8 @@ const getAllQueues = async (req, res) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-            "*".repeat(domainMain.length - 2) +
-            domainMain.slice(-1);
+          "*".repeat(domainMain.length - 2) +
+          domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -688,10 +726,10 @@ const getAllQueues = async (req, res) => {
       ...queue,
       user: queue.user
         ? {
-            ...queue.user,
-            email: censorEmail(queue.user.email),
-            phoneNumber: censorPhone(queue.user.phoneNumber),
-          }
+          ...queue.user,
+          email: censorEmail(queue.user.email),
+          phoneNumber: censorPhone(queue.user.phoneNumber),
+        }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -883,12 +921,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
@@ -911,7 +949,8 @@ module.exports = {
   getQueueCountByBranchIdUser,
   getRemainingQueue,
   getLatestInProgressQueue,
-  getWaitingQueuesByBranchId,
+  getWaitingQueuesByBranchIdLoket,
+  getWaitingQueuesByBranchIdCS,
   getOldestWaitingQueue,
   getAllQueues,
   getTicketById,
