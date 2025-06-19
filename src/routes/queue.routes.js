@@ -208,7 +208,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/queue/count:
+ * /api/queue/count/cs:
  *   get:
  *     summary: Get total active queues for CS's branch
  *     tags: [Queue]
@@ -241,7 +241,7 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/count:
+ * /api/queue/count/loket:
  *   get:
  *     summary: Get total active queues for Loket's branch
  *     tags: [Queue]
@@ -274,7 +274,7 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/count:
+ * /api/queue/count/user:
  *   get:
  *     summary: Get total active queues for user's latest visited branch
  *     tags: [Queue]
