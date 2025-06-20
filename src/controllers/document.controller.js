@@ -99,7 +99,7 @@ const editDocument = async (req, res, next) => {
     const username = req.user.username;
     const { documentName } = req.body;
 
-    if (documentName == null || updatedBy == null) {
+    if (documentName == null) {
       throw Object.assign(new Error("Nama dokumen dan updatedBy wajib diisi"), {
         status: 400,
       });
