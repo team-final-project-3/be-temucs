@@ -1,5 +1,3 @@
-const { getStartEndOfBookingDateWIB } = require("./dateHelper");
-
 async function generateTicketNumberAndEstimate(
   tx,
   branchId,
@@ -7,14 +5,18 @@ async function generateTicketNumberAndEstimate(
   serviceIds,
   username
 ) {
-  const { startUTC, endUTC } = getStartEndOfBookingDateWIB(bookingDate);
+  const startOfDay = new Date(bookingDate);
+  startOfDay.setHours(8, 0, 0, 0);
+  const endOfDay = new Date(bookingDate);
+  endOfDay.setHours(15, 0, 0, 0);
 
+  // Hitung jumlah queue pada hari itu di dalam transaksi
   const count = await tx.queue.count({
     where: {
       branchId,
       bookingDate: {
-        gte: startUTC,
-        lte: endUTC,
+        gte: startOfDay,
+        lte: endOfDay,
       },
     },
   });
@@ -23,12 +25,15 @@ async function generateTicketNumberAndEstimate(
   const paddingNumber = String(count + 1).padStart(3, "0");
   const ticketNumber = `${branch.branchCode}-${paddingNumber}`;
 
+  const bookingDateObj = new Date(bookingDate);
+  bookingDateObj.setHours(0, 0, 0, 0);
+
   const activeQueues = await tx.queue.findMany({
     where: {
       branchId,
       bookingDate: {
-        gte: startUTC,
-        lte: endUTC,
+        gte: bookingDateObj,
+        lte: endOfDay,
       },
       status: "waiting",
     },
@@ -47,10 +52,14 @@ async function generateTicketNumberAndEstimate(
     }
   }
 
-  const estimatedTimeDate = new Date(startUTC.getTime() + totalMinutes * 60000);
+  // Hitung estimatedTime untuk queue baru
+  const estimatedTimeDate = new Date(
+    bookingDate.getTime() + totalMinutes * 60000
+  );
   const notification = activeQueues.length < 5;
 
   return { ticketNumber, estimatedTimeDate, notification };
 }
 
 module.exports = { generateTicketNumberAndEstimate };
+
