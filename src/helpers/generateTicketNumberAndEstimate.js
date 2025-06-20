@@ -86,4 +86,4 @@ async function generateTicketNumberAndEstimate(
   return { ticketNumber, estimatedTimeDate, notification };
 }
 
-module.exports = generateTicketNumberAndEstimate;
+module.exports = { generateTicketNumberAndEstimate };
