@@ -1161,4 +1161,46 @@ router.get(
   queueController.getActiveCustomerByCS
 );
 
+/**
+ * @swagger
+ * /queue/cs/handling:
+ *   get:
+ *     summary: Ambil detail antrean berdasarkan token CS yang login
+ *     tags:
+ *       - Queue
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Daftar antrean dengan nama, nomor tiket, dan layanan
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                     example: Irene Simatupang
+ *                   ticketNumber:
+ *                     type: string
+ *                     example: AM-01-001
+ *                   services:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     example: ["servicedocument", "servicedocument"]
+ *       401:
+ *         description: Unauthorized – Token tidak valid atau bukan CS
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  "/queue/cs/handling",
+  verifyCSToken,
+  allowRoles("cs"),
+  queueController.getQueueDetailByCSId
+);
+
 module.exports = router;
