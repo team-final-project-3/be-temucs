@@ -146,9 +146,30 @@ router.get(
  *               estimatedTime:
  *                 type: integer
  *                 example: 20
+ *               documentIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: List of document IDs to relate with this service
+ *                 example: [1, 2, 3]
  *     responses:
  *       200:
  *         description: Service updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 updatedService:
+ *                   type: object
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Service not found
+ *       500:
+ *         description: Internal server error
  */
 router.put(
   "/service/:id",

@@ -115,7 +115,7 @@ const editService = async (req, res, next) => {
   try {
     const username = req.user.username;
     const id = parseInt(req.params.id, 10);
-    const { serviceName, status, estimatedTime } = req.body;
+    const { serviceName, estimatedTime, documentIds } = req.body;
 
     if (serviceName == null || estimatedTime == null) {
       throw Object.assign(
@@ -124,10 +124,39 @@ const editService = async (req, res, next) => {
       );
     }
 
+    if (documentIds !== undefined) {
+      if (!Array.isArray(documentIds)) {
+        throw Object.assign(new Error("documentIds harus berupa array"), {
+          status: 400,
+        });
+      }
+      if (documentIds.some((id) => typeof id !== "number" || id <= 0)) {
+        throw Object.assign(
+          new Error("Setiap documentId harus berupa angka positif"),
+          { status: 400 }
+        );
+      }
+    }
+
     const updatedService = await prisma.service.update({
       where: { id: Number(id) },
-      data: { serviceName, status, estimatedTime, updatedBy: username },
+      data: { serviceName, estimatedTime, updatedBy: username },
     });
+
+    if (Array.isArray(documentIds)) {
+      await prisma.serviceDocument.deleteMany({
+        where: { serviceId: id },
+      });
+
+      await prisma.serviceDocument.createMany({
+        data: documentIds.map((documentId) => ({
+          serviceId: id,
+          documentId,
+          createdBy: username,
+          updatedBy: username,
+        })),
+      });
+    }
 
     res
       .status(200)
