@@ -43,21 +43,6 @@ const bookQueueOnline = async (req, res, next) => {
       });
     }
 
-    const now = new Date();
-    const wib = new Date(now.getTime() + 7 * 60 * 60 * 1000);
-    const hour = wib.getHours();
-
-    let bookingDateWIB;
-    if (hour >= 15) {
-      wib.setDate(wib.getDate() + 1);
-      wib.setHours(8, 0, 0, 0);
-      bookingDateWIB = new Date(wib);
-    } else {
-      wib.setHours(8, 0, 0, 0);
-      bookingDateWIB = new Date(wib);
-    }
-    const bookingDate = new Date(bookingDateWIB.getTime() - 7 * 60 * 60 * 1000);
-
     const queue = await prisma.$transaction(async (tx) => {
       const { ticketNumber, estimatedTimeDate, notification } =
         await generateTicketNumberAndEstimate(
@@ -72,7 +57,7 @@ const bookQueueOnline = async (req, res, next) => {
         data: {
           userId,
           branchId,
-          bookingDate: new Date(bookingDate),
+          bookingDate: new Date(now),
           name: fullname,
           email,
           phoneNumber,
@@ -913,8 +898,8 @@ const getAllQueues = async (req, res) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-          "*".repeat(Math.max(domainMain.length - 2, 0)) +
-          domainMain.slice(-1);
+            "*".repeat(Math.max(domainMain.length - 2, 0)) +
+            domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -931,10 +916,10 @@ const getAllQueues = async (req, res) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-          ...queue.user,
-          email: censorEmail(queue.user.email),
-          phoneNumber: censorPhone(queue.user.phoneNumber),
-        }
+            ...queue.user,
+            email: censorEmail(queue.user.email),
+            phoneNumber: censorPhone(queue.user.phoneNumber),
+          }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -1136,12 +1121,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
@@ -1199,12 +1184,12 @@ const getActiveCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     };
@@ -1219,7 +1204,9 @@ const getQueueDetailByCSId = async (req, res, next) => {
   try {
     const csId = req.cs?.id;
     if (!csId) {
-      return res.status(401).json({ message: "Unauthorized: CS ID tidak ditemukan dalam token." });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: CS ID tidak ditemukan dalam token." });
     }
 
     const queues = await prisma.queue.findMany({
