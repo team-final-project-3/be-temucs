@@ -767,7 +767,7 @@ router.get(
  */
 router.get(
   "/queue/oldest-waiting/user",
-   verifyUserToken,
+  verifyUserToken,
   allowRoles("nasabah"),
   queueController.getOldestWaitingQueueUser
 );
@@ -1095,6 +1095,70 @@ router.get(
   verifyCSToken,
   allowRoles("cs"),
   queueController.getActiveCSCustomer
+);
+
+/**
+ * @swagger
+ * /api/queue/active-customer/cs:
+ *   get:
+ *     summary: Get nasabah yang sedang dilayani oleh CS login
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Data nasabah yang sedang dilayani oleh CS
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 queueId:
+ *                   type: integer
+ *                 ticketNumber:
+ *                   type: string
+ *                 cs:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     username:
+ *                       type: string
+ *                 nasabah:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       nullable: true
+ *                     fullname:
+ *                       type: string
+ *                     username:
+ *                       type: string
+ *                       nullable: true
+ *                     email:
+ *                       type: string
+ *                       nullable: true
+ *                     phoneNumber:
+ *                       type: string
+ *                       nullable: true
+ *                 status:
+ *                   type: string
+ *                 calledAt:
+ *                   type: string
+ *                   format: date-time
+ *       404:
+ *         description: CS tidak sedang melayani nasabah manapun
+ *       400:
+ *         description: CS ID tidak ditemukan pada akun CS
+ */
+
+router.get(
+  "/queue/active-customer/cs",
+  verifyCSToken,
+  allowRoles("cs"),
+  queueController.getActiveCustomerByCS
 );
 
 module.exports = router;

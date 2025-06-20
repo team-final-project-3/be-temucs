@@ -1144,6 +1144,69 @@ const getActiveCSCustomer = async (req, res, next) => {
   }
 };
 
+const getActiveCustomerByCS = async (req, res, next) => {
+  try {
+    const csId = req.cs?.csId;
+    if (!csId) {
+      throw Object.assign(new Error("CS ID tidak ditemukan pada akun CS."), {
+        status: 400,
+      });
+    }
+
+    const queue = await prisma.queue.findFirst({
+      where: {
+        status: "in progress",
+        csId: csId,
+      },
+      include: {
+        cs: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            fullname: true,
+            username: true,
+            email: true,
+            phoneNumber: true,
+          },
+        },
+      },
+    });
+
+    if (!queue) {
+      return res
+        .status(404)
+        .json({ message: "CS tidak sedang melayani nasabah manapun." });
+    }
+
+    const result = {
+      queueId: queue.id,
+      ticketNumber: queue.ticketNumber,
+      cs: queue.cs,
+      nasabah: queue.user
+        ? queue.user
+        : {
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
+      status: queue.status,
+      calledAt: queue.calledAt,
+    };
+
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   bookQueueOnline,
   bookQueueOffline,
@@ -1170,4 +1233,5 @@ module.exports = {
   getLoketTicketById,
   getUserQueueHistory,
   getActiveCSCustomer,
+  getActiveCustomerByCS,
 };

@@ -11,7 +11,13 @@ const registerSchema = z.object({
   fullname: z.string().min(1, "Fullname is required"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email format"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/,
+      "Password must contain uppercase, lowercase, number, and symbol"
+    ),
   phoneNumber: z
     .string()
     .regex(/^\d{10,15}$/, "Phone number must be 10-15 digits"),
