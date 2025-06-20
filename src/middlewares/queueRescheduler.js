@@ -1,5 +1,6 @@
 const prisma = require("../../prisma/client");
 const cron = require("node-cron");
+const sendExpoNotification = require("../helpers/sendExpoNotification");
 
 async function generateTicketNumberForReschedule(branchId, bookingDate, index) {
   const branch = await prisma.branch.findUnique({ where: { id: branchId } });
@@ -82,9 +83,25 @@ const rescheduleWaitingQueues = async () => {
         },
       });
 
-      currentTime = new Date(currentTime.getTime() + totalMinutes * 60000);
+      const user = queue.userId
+        ? await prisma.user.findUnique({ where: { id: queue.userId } })
+        : null;
 
-      // await sendRescheduleNotification(queue.userId, {...});
+      if (user && user.expoPushToken) {
+        const jam = currentTime.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        await sendExpoNotification(
+          user.expoPushToken,
+          "Antrian Di-reschedule",
+          `Antrian Anda telah dijadwalkan ulang ke besok jam ${jam} dengan nomor tiket ${ticketNumber}`,
+          { ticketNumber, bookingDate: tomorrow, jam }
+        );
+      }
+
+      currentTime = new Date(currentTime.getTime() + totalMinutes * 60000);
     }
   }
 

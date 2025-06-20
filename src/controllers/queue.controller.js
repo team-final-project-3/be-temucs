@@ -2,6 +2,7 @@ const prisma = require("../../prisma/client");
 const {
   generateTicketNumberAndEstimate,
 } = require("../helpers/generateTicketNumberAndEstimate");
+const sendExpoNotification = require("../helpers/sendExpoNotification");
 
 const allowedTransitions = {
   waiting: ["in progress", "canceled", "skipped"],
@@ -285,6 +286,23 @@ const updateStatus = (newStatus) => async (req, res, next) => {
             where: { id: { in: nextIds } },
             data: { notification: true },
           });
+        }
+
+        if (nextQueues.length === 5) {
+          const queueKe5 = nextQueues[4];
+          if (queueKe5.userId) {
+            const user = await tx.user.findUnique({
+              where: { id: queueKe5.userId },
+            });
+            if (user && user.expoPushToken) {
+              await sendExpoNotification(
+                user.expoPushToken,
+                "Antrian Anda Hampir Dipanggil",
+                "Antrian Anda tinggal 5 lagi. Mohon bersiap-siap.",
+                { ticketNumber: queueKe5.ticketNumber }
+              );
+            }
+          }
         }
       }
 
