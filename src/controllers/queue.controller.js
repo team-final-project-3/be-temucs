@@ -120,12 +120,12 @@ const bookQueueOffline = async (req, res, next) => {
     }
 
     const now = new Date();
-    if (now.getHours() >= 15) {
-      throw Object.assign(
-        new Error("Booking offline hanya bisa dilakukan sebelum jam 15.00"),
-        { status: 403 }
-      );
-    }
+    // if (now.getHours() >= 15) {
+    //   throw Object.assign(
+    //     new Error("Booking offline hanya bisa dilakukan sebelum jam 15.00"),
+    //     { status: 403 }
+    //   );
+    // }
 
     const existingQueue = await prisma.queue.findFirst({
       where: {
