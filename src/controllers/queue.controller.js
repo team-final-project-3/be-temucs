@@ -44,11 +44,19 @@ const bookQueueOnline = async (req, res, next) => {
     }
 
     const now = new Date();
-    let bookingDate = new Date(now);
-    if (now.getHours() >= 15) {
-      bookingDate.setDate(bookingDate.getDate() + 1);
-      bookingDate.setHours(8, 0, 0, 0);
+    const wib = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    const hour = wib.getHours();
+
+    let bookingDateWIB;
+    if (hour >= 15) {
+      wib.setDate(wib.getDate() + 1);
+      wib.setHours(8, 0, 0, 0);
+      bookingDateWIB = new Date(wib);
+    } else {
+      wib.setHours(8, 0, 0, 0);
+      bookingDateWIB = new Date(wib);
     }
+    const bookingDate = new Date(bookingDateWIB.getTime() - 7 * 60 * 60 * 1000);
 
     const queue = await prisma.$transaction(async (tx) => {
       const { ticketNumber, estimatedTimeDate, notification } =
