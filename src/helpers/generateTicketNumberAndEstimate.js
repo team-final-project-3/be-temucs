@@ -69,16 +69,13 @@ async function generateTicketNumberAndEstimate(
     );
   }
 
-  // Jika estimatedTimeDate lewat jam 15:00 WIB, geser ke hari berikutnya jam 08:00 WIB
   let estimatedTimeWIB = toWIB(estimatedTimeDate);
   if (
     estimatedTimeWIB.getHours() > 15 ||
     (estimatedTimeWIB.getHours() === 15 && estimatedTimeWIB.getMinutes() > 0)
   ) {
-    // Geser ke hari berikutnya jam 08:00 WIB
+    // Geser ke hari berikutnya
     estimatedTimeWIB.setDate(estimatedTimeWIB.getDate() + 1);
-    estimatedTimeWIB.setHours(8, 0, 0, 0);
-    estimatedTimeDate = toUTC(estimatedTimeWIB);
 
     // Cek jumlah antrian di hari baru
     const { startUTC: nextStartUTC, endUTC: nextEndUTC } =
@@ -93,10 +90,34 @@ async function generateTicketNumberAndEstimate(
         status: "waiting",
       },
       orderBy: { estimatedTime: "asc" },
+      include: {
+        services: {
+          include: { service: { select: { estimatedTime: true } } },
+        },
+      },
     });
 
-    // Ticket number lanjut jika sudah ada, jika belum mulai dari 001
-    const nextNumber = nextDayQueues.length + 1;
+    let nextNumber;
+    if (nextDayQueues.length > 0) {
+      // Ada antrian di hari berikutnya, lanjutkan dari antrian terakhir
+      const lastQueue = nextDayQueues[nextDayQueues.length - 1];
+      let lastEstimatedTimeWIB = toWIB(lastQueue.estimatedTime);
+      let lastDuration = 0;
+      for (const s of lastQueue.services) {
+        lastDuration += s.service.estimatedTime || 0;
+      }
+      estimatedTimeWIB = new Date(
+        lastEstimatedTimeWIB.getTime() + lastDuration * 60000
+      );
+
+      nextNumber = nextDayQueues.length + 1;
+    } else {
+      // Tidak ada antrian, mulai dari jam 08:00 WIB
+      estimatedTimeWIB.setHours(8, 0, 0, 0);
+      nextNumber = 1;
+    }
+
+    estimatedTimeDate = toUTC(estimatedTimeWIB);
     ticketNumber = `${branch.branchCode}-${String(nextNumber).padStart(
       3,
       "0"
