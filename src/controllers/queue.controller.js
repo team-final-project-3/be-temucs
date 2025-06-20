@@ -42,6 +42,7 @@ const bookQueueOnline = async (req, res, next) => {
         status: 400,
       });
     }
+    const bookingDate = new Date();
 
     const queue = await prisma.$transaction(async (tx) => {
       const { ticketNumber, estimatedTimeDate, notification } =
@@ -57,7 +58,7 @@ const bookQueueOnline = async (req, res, next) => {
         data: {
           userId,
           branchId,
-          bookingDate: new Date(now),
+          bookingDate: new Date(),
           name: fullname,
           email,
           phoneNumber,
