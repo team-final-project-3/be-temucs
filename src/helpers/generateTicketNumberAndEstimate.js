@@ -12,7 +12,7 @@ async function generateTicketNumberAndEstimate(
   const count = await tx.queue.count({
     where: {
       branchId,
-      bookingDate: {
+      estimatedTime: {
         gte: startUTC,
         lte: endUTC,
       },
@@ -26,7 +26,7 @@ async function generateTicketNumberAndEstimate(
   const activeQueues = await tx.queue.findMany({
     where: {
       branchId,
-      bookingDate: {
+      estimatedTime: {
         gte: startUTC,
         lte: endUTC,
       },
