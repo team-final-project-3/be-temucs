@@ -75,10 +75,32 @@ async function generateTicketNumberAndEstimate(
     estimatedTimeWIB.getHours() > 15 ||
     (estimatedTimeWIB.getHours() === 15 && estimatedTimeWIB.getMinutes() > 0)
   ) {
+    // Geser ke hari berikutnya jam 08:00 WIB
     estimatedTimeWIB.setDate(estimatedTimeWIB.getDate() + 1);
     estimatedTimeWIB.setHours(8, 0, 0, 0);
     estimatedTimeDate = toUTC(estimatedTimeWIB);
-    ticketNumber = `${branch.branchCode}-001`;
+
+    // Cek jumlah antrian di hari baru
+    const { startUTC: nextStartUTC, endUTC: nextEndUTC } =
+      getStartEndOfBookingDateWIB(estimatedTimeWIB);
+    const nextDayQueues = await tx.queue.findMany({
+      where: {
+        branchId,
+        estimatedTime: {
+          gte: nextStartUTC,
+          lte: nextEndUTC,
+        },
+        status: "waiting",
+      },
+      orderBy: { estimatedTime: "asc" },
+    });
+
+    // Ticket number lanjut jika sudah ada, jika belum mulai dari 001
+    const nextNumber = nextDayQueues.length + 1;
+    ticketNumber = `${branch.branchCode}-${String(nextNumber).padStart(
+      3,
+      "0"
+    )}`;
   }
 
   const notification = activeQueues.length < 5;
