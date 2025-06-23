@@ -14,14 +14,52 @@ const addBranch = async (req, res, next) => {
     } = req.body;
 
     if (
-      !name ||
-      !branchCode ||
-      !address ||
-      longitude == null ||
-      latitude == null
+      !name?.trim() ||
+      !branchCode?.trim() ||
+      !address?.trim() ||
+      longitude === null ||
+      latitude === null ||
+      longitude === "" ||
+      latitude === ""
     ) {
       throw Object.assign(new Error("Data branch tidak lengkap"), {
         status: 400,
+      });
+    }
+
+    const long = parseFloat(longitude);
+    const lat = parseFloat(latitude);
+    const isValidCoordinates =
+      !isNaN(long) &&
+      !isNaN(lat) &&
+      long >= -180 &&
+      long <= 180 &&
+      lat >= -90 &&
+      lat <= 90;
+
+    if (!isValidCoordinates) {
+      throw Object.assign(new Error("Format longitude/latitude tidak valid"), {
+        status: 400,
+      });
+    }
+
+    const existingName = await prisma.branch.findFirst({
+      where: { name },
+    });
+
+    if (existingName) {
+      throw Object.assign(new Error("Nama cabang sudah terdaftar"), {
+        status: 409,
+      });
+    }
+
+    const existingCode = await prisma.branch.findFirst({
+      where: { branchCode },
+    });
+
+    if (existingCode) {
+      throw Object.assign(new Error("Kode cabang sudah terdaftar"), {
+        status: 409,
       });
     }
 
@@ -30,8 +68,8 @@ const addBranch = async (req, res, next) => {
         name,
         branchCode,
         address,
-        longitude,
-        latitude,
+        longitude: long,
+        latitude: lat,
         holiday,
         status,
         createdBy: username,
@@ -39,7 +77,7 @@ const addBranch = async (req, res, next) => {
       },
     });
 
-    res.status(201).json({ message: "Branch created", branch });
+    res.status(201).json({ message: "Cabang baru berhasil ditambahkan", branch });
   } catch (error) {
     next(error);
   }
@@ -49,18 +87,67 @@ const editBranch = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const username = req.user.username;
-    const { name, branchCode, address, longitude, latitude, holiday, status } =
-      req.body;
+    const {
+      name,
+      branchCode,
+      address,
+      longitude,
+      latitude,
+      holiday,
+      status,
+    } = req.body;
 
     if (
-      !name ||
-      !branchCode ||
-      !address ||
-      longitude == null ||
-      latitude == null
+      !name?.trim() ||
+      !branchCode?.trim() ||
+      !address?.trim() ||
+      longitude === null ||
+      latitude === null ||
+      longitude === "" ||
+      latitude === ""
     ) {
       throw Object.assign(new Error("Data branch tidak lengkap"), {
         status: 400,
+      });
+    }
+
+    const long = parseFloat(longitude);
+    const lat = parseFloat(latitude);
+    const isValidCoordinates =
+      !isNaN(long) &&
+      !isNaN(lat) &&
+      long >= -180 &&
+      long <= 180 &&
+      lat >= -90 &&
+      lat <= 90;
+
+    if (!isValidCoordinates) {
+      throw Object.assign(new Error("Format longitude/latitude tidak valid"), {
+        status: 400,
+      });
+    }
+
+    const existingName = await prisma.branch.findFirst({
+      where: {
+        name,
+        NOT: { id },
+      },
+    });
+    if (existingName) {
+      throw Object.assign(new Error("Nama cabang sudah digunakan"), {
+        status: 409,
+      });
+    }
+
+    const existingCode = await prisma.branch.findFirst({
+      where: {
+        branchCode,
+        NOT: { id },
+      },
+    });
+    if (existingCode) {
+      throw Object.assign(new Error("Kode cabang sudah digunakan"), {
+        status: 409,
       });
     }
 
@@ -70,9 +157,10 @@ const editBranch = async (req, res, next) => {
         name,
         branchCode,
         address,
-        longitude,
-        latitude,
+        longitude: long,
+        latitude: lat,
         holiday,
+        status,
         updatedBy: username,
       },
     });
@@ -82,6 +170,7 @@ const editBranch = async (req, res, next) => {
     next(error);
   }
 };
+
 
 const updateBranchStatus = async (req, res, next) => {
   try {

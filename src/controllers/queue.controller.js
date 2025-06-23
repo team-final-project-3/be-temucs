@@ -1236,8 +1236,11 @@ const getQueueDetailByCSId = async (req, res, next) => {
     const services = queueServices.map((qs) => qs.service.serviceName);
 
     res.json({
-      name: queue.name,
+      id: queue.id,
       ticketNumber: queue.ticketNumber,
+      status: queue.status,
+      calledAt: queue.calledAt,
+      name: queue.name,
       services,
     });
   } catch (error) {
