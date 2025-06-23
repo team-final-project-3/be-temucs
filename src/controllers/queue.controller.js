@@ -1060,7 +1060,6 @@ const getUserQueueHistory = async (req, res, next) => {
       where: { userId },
       orderBy: { createdAt: "desc" },
       include: {
-        cs: true,
         services: { include: { service: true } },
         branch: true,
         queueLogs: true,
