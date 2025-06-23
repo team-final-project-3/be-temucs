@@ -96,8 +96,8 @@ model Queue {
   bookingDate   DateTime
   ticketNumber  String
   name          String
-  email         String
-  phoneNumber   String
+  email         String?
+  phoneNumber   String?
   estimatedTime DateTime?
   calledAt      DateTime?
   status        String

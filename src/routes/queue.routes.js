@@ -1198,7 +1198,7 @@ router.get(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Unauthorized: CS ID tidak ditemukan dalam token.
+ *                   example: "Unauthorized: CS ID tidak ditemukan dalam token."
  *       404:
  *         description: Tidak ada antrian dengan status in progress
  *         content:
