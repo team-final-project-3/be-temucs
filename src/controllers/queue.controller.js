@@ -1203,7 +1203,7 @@ const getActiveCustomerByCS = async (req, res, next) => {
 
 const getQueueDetailByCSId = async (req, res, next) => {
   try {
-    const csId = req.cs.id;
+    const csId = req.cs?.csId;
     console.log(csId);
     if (!csId) {
       return res
