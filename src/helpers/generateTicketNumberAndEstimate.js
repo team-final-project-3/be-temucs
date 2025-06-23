@@ -16,7 +16,6 @@ async function generateTicketNumberAndEstimate(
 ) {
   const { startUTC, endUTC } = getStartEndOfBookingDateWIB(bookingDate);
 
-  // Ambil semua antrian waiting di hari itu
   let allQueuesToday = await tx.queue.findMany({
     where: {
       branchId,
@@ -33,25 +32,21 @@ async function generateTicketNumberAndEstimate(
     },
   });
 
-  // Ambil branchCode
   const branch = await tx.branch.findUnique({ where: { id: branchId } });
 
   let nextNumber = allQueuesToday.length + 1;
   ticketNumber = `${branch.branchCode}-${String(nextNumber).padStart(3, "0")}`;
 
-  // Hitung estimasi waktu layanan baru
   let estimatedTimeDate;
   const now = new Date();
   const bookingWIB = toWIB(now);
   const minStartWIB = new Date(bookingWIB);
   minStartWIB.setHours(8, 0, 0, 0);
 
-  // Hitung total waktu existing
   let lastEstimatedTime = null;
   if (allQueuesToday.length > 0) {
     const lastQueue = allQueuesToday[allQueuesToday.length - 1];
     lastEstimatedTime = lastQueue.estimatedTime;
-    // Tambahkan total estimasi layanan antrian terakhir
     let lastDuration = 0;
     for (const s of lastQueue.services) {
       lastDuration += s.service.estimatedTime || 0;
@@ -60,21 +55,20 @@ async function generateTicketNumberAndEstimate(
       new Date(lastEstimatedTime).getTime() + lastDuration * 60000
     );
   } else {
-    // Slot pertama: max(jam booking, jam 08:00 WIB)
     estimatedTimeDate = toUTC(
       bookingWIB > minStartWIB ? bookingWIB : minStartWIB
     );
   }
 
   let estimatedTimeWIB = toWIB(estimatedTimeDate);
-  if (
+
+  while (
     estimatedTimeWIB.getHours() > 15 ||
     (estimatedTimeWIB.getHours() === 15 && estimatedTimeWIB.getMinutes() > 0)
   ) {
-    // Geser ke hari berikutnya
     estimatedTimeWIB.setDate(estimatedTimeWIB.getDate() + 1);
+    estimatedTimeWIB.setHours(8, 0, 0, 0);
 
-    // Cek jumlah antrian di hari baru
     const { startUTC: nextStartUTC, endUTC: nextEndUTC } =
       getStartEndOfBookingDateWIB(estimatedTimeWIB);
     const nextDayQueues = await tx.queue.findMany({
@@ -104,10 +98,8 @@ async function generateTicketNumberAndEstimate(
       estimatedTimeWIB = new Date(
         lastEstimatedTimeWIB.getTime() + lastDuration * 60000
       );
-
       nextNumber = nextDayQueues.length + 1;
     } else {
-      // Tidak ada antrian, mulai dari jam 08:00 WIB
       estimatedTimeWIB.setHours(8, 0, 0, 0);
       nextNumber = 1;
     }
