@@ -1,6 +1,7 @@
 const prisma = require("../../prisma/client");
 const cron = require("node-cron");
 const sendExpoNotification = require("../helpers/sendExpoNotification");
+const { wibToUTC } = require("../helpers/dateHelper");
 
 async function generateTicketNumberForReschedule(branchId, bookingDate, index) {
   const branch = await prisma.branch.findUnique({ where: { id: branchId } });
@@ -29,9 +30,10 @@ const rescheduleWaitingQueues = async () => {
 
   if (waitingQueues.length === 0) return;
 
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(8, 0, 0, 0);
+  const tomorrowWIB = new Date(now);
+  tomorrowWIB.setDate(tomorrowWIB.getDate() + 1);
+  tomorrowWIB.setHours(8, 0, 0, 0);
+  const tomorrow = wibToUTC(tomorrowWIB);
 
   const branchQueuesMap = {};
   for (const queue of waitingQueues) {

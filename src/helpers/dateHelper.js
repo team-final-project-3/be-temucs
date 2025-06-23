@@ -11,4 +11,8 @@ function getStartEndOfBookingDateWIB(bookingDate) {
   return { startUTC, endUTC };
 }
 
-module.exports = { getStartEndOfBookingDateWIB };
+function wibToUTC(dateWIB) {
+  return new Date(dateWIB.getTime() - 7 * 60 * 60 * 1000);
+}
+
+module.exports = { getStartEndOfBookingDateWIB, wibToUTC };
