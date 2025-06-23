@@ -1172,27 +1172,43 @@ router.get(
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Daftar antrean dengan nama, nomor tiket, dan layanan
+ *         description: Detail antrean aktif yang sedang ditangani CS
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   name:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                   example: Irene Simatupang
+ *                 ticketNumber:
+ *                   type: string
+ *                   example: AM-01-001
+ *                 services:
+ *                   type: array
+ *                   items:
  *                     type: string
- *                     example: Irene Simatupang
- *                   ticketNumber:
- *                     type: string
- *                     example: AM-01-001
- *                   services:
- *                     type: array
- *                     items:
- *                       type: string
- *                     example: ["servicedocument", "servicedocument"]
+ *                   example: ["servicedocument", "servicedocument"]
  *       401:
  *         description: Unauthorized – Token tidak valid atau bukan CS
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized: CS ID tidak ditemukan dalam token.
+ *       404:
+ *         description: Tidak ada antrian dengan status in progress
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tidak ada antrian yang sedang diproses.
  *       500:
  *         description: Server error
  */
