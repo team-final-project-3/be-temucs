@@ -44,8 +44,8 @@ async function generateTicketNumberAndEstimate(
 
   // Hitung total waktu existing
   let lastEstimatedTime = null;
-  if (activeQueues.length > 0) {
-    const lastQueue = activeQueues[activeQueues.length - 1];
+  if (allQueuesToday.length > 0) {
+    const lastQueue = allQueuesToday[allQueuesToday.length - 1];
     lastEstimatedTime = lastQueue.estimatedTime;
     // Tambahkan total estimasi layanan antrian terakhir
     let lastDuration = 0;
@@ -115,7 +115,7 @@ async function generateTicketNumberAndEstimate(
     )}`;
   }
 
-  const notification = activeQueues.length < 5;
+  const notification = allQueuesToday.length < 5;
 
   return { ticketNumber, estimatedTimeDate, notification };
 }
