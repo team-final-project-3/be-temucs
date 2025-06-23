@@ -17,30 +17,23 @@ async function generateTicketNumberAndEstimate(
   const { startUTC, endUTC } = getStartEndOfBookingDateWIB(bookingDate);
 
   // Ambil semua antrian waiting di hari itu
-  let activeQueues = await tx.queue.findMany({
+  let allQueuesToday = await tx.queue.findMany({
     where: {
       branchId,
       estimatedTime: {
         gte: startUTC,
         lte: endUTC,
       },
-      status: "waiting",
+      // status: "waiting", // HAPUS filter status!
     },
-    orderBy: { estimatedTime: "asc" },
-    include: {
-      services: {
-        include: { service: { select: { estimatedTime: true } } },
-      },
-    },
+    orderBy: { ticketNumber: "asc" },
   });
 
   // Ambil branchCode
   const branch = await tx.branch.findUnique({ where: { id: branchId } });
 
-  // Hitung ticketNumber
-  let ticketNumber = `${branch.branchCode}-${String(
-    activeQueues.length + 1
-  ).padStart(3, "0")}`;
+  let nextNumber = allQueuesToday.length + 1;
+  ticketNumber = `${branch.branchCode}-${String(nextNumber).padStart(3, "0")}`;
 
   // Hitung estimasi waktu layanan baru
   let estimatedTimeDate;
@@ -87,7 +80,6 @@ async function generateTicketNumberAndEstimate(
           gte: nextStartUTC,
           lte: nextEndUTC,
         },
-        status: "waiting",
       },
       orderBy: { estimatedTime: "asc" },
       include: {
@@ -99,7 +91,6 @@ async function generateTicketNumberAndEstimate(
 
     let nextNumber;
     if (nextDayQueues.length > 0) {
-      // Ada antrian di hari berikutnya, lanjutkan dari antrian terakhir
       const lastQueue = nextDayQueues[nextDayQueues.length - 1];
       let lastEstimatedTimeWIB = toWIB(lastQueue.estimatedTime);
       let lastDuration = 0;
