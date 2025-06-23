@@ -355,6 +355,25 @@ const getAllUsers = async (req, res, next) => {
   }
 };
 
+const saveExpoToken = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { expoPushToken } = req.body;
+    if (!expoPushToken) {
+      throw Object.assign(new Error("expoPushToken wajib diisi"), {
+        status: 400,
+      });
+    }
+    await prisma.user.update({
+      where: { id: userId },
+      data: { expoPushToken },
+    });
+    res.status(200).json({ message: "Expo push token berhasil disimpan" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   verifyOtp,
@@ -366,4 +385,5 @@ module.exports = {
   getProfile,
   changePassword,
   getAllUsers,
+  saveExpoToken,
 };

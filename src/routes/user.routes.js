@@ -335,4 +335,39 @@ router.post("/users/change-password", userController.changePassword);
  */
 router.get("/users", allowRoles("admin"), userController.getAllUsers);
 
+/**
+ * @swagger
+ * /api/users/expo-token:
+ *   post:
+ *     summary: Simpan atau update Expo Push Token user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - expoPushToken
+ *             properties:
+ *               expoPushToken:
+ *                 type: string
+ *                 description: Expo push token dari device user
+ *     responses:
+ *       200:
+ *         description: Token berhasil disimpan
+ *       400:
+ *         description: Token tidak valid
+ *       401:
+ *         description: Unauthorized
+ */
+router.post(
+  "/users/expo-token",
+  allowRoles("nasabah"),
+  verifyUserToken,
+  userController.saveExpoToken
+);
+
 module.exports = router;
