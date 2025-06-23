@@ -1163,7 +1163,7 @@ router.get(
 
 /**
  * @swagger
- * /queue/cs/handling:
+ * /api/queue/cs/handling:
  *   get:
  *     summary: Ambil detail antrean berdasarkan token CS yang login
  *     tags:
