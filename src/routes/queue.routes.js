@@ -1034,57 +1034,59 @@ router.get(
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of active CS-customer pairs in the branch
+ *         description: List of active CS-customer pairs in the branch (null jika CS belum melayani)
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   queueId:
- *                     type: integer
- *                     example: 12
- *                   ticketNumber:
- *                     type: string
- *                     example: "A-001"
- *                   cs:
- *                     type: object
+ *                 oneOf:
+ *                   - type: object
  *                     properties:
- *                       id:
+ *                       queueId:
  *                         type: integer
- *                         example: 3
- *                       name:
+ *                         example: 12
+ *                       ticketNumber:
  *                         type: string
- *                         example: "CS Budi"
- *                       username:
+ *                         example: "A-001"
+ *                       cs:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 3
+ *                           name:
+ *                             type: string
+ *                             example: "CS Budi"
+ *                           username:
+ *                             type: string
+ *                             example: "csbudi"
+ *                       nasabah:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 7
+ *                           fullname:
+ *                             type: string
+ *                             example: "Andi"
+ *                           username:
+ *                             type: string
+ *                             example: "andi123"
+ *                           email:
+ *                             type: string
+ *                             example: "andi@email.com"
+ *                           phoneNumber:
+ *                             type: string
+ *                             example: "08123456789"
+ *                       status:
  *                         type: string
- *                         example: "csbudi"
- *                   nasabah:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                         example: 7
- *                       fullname:
+ *                         example: "in progress"
+ *                       calledAt:
  *                         type: string
- *                         example: "Andi"
- *                       username:
- *                         type: string
- *                         example: "andi123"
- *                       email:
- *                         type: string
- *                         example: "andi@email.com"
- *                       phoneNumber:
- *                         type: string
- *                         example: "08123456789"
- *                   status:
- *                     type: string
- *                     example: "in progress"
- *                   calledAt:
- *                     type: string
- *                     format: date-time
- *                     example: "2024-06-17T10:00:00.000Z"
+ *                         format: date-time
+ *                         example: "2024-06-17T10:00:00.000Z"
+ *                   - type: "null"
  *       400:
  *         description: branchId is required
  *       500:

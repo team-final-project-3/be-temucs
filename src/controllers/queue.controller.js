@@ -899,8 +899,8 @@ const getAllQueues = async (req, res) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-          "*".repeat(Math.max(domainMain.length - 2, 0)) +
-          domainMain.slice(-1);
+            "*".repeat(Math.max(domainMain.length - 2, 0)) +
+            domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -917,10 +917,10 @@ const getAllQueues = async (req, res) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-          ...queue.user,
-          email: censorEmail(queue.user.email),
-          phoneNumber: censorPhone(queue.user.phoneNumber),
-        }
+            ...queue.user,
+            email: censorEmail(queue.user.email),
+            phoneNumber: censorPhone(queue.user.phoneNumber),
+          }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -1089,6 +1089,16 @@ const getActiveCSCustomer = async (req, res, next) => {
       });
     }
 
+    const csList = await prisma.cS.findMany({
+      where: { branchId },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+      },
+      orderBy: { id: "asc" },
+    });
+
     const queues = await prisma.queue.findMany({
       where: {
         status: "in progress",
@@ -1115,22 +1125,31 @@ const getActiveCSCustomer = async (req, res, next) => {
       },
     });
 
-    const result = queues.map((queue) => ({
-      queueId: queue.id,
-      ticketNumber: queue.ticketNumber,
-      cs: queue.cs,
-      nasabah: queue.user
-        ? queue.user
-        : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
-      status: queue.status,
-      calledAt: queue.calledAt,
-    }));
+    const queueMap = {};
+    for (const queue of queues) {
+      queueMap[queue.csId] = queue;
+    }
+
+    const result = csList.map((cs) => {
+      const queue = queueMap[cs.id];
+      if (!queue) return null;
+      return {
+        queueId: queue.id,
+        ticketNumber: queue.ticketNumber,
+        cs: queue.cs,
+        nasabah: queue.user
+          ? queue.user
+          : {
+              fullname: queue.name,
+              username: null,
+              email: queue.email,
+              phoneNumber: queue.phoneNumber,
+              id: null,
+            },
+        status: queue.status,
+        calledAt: queue.calledAt,
+      };
+    });
 
     res.status(200).json(result);
   } catch (error) {
@@ -1185,12 +1204,12 @@ const getActiveCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     };
