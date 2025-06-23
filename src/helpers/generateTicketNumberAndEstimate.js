@@ -24,9 +24,13 @@ async function generateTicketNumberAndEstimate(
         gte: startUTC,
         lte: endUTC,
       },
-      // status: "waiting", // HAPUS filter status!
     },
     orderBy: { ticketNumber: "asc" },
+    include: {
+      services: {
+        include: { service: { select: { estimatedTime: true } } },
+      },
+    },
   });
 
   // Ambil branchCode
