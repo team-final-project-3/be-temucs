@@ -359,7 +359,22 @@ const changePassword = async (req, res, next) => {
 
 const getAllUsers = async (req, res, next) => {
   try {
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({
+      where: {
+        NOT: { role: "admin" },
+      },
+      select: {
+        id: true,
+        fullname: true,
+        username: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
     res.json({ success: true, data: users });
   } catch (error) {
     next(error);

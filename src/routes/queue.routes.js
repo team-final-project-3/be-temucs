@@ -158,6 +158,51 @@ router.patch(
 
 /**
  * @swagger
+ * /api/queue/{id}/call:
+ *   patch:
+ *     summary: Call a queue (change status to "called" and set calledAt)
+ *     tags:
+ *       - Queue
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Queue ID
+ *     responses:
+ *       200:
+ *         description: Queue status updated to called
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Queue status updated to called
+ *                 queue:
+ *                   type: object
+ *       400:
+ *         description: Queue hanya bisa dipanggil jika statusnya masih waiting
+ *       403:
+ *         description: CS tidak berhak memanggil antrian ini
+ *       404:
+ *         description: Queue tidak ditemukan
+ *       500:
+ *         description: Internal server error
+ */
+router.patch(
+  "/queue/:id/call",
+  verifyCSToken,
+  allowRoles("cs"),
+  queueController.callQueue
+);
+
+/**
+ * @swagger
  * /api/queue/{id}/take:
  *   patch:
  *     summary: Take a queue (change status to in progress and assign csId)

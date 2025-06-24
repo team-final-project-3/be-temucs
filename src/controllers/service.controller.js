@@ -3,11 +3,32 @@ const prisma = require("../../prisma/client");
 const addService = async (req, res, next) => {
   try {
     const username = req.user.username;
-    const { serviceName, estimatedTime, documentIds } = req.body;
+    const { serviceName, estimatedTime, documents } = req.body;
 
     if (!serviceName || !estimatedTime) {
       throw Object.assign(
         new Error("Nama layanan dan estimasi waktu wajib diisi"),
+        { status: 400 }
+      );
+    }
+    if (!Array.isArray(documents)) {
+      throw Object.assign(new Error("documents harus berupa array"), {
+        status: 400,
+      });
+    }
+    if (
+      documents.some(
+        (doc) =>
+          typeof doc.documentId !== "number" ||
+          doc.documentId <= 0 ||
+          (doc.quantity !== undefined &&
+            (typeof doc.quantity !== "number" || doc.quantity <= 0))
+      )
+    ) {
+      throw Object.assign(
+        new Error(
+          "Setiap dokumen harus punya documentId dan quantity > 0 jika diisi"
+        ),
         { status: 400 }
       );
     }
@@ -20,8 +41,9 @@ const addService = async (req, res, next) => {
         updatedBy: username,
         status: true,
         documents: {
-          create: documentIds.map((documentId) => ({
-            documentId,
+          create: documents.map((doc) => ({
+            documentId: doc.documentId,
+            quantity: doc.quantity !== undefined ? doc.quantity : 1, // default 1
             createdBy: username,
             updatedBy: username,
           })),
@@ -83,7 +105,11 @@ const getServiceForUser = async (req, res, next) => {
         status: 404,
       });
     }
-    const documents = service.documents.map((sd) => sd.document);
+
+    const documents = service.documents.map((sd) => ({
+      ...sd.document,
+      quantity: sd.quantity,
+    }));
     res.status(200).json({ ...service, documents });
   } catch (error) {
     next(error);
@@ -115,7 +141,7 @@ const editService = async (req, res, next) => {
   try {
     const username = req.user.username;
     const id = parseInt(req.params.id, 10);
-    const { serviceName, estimatedTime, documentIds } = req.body;
+    const { serviceName, estimatedTime, documents } = req.body;
 
     if (serviceName == null || estimatedTime == null) {
       throw Object.assign(
@@ -124,15 +150,25 @@ const editService = async (req, res, next) => {
       );
     }
 
-    if (documentIds !== undefined) {
-      if (!Array.isArray(documentIds)) {
-        throw Object.assign(new Error("documentIds harus berupa array"), {
+    if (documents !== undefined) {
+      if (!Array.isArray(documents)) {
+        throw Object.assign(new Error("documents harus berupa array"), {
           status: 400,
         });
       }
-      if (documentIds.some((id) => typeof id !== "number" || id <= 0)) {
+      if (
+        documents.some(
+          (doc) =>
+            typeof doc.documentId !== "number" ||
+            doc.documentId <= 0 ||
+            (doc.quantity !== undefined &&
+              (typeof doc.quantity !== "number" || doc.quantity <= 0))
+        )
+      ) {
         throw Object.assign(
-          new Error("Setiap documentId harus berupa angka positif"),
+          new Error(
+            "Setiap dokumen harus punya documentId dan quantity > 0 jika diisi"
+          ),
           { status: 400 }
         );
       }
@@ -143,15 +179,16 @@ const editService = async (req, res, next) => {
       data: { serviceName, estimatedTime, updatedBy: username },
     });
 
-    if (Array.isArray(documentIds)) {
+    if (Array.isArray(documents)) {
       await prisma.serviceDocument.deleteMany({
         where: { serviceId: id },
       });
 
       await prisma.serviceDocument.createMany({
-        data: documentIds.map((documentId) => ({
+        data: documents.map((doc) => ({
           serviceId: id,
-          documentId,
+          documentId: doc.documentId,
+          quantity: doc.quantity !== undefined ? doc.quantity : 1, // default 1
           createdBy: username,
           updatedBy: username,
         })),

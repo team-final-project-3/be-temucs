@@ -5,7 +5,8 @@ const {
 const sendExpoNotification = require("../helpers/sendExpoNotification");
 
 const allowedTransitions = {
-  waiting: ["in progress", "canceled", "skipped"],
+  waiting: ["called", "canceled"],
+  called: ["in progress", "canceled", "skipped"],
   "in progress": ["done"],
   done: [],
   canceled: [],
@@ -231,7 +232,9 @@ const updateStatus = (newStatus) => async (req, res, next) => {
     }
 
     if (currentStatus === newStatus) {
-      throw Object.assign(new Error(), { status: 400 });
+      throw Object.assign(new Error(`Status sekarang sudah ${newStatus}`), {
+        status: 400,
+      });
     }
 
     if (!allowedTransitions[currentStatus]?.includes(newStatus)) {
@@ -312,6 +315,68 @@ const updateStatus = (newStatus) => async (req, res, next) => {
   }
 };
 
+const callQueue = async (req, res, next) => {
+  const id = parseInt(req.params.id, 10);
+  const { csId, username, branchId } = req.cs;
+
+  if (!csId || !username || !branchId) {
+    throw Object.assign(new Error(), { status: 403 });
+  }
+
+  try {
+    const queueData = await prisma.queue.findUnique({ where: { id } });
+    if (!queueData) throw Object.assign(new Error(), { status: 404 });
+    if (queueData.branchId !== branchId)
+      throw Object.assign(new Error(), { status: 403 });
+
+    if (queueData.status !== "waiting") {
+      throw Object.assign(
+        new Error("Antrian hanya bisa dipanggil jika statusnya masih waiting."),
+        { status: 400 }
+      );
+    }
+
+    let queue;
+    try {
+      queue = await prisma.$transaction(async (tx) => {
+        const updated = await tx.queue.updateMany({
+          where: { id, status: "waiting" },
+          data: {
+            status: "called",
+            calledAt: new Date(),
+            csId,
+            updatedBy: username,
+          },
+        });
+        if (updated.count === 0) {
+          throw Object.assign(
+            new Error(
+              "Antrian sudah dipanggil oleh CS lain. Silakan refresh daftar antrian."
+            ),
+            { status: 409 }
+          );
+        }
+        return await tx.queue.findUnique({ where: { id } });
+      });
+    } catch (err) {
+      return next(err);
+    }
+
+    await prisma.queueLog.create({
+      data: {
+        queueId: queue.id,
+        status: "called",
+        createdBy: username,
+        updatedBy: username,
+      },
+    });
+
+    res.json({ message: "Queue status updated to called", queue });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const takeQueue = async (req, res, next) => {
   const id = parseInt(req.params.id, 10);
   const { csId, username, branchId } = req.cs;
@@ -339,16 +404,13 @@ const takeQueue = async (req, res, next) => {
     }
 
     const queueData = await prisma.queue.findUnique({ where: { id } });
-    if (!queueData) {
-      throw Object.assign(new Error(), { status: 404 });
-    }
-    if (queueData.branchId !== branchId) {
+    if (!queueData) throw Object.assign(new Error(), { status: 404 });
+    if (queueData.branchId !== branchId)
       throw Object.assign(new Error(), { status: 403 });
-    }
 
-    if (queueData.status !== "waiting") {
+    if (queueData.status !== "called") {
       throw Object.assign(
-        new Error("Antrian hanya bisa diambil jika statusnya masih waiting."),
+        new Error("Antrian hanya bisa diambil jika statusnya 'called'."),
         { status: 400 }
       );
     }
@@ -358,8 +420,6 @@ const takeQueue = async (req, res, next) => {
         where: { id },
         data: {
           status: "in progress",
-          calledAt: new Date(),
-          csId,
           updatedBy: username,
         },
       });
@@ -1253,6 +1313,7 @@ module.exports = {
   bookQueueOffline,
   cancelQueue: updateStatus("canceled"),
   skipQueue: updateStatus("skipped"),
+  callQueue,
   takeQueue,
   doneQueue: updateStatus("done"),
   getQueueCountByBranchIdCS,

@@ -19,7 +19,7 @@ const { verifyLoketToken } = require("../auth/loket.auth");
  *             type: object
  *             required:
  *               - serviceName
- *               - documentIds
+ *               - documents
  *             properties:
  *               serviceName:
  *                 type: string
@@ -28,12 +28,19 @@ const { verifyLoketToken } = require("../auth/loket.auth");
  *                 type: integer
  *                 nullable: true
  *                 example: 15
- *               documentIds:
+ *               documents:
  *                 type: array
  *                 items:
- *                   type: integer
- *                 description: List of document IDs to relate with this service
- *                 example: [1, 2, 3]
+ *                   type: object
+ *                   properties:
+ *                     documentId:
+ *                       type: integer
+ *                       example: 1
+ *                     quantity:
+ *                       type: integer
+ *                       example: 3
+ *                 description: List of documents (with quantity) to relate with this service
+ *                 example: [{ "documentId": 1, "quantity": 3 }, { "documentId": 2, "quantity": 1 }]
  *     responses:
  *       201:
  *         description: Service created
@@ -108,9 +115,44 @@ router.get(
  *         required: true
  *         schema:
  *           type: integer
+ *         description: Service ID
  *     responses:
  *       200:
  *         description: Service data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 serviceName:
+ *                   type: string
+ *                   example: "Pengajuan KPR"
+ *                 estimatedTime:
+ *                   type: integer
+ *                   example: 20
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 documents:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       name:
+ *                         type: string
+ *                         example: "Materai"
+ *                       description:
+ *                         type: string
+ *                         example: "Materai 10000"
+ *                       quantity:
+ *                         type: integer
+ *                         example: 3
  *       404:
  *         description: Service tidak ditemukan
  */
@@ -146,12 +188,19 @@ router.get(
  *               estimatedTime:
  *                 type: integer
  *                 example: 20
- *               documentIds:
+ *               documents:
  *                 type: array
  *                 items:
- *                   type: integer
- *                 description: List of document IDs to relate with this service
- *                 example: [1, 2, 3]
+ *                   type: object
+ *                   properties:
+ *                     documentId:
+ *                       type: integer
+ *                       example: 1
+ *                     quantity:
+ *                       type: integer
+ *                       example: 2
+ *                 description: List of documents (with quantity) to relate with this service
+ *                 example: [{ "documentId": 1, "quantity": 2 }, { "documentId": 2, "quantity": 1 }]
  *     responses:
  *       200:
  *         description: Service updated
