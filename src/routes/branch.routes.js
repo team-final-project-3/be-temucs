@@ -201,6 +201,151 @@ router.get(
 
 /**
  * @swagger
+ * /api/branch/loket:
+ *   get:
+ *     summary: Get all branches (khusus Loket) beserta jumlah antrian aktif
+ *     tags: [Branch]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of branches with waitingQueueCount
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 branches:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       name:
+ *                         type: string
+ *                         example: "BNI Lada Kota"
+ *                       branchCode:
+ *                         type: string
+ *                         example: "BNI1234"
+ *                       address:
+ *                         type: string
+ *                         example: "Jl. Lada No.12, Jakarta"
+ *                       longitude:
+ *                         type: number
+ *                         example: 106.8147
+ *                       latitude:
+ *                         type: number
+ *                         example: -6.1383
+ *                       holiday:
+ *                         type: boolean
+ *                         example: false
+ *                       status:
+ *                         type: boolean
+ *                         example: true
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                       waitingQueueCount:
+ *                         type: integer
+ *                         example: 5
+ *       401:
+ *         description: Unauthorized – Token tidak valid atau bukan Loket
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/branch/loket",
+  allowRoles("loket"),
+  branchController.getAllBranchLoket
+);
+
+// /**
+//  * @swagger
+//  * /api/branch/loket/{id}:
+//  *   get:
+//  *     summary: Get branch detail (khusus Loket) beserta jumlah antrian aktif
+//  *     tags: [Branch]
+//  *     security:
+//  *       - bearerAuth: []
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: ID cabang
+//  *     responses:
+//  *       200:
+//  *         description: Branch detail with waitingQueueCount
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 branch:
+//  *                   type: object
+//  *                   properties:
+//  *                     id:
+//  *                       type: integer
+//  *                       example: 1
+//  *                     name:
+//  *                       type: string
+//  *                       example: "BNI Lada Kota"
+//  *                     branchCode:
+//  *                       type: string
+//  *                       example: "BNI1234"
+//  *                     address:
+//  *                       type: string
+//  *                       example: "Jl. Lada No.12, Jakarta"
+//  *                     longitude:
+//  *                       type: number
+//  *                       example: 106.8147
+//  *                     latitude:
+//  *                       type: number
+//  *                       example: -6.1383
+//  *                     holiday:
+//  *                       type: boolean
+//  *                       example: false
+//  *                     status:
+//  *                       type: boolean
+//  *                       example: true
+//  *                     createdAt:
+//  *                       type: string
+//  *                       format: date-time
+//  *                     updatedAt:
+//  *                       type: string
+//  *                       format: date-time
+//  *                     waitingQueueCount:
+//  *                       type: integer
+//  *                       example: 3
+//  *                     lokets:
+//  *                       type: array
+//  *                       items:
+//  *                         type: object
+//  *                     cs:
+//  *                       type: array
+//  *                       items:
+//  *                         type: object
+//  *       404:
+//  *         description: Cabang tidak ditemukan
+//  *       401:
+//  *         description: Unauthorized – Token tidak valid atau bukan Loket
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.get(
+//   "/branch/loket/:id",
+//   allowRoles("loket"),
+//   branchController.getBranchLoket
+// );
+
+/**
+ * @swagger
  * /api/branch/{id}:
  *   get:
  *     summary: Get branch by ID

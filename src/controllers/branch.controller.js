@@ -77,7 +77,9 @@ const addBranch = async (req, res, next) => {
       },
     });
 
-    res.status(201).json({ message: "Cabang baru berhasil ditambahkan", branch });
+    res
+      .status(201)
+      .json({ message: "Cabang baru berhasil ditambahkan", branch });
   } catch (error) {
     next(error);
   }
@@ -87,15 +89,8 @@ const editBranch = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const username = req.user.username;
-    const {
-      name,
-      branchCode,
-      address,
-      longitude,
-      latitude,
-      holiday,
-      status,
-    } = req.body;
+    const { name, branchCode, address, longitude, latitude, holiday, status } =
+      req.body;
 
     if (
       !name?.trim() ||
@@ -171,7 +166,6 @@ const editBranch = async (req, res, next) => {
   }
 };
 
-
 const updateBranchStatus = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -213,6 +207,36 @@ const getAllBranch = async (req, res, next) => {
   }
 };
 
+const getAllBranchLoket = async (req, res, next) => {
+  try {
+    const branches = await prisma.branch.findMany();
+
+    const branchIds = branches.map((b) => b.id);
+    const queueCounts = await prisma.queue.groupBy({
+      by: ["branchId"],
+      where: {
+        branchId: { in: branchIds },
+        NOT: { status: { in: ["done", "skipped", "canceled"] } },
+      },
+      _count: { id: true },
+    });
+
+    const countMap = {};
+    queueCounts.forEach((q) => {
+      countMap[q.branchId] = q._count.id;
+    });
+
+    const result = branches.map((branch) => ({
+      ...branch,
+      waitingQueueCount: countMap[branch.id] || 0,
+    }));
+
+    res.json({ branches: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getBranch = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -232,10 +256,48 @@ const getBranch = async (req, res, next) => {
   }
 };
 
+// const getBranchLoket = async (req, res, next) => {
+//   try {
+//     const id = parseInt(req.params.id, 10);
+//     const branch = await prisma.branch.findUnique({
+//       where: { id },
+//       include: {
+//         lokets: {
+//           select: {
+//             id: true,
+//             name: true,
+//             username: true,
+//             status: true,
+//             createdAt: true,
+//             updatedAt: true,
+//           },
+//         },
+//         cs: true,
+//       },
+//     });
+//     if (!branch) {
+//       throw Object.assign(new Error("Branch tidak ditemukan"), { status: 404 });
+//     }
+
+//     const queueCount = await prisma.queue.count({
+//       where: {
+//         branchId: id,
+//         NOT: { status: { in: ["done", "skipped", "canceled"] } },
+//       },
+//     });
+
+//     res.json({ branch: { ...branch, waitingQueueCount: queueCount } });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 module.exports = {
   addBranch,
   editBranch,
   updateBranchStatus,
   getBranch,
+  // getBranchLoket,
   getAllBranch,
+  getAllBranchLoket,
 };
