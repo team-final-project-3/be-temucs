@@ -464,92 +464,92 @@ const getQueueCountByBranchIdUser = async (req, res, next) => {
   }
 };
 
-const getRemainingQueueUser = async (req, res, next) => {
-  try {
-    const queueId = req.user?.queueId;
-    const branchId = req.user?.branchId;
+// const getRemainingQueueUser = async (req, res, next) => {
+//   try {
+//     const queueId = parseInt(req.params.id, 10);
+//     const branchId = req.user?.branchId;
 
-    if (!queueId || !branchId) {
-      throw Object.assign(new Error("Data tidak valid"), {
-        status: 400,
-      });
-    }
+//     if (!queueId || !branchId) {
+//       throw Object.assign(new Error("Data tidak valid"), {
+//         status: 400,
+//       });
+//     }
 
-    const remaining = await prisma.queue.count({
-      where: {
-        branchId: Number(branchId),
-        id: { lt: queueId },
-        status: { notIn: ["done", "skipped", "canceled"] },
-      },
-    });
+//     const remaining = await prisma.queue.count({
+//       where: {
+//         branchId: Number(branchId),
+//         id: { lt: queueId },
+//         status: { notIn: ["done", "skipped", "canceled"] },
+//       },
+//     });
 
-    res.status(200).json({
-      queueId,
-      branchId,
-      remainingInFront: remaining,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+//     res.status(200).json({
+//       queueId,
+//       branchId,
+//       remainingInFront: remaining,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-const getRemainingQueueLoket = async (req, res, next) => {
-  try {
-    const queueId = req.loket?.queueId;
-    const branchId = req.loket?.branchId;
+// const getRemainingQueueLoket = async (req, res, next) => {
+//   try {
+//     const queueId = parseInt(req.params.id, 10);
+//     const branchId = req.loket?.branchId;
 
-    if (!queueId || !branchId) {
-      throw Object.assign(new Error("Data tidak valid"), {
-        status: 400,
-      });
-    }
+//     if (!queueId || !branchId) {
+//       throw Object.assign(new Error("Data tidak valid"), {
+//         status: 400,
+//       });
+//     }
 
-    const remaining = await prisma.queue.count({
-      where: {
-        branchId: Number(branchId),
-        id: { lt: queueId },
-        status: { notIn: ["done", "skipped", "canceled"] },
-      },
-    });
+//     const remaining = await prisma.queue.count({
+//       where: {
+//         branchId: Number(branchId),
+//         id: { lt: queueId },
+//         status: { notIn: ["done", "skipped", "canceled"] },
+//       },
+//     });
 
-    res.status(200).json({
-      queueId,
-      branchId,
-      remainingInFront: remaining,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+//     res.status(200).json({
+//       queueId,
+//       branchId,
+//       remainingInFront: remaining,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-const getRemainingQueueCS = async (req, res, next) => {
-  try {
-    const queueId = req.cs?.queueId;
-    const branchId = req.cs?.branchId;
+// const getRemainingQueueCS = async (req, res, next) => {
+//   try {
+//     const queueId = parseInt(req.params.id, 10);
+//     const branchId = req.cs?.branchId;
 
-    if (!queueId || !branchId) {
-      throw Object.assign(new Error("Data tidak valid"), {
-        status: 400,
-      });
-    }
+//     if (!queueId || !branchId) {
+//       throw Object.assign(new Error("Data tidak valid"), {
+//         status: 400,
+//       });
+//     }
 
-    const remaining = await prisma.queue.count({
-      where: {
-        branchId: Number(branchId),
-        id: { lt: queueId },
-        status: { notIn: ["done", "skipped", "canceled"] },
-      },
-    });
+//     const remaining = await prisma.queue.count({
+//       where: {
+//         branchId: Number(branchId),
+//         id: { lt: queueId },
+//         status: { notIn: ["done", "skipped", "canceled"] },
+//       },
+//     });
 
-    res.status(200).json({
-      queueId,
-      branchId,
-      remainingInFront: remaining,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+//     res.status(200).json({
+//       queueId,
+//       branchId,
+//       remainingInFront: remaining,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 const getLatestInProgressQueueCS = async (req, res, next) => {
   try {
@@ -1258,9 +1258,9 @@ module.exports = {
   getQueueCountByBranchIdCS,
   getQueueCountByBranchIdLoket,
   getQueueCountByBranchIdUser,
-  getRemainingQueueCS,
-  getRemainingQueueLoket,
-  getRemainingQueueUser,
+  // getRemainingQueueCS,
+  // getRemainingQueueLoket,
+  // getRemainingQueueUser,
   getLatestInProgressQueueCS,
   getLatestInProgressQueueLoket,
   getLatestInProgressQueueUser,
