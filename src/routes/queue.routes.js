@@ -1276,4 +1276,113 @@ router.get(
   queueController.getQueueDetailByCSId
 );
 
+/**
+ * @swagger
+ * /api/queue/cs/is-calling:
+ *   get:
+ *     summary: Cek apakah CS sedang memanggil (called) nasabah
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Status pemanggilan nasabah oleh CS
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isCalling:
+ *                   type: boolean
+ *                   example: true
+ *                 queueId:
+ *                   type: integer
+ *                   nullable: true
+ *                   example: 12
+ *                 ticketNumber:
+ *                   type: string
+ *                   nullable: true
+ *                   example: "A-001"
+ *                 calledAt:
+ *                   type: string
+ *                   format: date-time
+ *                   nullable: true
+ *                   example: "2024-06-24T09:00:00.000Z"
+ *       401:
+ *         description: Unauthorized – Token tidak valid atau bukan CS
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/cs/is-calling",
+  verifyCSToken,
+  allowRoles("cs"),
+  queueController.isCSCallingCustomer
+);
+
+/**
+ * @swagger
+ * /api/queue/cs/called-customer:
+ *   get:
+ *     summary: Ambil data nasabah yang sedang dipanggil (called) oleh CS login
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Data nasabah yang sedang dipanggil oleh CS
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 queueId:
+ *                   type: integer
+ *                   example: 12
+ *                 ticketNumber:
+ *                   type: string
+ *                   example: "A-001"
+ *                 calledAt:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-06-24T09:00:00.000Z"
+ *                 nasabah:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       nullable: true
+ *                       example: 7
+ *                     fullname:
+ *                       type: string
+ *                       example: "Andi"
+ *                     username:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "andi123"
+ *                     email:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "andi@email.com"
+ *                     phoneNumber:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "08123456789"
+ *                 status:
+ *                   type: string
+ *                   example: "called"
+ *       404:
+ *         description: Tidak ada nasabah yang sedang dipanggil
+ *       401:
+ *         description: Unauthorized – Token tidak valid atau bukan CS
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/cs/called-customer",
+  verifyCSToken,
+  allowRoles("cs"),
+  queueController.getCalledCustomerByCS
+);
+
 module.exports = router;

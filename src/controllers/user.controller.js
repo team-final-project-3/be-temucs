@@ -268,7 +268,7 @@ const resetPassword = async (req, res, next) => {
 const verifyOtpForgotPassword = async (req, res, next) => {
   let { email, otp } = req.body;
   try {
-    email = toLowerCase();
+    email = email.toLowerCase();
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });

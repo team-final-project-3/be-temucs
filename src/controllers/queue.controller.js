@@ -1308,6 +1308,86 @@ const getQueueDetailByCSId = async (req, res, next) => {
   }
 };
 
+const isCSCallingCustomer = async (req, res, next) => {
+  try {
+    const csId = req.cs?.csId;
+    if (!csId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: CS ID tidak ditemukan dalam token." });
+    }
+
+    const queue = await prisma.queue.findFirst({
+      where: {
+        csId,
+        status: "called",
+      },
+    });
+
+    res.json({
+      isCalling: !!queue,
+      queueId: queue ? queue.id : null,
+      ticketNumber: queue ? queue.ticketNumber : null,
+      calledAt: queue ? queue.calledAt : null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getCalledCustomerByCS = async (req, res, next) => {
+  try {
+    const csId = req.cs?.csId;
+    if (!csId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: CS ID tidak ditemukan dalam token." });
+    }
+
+    const queue = await prisma.queue.findFirst({
+      where: {
+        csId,
+        status: "called",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullname: true,
+            username: true,
+            email: true,
+            phoneNumber: true,
+          },
+        },
+      },
+    });
+
+    if (!queue) {
+      return res
+        .status(404)
+        .json({ message: "Tidak ada nasabah yang sedang dipanggil." });
+    }
+
+    res.json({
+      queueId: queue.id,
+      ticketNumber: queue.ticketNumber,
+      calledAt: queue.calledAt,
+      nasabah: queue.user
+        ? queue.user
+        : {
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
+      status: queue.status,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   bookQueueOnline,
   bookQueueOffline,
@@ -1337,4 +1417,6 @@ module.exports = {
   getActiveCSCustomer,
   getActiveCustomerByCS,
   getQueueDetailByCSId,
+  isCSCallingCustomer,
+  getCalledCustomerByCS,
 };
