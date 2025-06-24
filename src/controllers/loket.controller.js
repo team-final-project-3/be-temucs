@@ -7,7 +7,7 @@ const {
 
 const addLoket = async (req, res, next) => {
   const adminUsername = req.user.username;
-  const { branchId, name, username, password } = req.body;
+  let { branchId, name, username, password } = req.body;
   try {
     if (branchId == null || !name || !username || !password) {
       throw Object.assign(new Error("Data loket tidak lengkap"), {
@@ -124,7 +124,7 @@ const updateLoketStatus = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
-  const { username, password } = req.body;
+  let { username, password } = req.body;
   try {
     if (!username || !password) {
       throw Object.assign(new Error("Username dan password wajib diisi"), {

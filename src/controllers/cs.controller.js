@@ -7,7 +7,7 @@ const {
 
 const addCS = async (req, res, next) => {
   const adminUsername = req.user.username;
-  const { branchId, name, username, password } = req.body;
+  let { branchId, name, username, password } = req.body;
   try {
     if (branchId == null || !name || !username || !password) {
       throw Object.assign(new Error("Data CS tidak lengkap"), { status: 400 });
@@ -114,7 +114,7 @@ const updateCSStatus = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
-  const { username, password } = req.body;
+  let { username, password } = req.body;
   try {
     if (!username || !password) {
       throw Object.assign(new Error("Username dan password wajib diisi"), {
