@@ -6,6 +6,7 @@ const {
   generateToken,
 } = require("../auth/user.auth");
 const { sendOtpEmail } = require("../utils/email");
+const { toLowerCase } = require("zod/v4");
 
 const registerSchema = z.object({
   fullname: z.string().min(1, "Fullname is required"),
@@ -26,7 +27,7 @@ const registerSchema = z.object({
 
 const register = async (req, res, next) => {
   try {
-    const {
+    let {
       fullname,
       username,
       email,
@@ -34,6 +35,9 @@ const register = async (req, res, next) => {
       phoneNumber,
       role = "nasabah",
     } = registerSchema.parse(req.body);
+
+    username = username.toLowerCase();
+    email = email.toLowerCase();
 
     const coreBanking = await prisma.coreBanking.findUnique({
       where: { email },
@@ -115,8 +119,9 @@ const register = async (req, res, next) => {
 };
 
 const verifyOtp = async (req, res, next) => {
-  const { email, otp } = req.body;
+  let { email, otp } = req.body;
   try {
+    email = email.toLowerCase();
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
@@ -145,8 +150,9 @@ const verifyOtp = async (req, res, next) => {
 };
 
 const resendOtp = async (req, res, next) => {
-  const { email } = req.body;
+  let { email } = req.body;
   try {
+    email = email.toLowerCase();
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
@@ -169,9 +175,11 @@ const resendOtp = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
-  const { username, password } = req.body;
+  let { username, password } = req.body;
 
   try {
+    username = username.toLowerCase();
+
     const user = await prisma.user.findUnique({
       where: { username },
     });
@@ -211,8 +219,9 @@ const login = async (req, res, next) => {
 };
 
 const forgotPassword = async (req, res, next) => {
-  const { email } = req.body;
+  let { email } = req.body;
   try {
+    email = email.toLowerCase();
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
@@ -235,8 +244,9 @@ const forgotPassword = async (req, res, next) => {
 };
 
 const resetPassword = async (req, res, next) => {
-  const { email, newPassword } = req.body;
+  let { email, newPassword } = req.body;
   try {
+    email = email.toLowerCase();
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
@@ -256,8 +266,9 @@ const resetPassword = async (req, res, next) => {
 };
 
 const verifyOtpForgotPassword = async (req, res, next) => {
-  const { email, otp } = req.body;
+  let { email, otp } = req.body;
   try {
+    email = toLowerCase();
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
