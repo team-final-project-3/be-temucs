@@ -15,6 +15,8 @@ const addLoket = async (req, res, next) => {
       });
     }
 
+    username = username.toLowerCase();
+
     const existing = await prisma.loket.findUnique({ where: { username } });
     if (existing) {
       throw Object.assign(new Error("Username sudah terdaftar"), {
@@ -129,6 +131,8 @@ const login = async (req, res, next) => {
         status: 400,
       });
     }
+
+    username = username.toLowerCase();
 
     const loket = await prisma.loket.findUnique({
       where: { username },

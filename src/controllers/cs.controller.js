@@ -13,6 +13,8 @@ const addCS = async (req, res, next) => {
       throw Object.assign(new Error("Data CS tidak lengkap"), { status: 400 });
     }
 
+    username = username.toLowerCase();
+
     const existing = await prisma.cS.findUnique({ where: { username } });
     if (existing) {
       throw Object.assign(new Error("CS sudah terdaftar"), { status: 400 });
@@ -119,6 +121,8 @@ const login = async (req, res, next) => {
         status: 400,
       });
     }
+
+    username = username.toLowerCase();
 
     const cs = await prisma.cS.findUnique({
       where: { username },

@@ -16,51 +16,57 @@ async function generateTicketNumberAndEstimate(
 ) {
   const { startUTC, endUTC } = getStartEndOfBookingDateWIB(bookingDate);
 
-  let allQueuesToday = await tx.queue.findMany({
-    where: {
-      branchId,
-      estimatedTime: {
-        gte: startUTC,
-        lte: endUTC,
-      },
-    },
-    orderBy: { ticketNumber: "asc" },
-    include: {
-      services: {
-        include: { service: { select: { estimatedTime: true } } },
-      },
-    },
-  });
-
   const branch = await tx.branch.findUnique({ where: { id: branchId } });
 
-  let nextNumber = allQueuesToday.length + 1;
-  ticketNumber = `${branch.branchCode}-${String(nextNumber).padStart(3, "0")}`;
+  const csList = await tx.cS.findMany({
+    where: { branchId },
+    select: { id: true },
+  });
 
-  let estimatedTimeDate;
-  const now = new Date();
-  const bookingWIB = toWIB(now);
-  const minStartWIB = new Date(bookingWIB);
-  minStartWIB.setHours(8, 0, 0, 0);
+  let csAvailableTimes = {};
+  for (const cs of csList) {
+    const lastQueue = await tx.queue.findFirst({
+      where: {
+        branchId,
+        csId: cs.id,
+        estimatedTime: {
+          gte: startUTC,
+          lte: endUTC,
+        },
+      },
+      orderBy: { estimatedTime: "desc" },
+      include: {
+        services: {
+          include: { service: { select: { estimatedTime: true } } },
+        },
+      },
+    });
 
-  let lastEstimatedTime = null;
-  if (allQueuesToday.length > 0) {
-    const lastQueue = allQueuesToday[allQueuesToday.length - 1];
-    lastEstimatedTime = lastQueue.estimatedTime;
-    let lastDuration = 0;
-    for (const s of lastQueue.services) {
-      lastDuration += s.service.estimatedTime || 0;
+    if (lastQueue) {
+      let lastFinish = toWIB(lastQueue.estimatedTime);
+      let lastDuration = 0;
+      for (const s of lastQueue.services)
+        lastDuration += s.service.estimatedTime || 0;
+      csAvailableTimes[cs.id] = new Date(
+        lastFinish.getTime() + lastDuration * 60000
+      );
+    } else {
+      let startWIB = new Date(toWIB(new Date()));
+      startWIB.setHours(8, 0, 0, 0);
+      csAvailableTimes[cs.id] = startWIB;
     }
-    estimatedTimeDate = new Date(
-      new Date(lastEstimatedTime).getTime() + lastDuration * 60000
-    );
-  } else {
-    estimatedTimeDate = toUTC(
-      bookingWIB > minStartWIB ? bookingWIB : minStartWIB
-    );
   }
 
-  let estimatedTimeWIB = toWIB(estimatedTimeDate);
+  let selectedCSId = null;
+  let earliestTime = null;
+  for (const [csId, time] of Object.entries(csAvailableTimes)) {
+    if (!earliestTime || time < earliestTime) {
+      earliestTime = time;
+      selectedCSId = csId;
+    }
+  }
+
+  let estimatedTimeWIB = new Date(earliestTime);
 
   while (
     estimatedTimeWIB.getHours() > 15 ||
@@ -69,51 +75,78 @@ async function generateTicketNumberAndEstimate(
     estimatedTimeWIB.setDate(estimatedTimeWIB.getDate() + 1);
     estimatedTimeWIB.setHours(8, 0, 0, 0);
 
-    const { startUTC: nextStartUTC, endUTC: nextEndUTC } =
-      getStartEndOfBookingDateWIB(estimatedTimeWIB);
-    const nextDayQueues = await tx.queue.findMany({
-      where: {
-        branchId,
-        estimatedTime: {
-          gte: nextStartUTC,
-          lte: nextEndUTC,
+    csAvailableTimes = {};
+    for (const cs of csList) {
+      const { startUTC: nextStartUTC, endUTC: nextEndUTC } =
+        getStartEndOfBookingDateWIB(estimatedTimeWIB);
+      const lastQueue = await tx.queue.findFirst({
+        where: {
+          branchId,
+          csId: cs.id,
+          estimatedTime: {
+            gte: nextStartUTC,
+            lte: nextEndUTC,
+          },
         },
-      },
-      orderBy: { estimatedTime: "asc" },
-      include: {
-        services: {
-          include: { service: { select: { estimatedTime: true } } },
+        orderBy: { estimatedTime: "desc" },
+        include: {
+          services: {
+            include: { service: { select: { estimatedTime: true } } },
+          },
         },
-      },
-    });
+      });
 
-    let nextNumber;
-    if (nextDayQueues.length > 0) {
-      const lastQueue = nextDayQueues[nextDayQueues.length - 1];
-      let lastEstimatedTimeWIB = toWIB(lastQueue.estimatedTime);
-      let lastDuration = 0;
-      for (const s of lastQueue.services) {
-        lastDuration += s.service.estimatedTime || 0;
+      if (lastQueue) {
+        let lastFinish = toWIB(lastQueue.estimatedTime);
+        let lastDuration = 0;
+        for (const s of lastQueue.services)
+          lastDuration += s.service.estimatedTime || 0;
+        csAvailableTimes[cs.id] = new Date(
+          lastFinish.getTime() + lastDuration * 60000
+        );
+      } else {
+        let startWIB = new Date(estimatedTimeWIB);
+        startWIB.setHours(8, 0, 0, 0);
+        csAvailableTimes[cs.id] = startWIB;
       }
-      estimatedTimeWIB = new Date(
-        lastEstimatedTimeWIB.getTime() + lastDuration * 60000
-      );
-      nextNumber = nextDayQueues.length + 1;
-    } else {
-      estimatedTimeWIB.setHours(8, 0, 0, 0);
-      nextNumber = 1;
     }
-
-    estimatedTimeDate = toUTC(estimatedTimeWIB);
-    ticketNumber = `${branch.branchCode}-${String(nextNumber).padStart(
-      3,
-      "0"
-    )}`;
+    selectedCSId = null;
+    earliestTime = null;
+    for (const [csId, time] of Object.entries(csAvailableTimes)) {
+      if (!earliestTime || time < earliestTime) {
+        earliestTime = time;
+        selectedCSId = csId;
+      }
+    }
+    estimatedTimeWIB = new Date(earliestTime);
   }
 
-  const notification = allQueuesToday.length < 5;
+  const { startUTC: ticketStartUTC, endUTC: ticketEndUTC } =
+    getStartEndOfBookingDateWIB(estimatedTimeWIB);
+  const allQueuesThisDay = await tx.queue.findMany({
+    where: {
+      branchId,
+      estimatedTime: {
+        gte: ticketStartUTC,
+        lte: ticketEndUTC,
+      },
+    },
+  });
+  let nextNumber = allQueuesThisDay.length + 1;
+  const ticketNumber = `${branch.branchCode}-${String(nextNumber).padStart(
+    3,
+    "0"
+  )}`;
 
-  return { ticketNumber, estimatedTimeDate, notification };
+  const estimatedTimeDate = toUTC(estimatedTimeWIB);
+  const notification = allQueuesThisDay.length < 5;
+
+  return {
+    ticketNumber,
+    estimatedTimeDate,
+    notification,
+    csId: Number(selectedCSId),
+  };
 }
 
 module.exports = { generateTicketNumberAndEstimate };
