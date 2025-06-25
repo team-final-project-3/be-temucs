@@ -372,6 +372,13 @@ const callQueue = async (req, res, next) => {
     });
 
     res.json({ message: "Queue status updated to called", queue });
+
+    // Emit ke semua client
+    io.emit('queue:called', {
+      ticketNumber: updatedQueue.ticketNumber,
+      status: updatedQueue.status,
+      calledAt: updatedQueue.calledAt,
+    });
   } catch (error) {
     next(error);
   }
@@ -435,6 +442,7 @@ const takeQueue = async (req, res, next) => {
     });
 
     res.json({ message: "Queue status updated to in progress", queue });
+
   } catch (error) {
     next(error);
   }
@@ -959,8 +967,8 @@ const getAllQueues = async (req, res) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-            "*".repeat(Math.max(domainMain.length - 2, 0)) +
-            domainMain.slice(-1);
+          "*".repeat(Math.max(domainMain.length - 2, 0)) +
+          domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -977,10 +985,10 @@ const getAllQueues = async (req, res) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-            ...queue.user,
-            email: censorEmail(queue.user.email),
-            phoneNumber: censorPhone(queue.user.phoneNumber),
-          }
+          ...queue.user,
+          email: censorEmail(queue.user.email),
+          phoneNumber: censorPhone(queue.user.phoneNumber),
+        }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -1182,12 +1190,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
@@ -1248,12 +1256,12 @@ const getActiveCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
       calledAt: queue.calledAt,
     };
@@ -1368,18 +1376,63 @@ const getCalledCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
     });
   } catch (error) {
     next(error);
   }
 };
+
+
+const getCalledCustomerTV = async (req, res, next) => {
+  try {
+    const csId = req.cs?.csId;
+
+    if (!csId) {
+      return res.status(401).json({ message: "Unauthorized: CS ID tidak ditemukan." });
+    }
+
+    const cs = await prisma.cS.findUnique({
+      where: { id: csId },
+      select: { branchId: true },
+    });
+
+    if (!cs) {
+      return res.status(404).json({ message: "CS tidak ditemukan." });
+    }
+
+    const queue = await prisma.queue.findFirst({
+      where: {
+        branchId: cs.branchId,
+        status: "called",
+      },
+      orderBy: {
+        calledAt: 'asc',
+      },
+      select: {
+        ticketNumber: true,
+        status: true,
+        calledAt: true,
+      },
+    });
+
+    if (!queue) {
+      return res.status(404).json({ message: "Tidak ada antrian dengan status 'called'." });
+    }
+
+    res.json(queue);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
+
 
 module.exports = {
   bookQueueOnline,
@@ -1411,4 +1464,5 @@ module.exports = {
   getActiveCustomerByCS,
   getQueueDetailByCSId,
   getCalledCustomerByCS,
+  getCalledCustomerTV,
 };
