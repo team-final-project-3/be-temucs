@@ -443,6 +443,13 @@ const takeQueue = async (req, res, next) => {
       },
     });
 
+    // Emit event "queue:in-progress" saat antrian diambil CS
+    global.io.emit("queue:in-progress", {
+      ticketNumber: queue.ticketNumber,
+      status: queue.status,
+      updatedAt: queue.updatedAt,
+    });
+
     res.json({ message: "Queue status updated to in progress", queue });
 
   } catch (error) {
