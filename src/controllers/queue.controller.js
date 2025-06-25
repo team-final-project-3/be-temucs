@@ -372,6 +372,13 @@ const callQueue = async (req, res, next) => {
     });
 
     res.json({ message: "Queue status updated to called", queue });
+
+    // Emit ke semua client
+    io.emit('queue:called', {
+      ticketNumber: updatedQueue.ticketNumber,
+      status: updatedQueue.status,
+      calledAt: updatedQueue.calledAt,
+    });
   } catch (error) {
     next(error);
   }
@@ -435,6 +442,7 @@ const takeQueue = async (req, res, next) => {
     });
 
     res.json({ message: "Queue status updated to in progress", queue });
+
   } catch (error) {
     next(error);
   }
