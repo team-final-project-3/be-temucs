@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --coverage",
     "seed:service": "node prisma/seed-service-document.js"
   },
   "keywords": [],
@@ -21,7 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "node-cron": "^4.1.0",
-    "node-fetch": "^3.3.2",
+    "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.3",
     "prisma": "^6.9.0",
     "socket.io": "^4.8.1",
@@ -30,6 +30,8 @@
     "zod": "^3.25.63"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "jest": "^30.0.3",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.1"
   }
 }
