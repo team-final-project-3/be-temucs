@@ -284,38 +284,38 @@ router.patch(
 //   queueController.getQueueCountByBranchIdCS
 // );
 
-// /**
-//  * @swagger
-//  * /api/queue/count/loket:
-//  *   get:
-//  *     summary: Get total active queues for Loket's branch
-//  *     tags: [Queue]
-//  *     security:
-//  *       - bearerAuth: []
-//  *     description: Only accessible by Loket role. Automatically gets branch from Loket's login data.
-//  *     responses:
-//  *       200:
-//  *         description: Total active queue count for Loket's branch
-//  *         content:
-//  *           application/json:
-//  *             schema:
-//  *               type: object
-//  *               properties:
-//  *                 branchId:
-//  *                   type: integer
-//  *                 totalQueue:
-//  *                   type: integer
-//  *       403:
-//  *         description: Loket tidak ditemukan atau unauthorized
-//  *       500:
-//  *         description: Internal server error
-//  */
-// router.get(
-//   "/queue/count/loket",
-//   verifyLoketToken,
-//   allowRoles("loket"),
-//   queueController.getQueueCountByBranchIdLoket
-// );
+/**
+ * @swagger
+ * /api/queue/count/loket:
+ *   get:
+ *     summary: Get total active queues for Loket's branch
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by Loket role. Automatically gets branch from Loket's login data.
+ *     responses:
+ *       200:
+ *         description: Total active queue count for Loket's branch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 branchId:
+ *                   type: integer
+ *                 totalQueue:
+ *                   type: integer
+ *       403:
+ *         description: Loket tidak ditemukan atau unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/count/loket",
+  verifyLoketToken,
+  allowRoles("loket"),
+  queueController.getQueueCountByBranchIdLoket
+);
 
 // /**
 //  * @swagger

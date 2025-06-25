@@ -468,33 +468,33 @@ const takeQueue = async (req, res, next) => {
 //   }
 // };
 
-// const getQueueCountByBranchIdLoket = async (req, res, next) => {
-//   try {
-//     const branchId = req.loket.branchId;
+const getQueueCountByBranchIdLoket = async (req, res, next) => {
+  try {
+    const branchId = req.loket.branchId;
 
-//     if (!branchId) {
-//       throw Object.assign(new Error("Cabang tidak ditemukan pada akun Loket"), {
-//         status: 400,
-//       });
-//     }
+    if (!branchId) {
+      throw Object.assign(new Error("Cabang tidak ditemukan pada akun Loket"), {
+        status: 400,
+      });
+    }
 
-//     const count = await prisma.queue.count({
-//       where: {
-//         branchId: Number(branchId),
-//         status: {
-//           notIn: ["done", "skipped", "canceled"],
-//         },
-//       },
-//     });
+    const count = await prisma.queue.count({
+      where: {
+        branchId: Number(branchId),
+        status: {
+          notIn: ["done", "skipped", "canceled"],
+        },
+      },
+    });
 
-//     res.status(200).json({
-//       branchId: Number(branchId),
-//       totalQueue: count,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+    res.status(200).json({
+      branchId: Number(branchId),
+      totalQueue: count,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // const getQueueCountByBranchIdUser = async (req, res, next) => {
 //   try {
@@ -1390,7 +1390,7 @@ module.exports = {
   takeQueue,
   doneQueue: updateStatus("done"),
   // getQueueCountByBranchIdCS,
-  // getQueueCountByBranchIdLoket,
+  getQueueCountByBranchIdLoket,
   // getQueueCountByBranchIdUser,
   // getRemainingQueueCS,
   // getRemainingQueueLoket,
