@@ -251,104 +251,104 @@ router.patch(
   queueController.doneQueue
 );
 
-/**
- * @swagger
- * /api/queue/count/cs:
- *   get:
- *     summary: Get total active queues for CS's branch
- *     tags: [Queue]
- *     security:
- *       - bearerAuth: []
- *     description: Only accessible by CS role. Automatically gets branch from CS's login data.
- *     responses:
- *       200:
- *         description: Total active queue count for CS's branch
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 branchId:
- *                   type: integer
- *                 totalQueue:
- *                   type: integer
- *       403:
- *         description: CS tidak ditemukan atau unauthorized
- *       500:
- *         description: Internal server error
- */
-router.get(
-  "/queue/count/cs",
-  verifyCSToken,
-  allowRoles("cs"),
-  queueController.getQueueCountByBranchIdCS
-);
+// /**
+//  * @swagger
+//  * /api/queue/count/cs:
+//  *   get:
+//  *     summary: Get total active queues for CS's branch
+//  *     tags: [Queue]
+//  *     security:
+//  *       - bearerAuth: []
+//  *     description: Only accessible by CS role. Automatically gets branch from CS's login data.
+//  *     responses:
+//  *       200:
+//  *         description: Total active queue count for CS's branch
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 branchId:
+//  *                   type: integer
+//  *                 totalQueue:
+//  *                   type: integer
+//  *       403:
+//  *         description: CS tidak ditemukan atau unauthorized
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.get(
+//   "/queue/count/cs",
+//   verifyCSToken,
+//   allowRoles("cs"),
+//   queueController.getQueueCountByBranchIdCS
+// );
 
-/**
- * @swagger
- * /api/queue/count/loket:
- *   get:
- *     summary: Get total active queues for Loket's branch
- *     tags: [Queue]
- *     security:
- *       - bearerAuth: []
- *     description: Only accessible by Loket role. Automatically gets branch from Loket's login data.
- *     responses:
- *       200:
- *         description: Total active queue count for Loket's branch
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 branchId:
- *                   type: integer
- *                 totalQueue:
- *                   type: integer
- *       403:
- *         description: Loket tidak ditemukan atau unauthorized
- *       500:
- *         description: Internal server error
- */
-router.get(
-  "/queue/count/loket",
-  verifyLoketToken,
-  allowRoles("loket"),
-  queueController.getQueueCountByBranchIdLoket
-);
+// /**
+//  * @swagger
+//  * /api/queue/count/loket:
+//  *   get:
+//  *     summary: Get total active queues for Loket's branch
+//  *     tags: [Queue]
+//  *     security:
+//  *       - bearerAuth: []
+//  *     description: Only accessible by Loket role. Automatically gets branch from Loket's login data.
+//  *     responses:
+//  *       200:
+//  *         description: Total active queue count for Loket's branch
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 branchId:
+//  *                   type: integer
+//  *                 totalQueue:
+//  *                   type: integer
+//  *       403:
+//  *         description: Loket tidak ditemukan atau unauthorized
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.get(
+//   "/queue/count/loket",
+//   verifyLoketToken,
+//   allowRoles("loket"),
+//   queueController.getQueueCountByBranchIdLoket
+// );
 
-/**
- * @swagger
- * /api/queue/count/user:
- *   get:
- *     summary: Get total active queues for user's latest visited branch
- *     tags: [Queue]
- *     security:
- *       - bearerAuth: []
- *     description: Only accessible by Nasabah. Gets branch based on user's last queue.
- *     responses:
- *       200:
- *         description: Total active queue count for the user's branch
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 branchId:
- *                   type: integer
- *                 totalQueue:
- *                   type: integer
- *       404:
- *         description: No recent queue found for user
- *       500:
- *         description: Internal server error
- */
-router.get(
-  "/queue/count/user",
-  verifyUserToken,
-  allowRoles("nasabah"),
-  queueController.getQueueCountByBranchIdUser
-);
+// /**
+//  * @swagger
+//  * /api/queue/count/user:
+//  *   get:
+//  *     summary: Get total active queues for user's latest visited branch
+//  *     tags: [Queue]
+//  *     security:
+//  *       - bearerAuth: []
+//  *     description: Only accessible by Nasabah. Gets branch based on user's last queue.
+//  *     responses:
+//  *       200:
+//  *         description: Total active queue count for the user's branch
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 branchId:
+//  *                   type: integer
+//  *                 totalQueue:
+//  *                   type: integer
+//  *       404:
+//  *         description: No recent queue found for user
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.get(
+//   "/queue/count/user",
+//   verifyUserToken,
+//   allowRoles("nasabah"),
+//   queueController.getQueueCountByBranchIdUser
+// );
 
 // /**
 //  * @swagger
@@ -1278,50 +1278,6 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/cs/is-calling:
- *   get:
- *     summary: Cek apakah CS sedang memanggil (called) nasabah
- *     tags: [Queue]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Status pemanggilan nasabah oleh CS
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 isCalling:
- *                   type: boolean
- *                   example: true
- *                 queueId:
- *                   type: integer
- *                   nullable: true
- *                   example: 12
- *                 ticketNumber:
- *                   type: string
- *                   nullable: true
- *                   example: "A-001"
- *                 calledAt:
- *                   type: string
- *                   format: date-time
- *                   nullable: true
- *                   example: "2024-06-24T09:00:00.000Z"
- *       401:
- *         description: Unauthorized – Token tidak valid atau bukan CS
- *       500:
- *         description: Internal server error
- */
-router.get(
-  "/queue/cs/is-calling",
-  verifyCSToken,
-  allowRoles("cs"),
-  queueController.isCSCallingCustomer
-);
-
-/**
- * @swagger
  * /api/queue/cs/called-customer:
  *   get:
  *     summary: Ambil data nasabah yang sedang dipanggil (called) oleh CS login
@@ -1330,49 +1286,36 @@ router.get(
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Data nasabah yang sedang dipanggil oleh CS
+ *         description: Data nasabah yang sedang dipanggil oleh CS, atau isCalling false jika tidak ada
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 isCalling:
+ *                   type: boolean
+ *                   example: false
  *                 queueId:
  *                   type: integer
- *                   example: 12
+ *                   nullable: true
+ *                   example: null
  *                 ticketNumber:
  *                   type: string
- *                   example: "A-001"
+ *                   nullable: true
+ *                   example: null
  *                 calledAt:
  *                   type: string
  *                   format: date-time
- *                   example: "2024-06-24T09:00:00.000Z"
+ *                   nullable: true
+ *                   example: null
  *                 nasabah:
  *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                       nullable: true
- *                       example: 7
- *                     fullname:
- *                       type: string
- *                       example: "Andi"
- *                     username:
- *                       type: string
- *                       nullable: true
- *                       example: "andi123"
- *                     email:
- *                       type: string
- *                       nullable: true
- *                       example: "andi@email.com"
- *                     phoneNumber:
- *                       type: string
- *                       nullable: true
- *                       example: "08123456789"
+ *                   nullable: true
+ *                   example: null
  *                 status:
  *                   type: string
- *                   example: "called"
- *       404:
- *         description: Tidak ada nasabah yang sedang dipanggil
+ *                   nullable: true
+ *                   example: null
  *       401:
  *         description: Unauthorized – Token tidak valid atau bukan CS
  *       500:

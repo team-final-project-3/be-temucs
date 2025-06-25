@@ -440,89 +440,89 @@ const takeQueue = async (req, res, next) => {
   }
 };
 
-const getQueueCountByBranchIdCS = async (req, res, next) => {
-  try {
-    const branchId = req.cs.branchId;
+// const getQueueCountByBranchIdCS = async (req, res, next) => {
+//   try {
+//     const branchId = req.cs.branchId;
 
-    if (!branchId) {
-      throw Object.assign(new Error("Cabang tidak ditemukan pada akun CS"), {
-        status: 400,
-      });
-    }
+//     if (!branchId) {
+//       throw Object.assign(new Error("Cabang tidak ditemukan pada akun CS"), {
+//         status: 400,
+//       });
+//     }
 
-    const count = await prisma.queue.count({
-      where: {
-        branchId: Number(branchId),
-        status: {
-          notIn: ["done", "skipped", "canceled"],
-        },
-      },
-    });
+//     const count = await prisma.queue.count({
+//       where: {
+//         branchId: Number(branchId),
+//         status: {
+//           notIn: ["done", "skipped", "canceled"],
+//         },
+//       },
+//     });
 
-    res.status(200).json({
-      branchId: Number(branchId),
-      totalQueue: count,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+//     res.status(200).json({
+//       branchId: Number(branchId),
+//       totalQueue: count,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-const getQueueCountByBranchIdLoket = async (req, res, next) => {
-  try {
-    const branchId = req.loket.branchId;
+// const getQueueCountByBranchIdLoket = async (req, res, next) => {
+//   try {
+//     const branchId = req.loket.branchId;
 
-    if (!branchId) {
-      throw Object.assign(new Error("Cabang tidak ditemukan pada akun Loket"), {
-        status: 400,
-      });
-    }
+//     if (!branchId) {
+//       throw Object.assign(new Error("Cabang tidak ditemukan pada akun Loket"), {
+//         status: 400,
+//       });
+//     }
 
-    const count = await prisma.queue.count({
-      where: {
-        branchId: Number(branchId),
-        status: {
-          notIn: ["done", "skipped", "canceled"],
-        },
-      },
-    });
+//     const count = await prisma.queue.count({
+//       where: {
+//         branchId: Number(branchId),
+//         status: {
+//           notIn: ["done", "skipped", "canceled"],
+//         },
+//       },
+//     });
 
-    res.status(200).json({
-      branchId: Number(branchId),
-      totalQueue: count,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+//     res.status(200).json({
+//       branchId: Number(branchId),
+//       totalQueue: count,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-const getQueueCountByBranchIdUser = async (req, res, next) => {
-  try {
-    const branchId = req.user.branchId;
+// const getQueueCountByBranchIdUser = async (req, res, next) => {
+//   try {
+//     const branchId = req.user.branchId;
 
-    if (!branchId) {
-      throw Object.assign(new Error("Cabang tidak ditemukan pada akun Anda"), {
-        status: 400,
-      });
-    }
+//     if (!branchId) {
+//       throw Object.assign(new Error("Cabang tidak ditemukan pada akun Anda"), {
+//         status: 400,
+//       });
+//     }
 
-    const count = await prisma.queue.count({
-      where: {
-        branchId: Number(branchId),
-        status: {
-          notIn: ["done", "skipped", "canceled"],
-        },
-      },
-    });
+//     const count = await prisma.queue.count({
+//       where: {
+//         branchId: Number(branchId),
+//         status: {
+//           notIn: ["done", "skipped", "canceled"],
+//         },
+//       },
+//     });
 
-    res.status(200).json({
-      branchId: Number(branchId),
-      totalQueue: count,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+//     res.status(200).json({
+//       branchId: Number(branchId),
+//       totalQueue: count,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 // const getRemainingQueueUser = async (req, res, next) => {
 //   try {
@@ -1233,9 +1233,12 @@ const getActiveCustomerByCS = async (req, res, next) => {
     });
 
     if (!queue) {
-      return res
-        .status(404)
-        .json({ message: "CS tidak sedang melayani nasabah manapun." });
+      throw Object.assign(
+        new Error("CS tidak sedang melayani nasabah manapun."),
+        {
+          status: 404,
+        }
+      );
     }
 
     const result = {
@@ -1266,9 +1269,12 @@ const getQueueDetailByCSId = async (req, res, next) => {
     const csId = req.cs?.csId;
     console.log(csId);
     if (!csId) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: CS ID tidak ditemukan dalam token." });
+      throw Object.assign(
+        new Error("Unauthorized: CS ID tidak ditemukan dalam token."),
+        {
+          status: 401,
+        }
+      );
     }
 
     const queue = await prisma.queue.findFirst({
@@ -1279,9 +1285,14 @@ const getQueueDetailByCSId = async (req, res, next) => {
     });
 
     if (!queue) {
-      return res
-        .status(404)
-        .json({ message: "Tidak ada antrian yang sedang diproses." });
+      return res.status(200).json({
+        id: null,
+        ticketNumber: null,
+        status: null,
+        calledAt: null,
+        name: null,
+        services: null,
+      });
     }
 
     const queueServices = await prisma.queueService.findMany({
@@ -1293,7 +1304,10 @@ const getQueueDetailByCSId = async (req, res, next) => {
       },
     });
 
-    const services = queueServices.map((qs) => qs.service.serviceName);
+    const services =
+      Array.isArray(queueServices) && queueServices.length > 0
+        ? queueServices.map((qs) => qs.service.serviceName)
+        : [];
 
     res.json({
       id: queue.id,
@@ -1302,33 +1316,6 @@ const getQueueDetailByCSId = async (req, res, next) => {
       calledAt: queue.calledAt,
       name: queue.name,
       services,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const isCSCallingCustomer = async (req, res, next) => {
-  try {
-    const csId = req.cs?.csId;
-    if (!csId) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: CS ID tidak ditemukan dalam token." });
-    }
-
-    const queue = await prisma.queue.findFirst({
-      where: {
-        csId,
-        status: "called",
-      },
-    });
-
-    res.json({
-      isCalling: !!queue,
-      queueId: queue ? queue.id : null,
-      ticketNumber: queue ? queue.ticketNumber : null,
-      calledAt: queue ? queue.calledAt : null,
     });
   } catch (error) {
     next(error);
@@ -1363,12 +1350,18 @@ const getCalledCustomerByCS = async (req, res, next) => {
     });
 
     if (!queue) {
-      return res
-        .status(404)
-        .json({ message: "Tidak ada nasabah yang sedang dipanggil." });
+      return res.status(200).json({
+        isCalling: false,
+        queueId: null,
+        ticketNumber: null,
+        calledAt: null,
+        nasabah: null,
+        status: null,
+      });
     }
 
-    res.json({
+    res.status(200).json({
+      isCalling: true,
       queueId: queue.id,
       ticketNumber: queue.ticketNumber,
       calledAt: queue.calledAt,
@@ -1396,9 +1389,9 @@ module.exports = {
   callQueue,
   takeQueue,
   doneQueue: updateStatus("done"),
-  getQueueCountByBranchIdCS,
-  getQueueCountByBranchIdLoket,
-  getQueueCountByBranchIdUser,
+  // getQueueCountByBranchIdCS,
+  // getQueueCountByBranchIdLoket,
+  // getQueueCountByBranchIdUser,
   // getRemainingQueueCS,
   // getRemainingQueueLoket,
   // getRemainingQueueUser,
@@ -1417,6 +1410,5 @@ module.exports = {
   getActiveCSCustomer,
   getActiveCustomerByCS,
   getQueueDetailByCSId,
-  isCSCallingCustomer,
   getCalledCustomerByCS,
 };

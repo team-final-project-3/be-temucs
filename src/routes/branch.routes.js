@@ -192,6 +192,51 @@ router.put(
  *     responses:
  *       200:
  *         description: List of branches
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 branches:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       name:
+ *                         type: string
+ *                         example: "BNI Lada Kota"
+ *                       branchCode:
+ *                         type: string
+ *                         example: "BNI1234"
+ *                       address:
+ *                         type: string
+ *                         example: "Jl. Lada No.12, Jakarta"
+ *                       longitude:
+ *                         type: number
+ *                         example: 106.8147
+ *                       latitude:
+ *                         type: number
+ *                         example: -6.1383
+ *                       holiday:
+ *                         type: boolean
+ *                         example: false
+ *                       status:
+ *                         type: boolean
+ *                         example: true
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                       activeQueueCount:
+ *                         type: integer
+ *                         example: 5
+ *       500:
+ *         description: Internal server error
  */
 router.get(
   "/branch",
@@ -203,7 +248,7 @@ router.get(
  * @swagger
  * /api/branch/loket:
  *   get:
- *     summary: Get all branches (khusus Loket) beserta jumlah antrian aktif
+ *     summary: Get all branches (for Loket)
  *     tags: [Branch]
  *     security:
  *       - bearerAuth: []
@@ -250,7 +295,7 @@ router.get(
  *                       updatedAt:
  *                         type: string
  *                         format: date-time
- *                       waitingQueueCount:
+ *                       activeQueueCount:
  *                         type: integer
  *                         example: 5
  *       401:

@@ -34,6 +34,7 @@ const getDocumentsByServiceIdForUser = async (req, res, next) => {
         uniqueDocsMap.set(sd.document.id, {
           id: sd.document.id,
           name: sd.document.documentName,
+          quantity: sd.quantity,
         });
       }
     }
@@ -79,6 +80,7 @@ const getDocumentsByServiceIdForLoket = async (req, res, next) => {
         uniqueDocsMap.set(sd.document.id, {
           id: sd.document.id,
           name: sd.document.documentName,
+          quantity: sd.quantity,
         });
       }
     }

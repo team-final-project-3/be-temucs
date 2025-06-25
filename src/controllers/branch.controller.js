@@ -201,15 +201,6 @@ const updateBranchStatus = async (req, res, next) => {
 const getAllBranch = async (req, res, next) => {
   try {
     const branches = await prisma.branch.findMany();
-    res.json({ branches });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getAllBranchLoket = async (req, res, next) => {
-  try {
-    const branches = await prisma.branch.findMany();
 
     const branchIds = branches.map((b) => b.id);
     const queueCounts = await prisma.queue.groupBy({
@@ -228,7 +219,7 @@ const getAllBranchLoket = async (req, res, next) => {
 
     const result = branches.map((branch) => ({
       ...branch,
-      waitingQueueCount: countMap[branch.id] || 0,
+      activeQueueCount: countMap[branch.id] || 0,
     }));
 
     res.json({ branches: result });
@@ -236,6 +227,8 @@ const getAllBranchLoket = async (req, res, next) => {
     next(error);
   }
 };
+
+const getAllBranchLoket = getAllBranch;
 
 const getBranch = async (req, res, next) => {
   try {
@@ -250,7 +243,33 @@ const getBranch = async (req, res, next) => {
     if (!branch) {
       throw Object.assign(new Error("Branch tidak ditemukan"), { status: 404 });
     }
-    res.json({ branch });
+
+    const activeQueueCount = await prisma.queue.count({
+      where: {
+        branchId: id,
+        NOT: { status: { in: ["done", "skipped", "canceled"] } },
+      },
+    });
+
+    const lastInProgress = await prisma.queue.findFirst({
+      where: {
+        branchId: id,
+        status: "in progress",
+      },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        ticketNumber: true,
+      },
+    });
+
+    res.json({
+      branch: {
+        ...branch,
+        activeQueueCount,
+        lastInProgressTicket: lastInProgress || null,
+      },
+    });
   } catch (error) {
     next(error);
   }

@@ -25,7 +25,26 @@ const { verifyUserToken } = require("../auth/user.auth");
  *                 example: [1, 2, 3]
  *     responses:
  *       200:
- *         description: Success, returns list of unique documents
+ *         description: Success, returns list of unique documents with quantity
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 documents:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       name:
+ *                         type: string
+ *                         example: "KTP"
+ *                       quantity:
+ *                         type: integer
+ *                         example: 1
  *       400:
  *         description: Bad request
  *       500:
@@ -58,7 +77,26 @@ router.post(
  *                 example: [1, 2, 3]
  *     responses:
  *       200:
- *         description: Success, returns list of unique documents
+ *         description: Success, returns list of unique documents with quantity
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 documents:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       name:
+ *                         type: string
+ *                         example: "KTP"
+ *                       quantity:
+ *                         type: integer
+ *                         example: 1
  *       400:
  *         description: Bad request
  *       500:

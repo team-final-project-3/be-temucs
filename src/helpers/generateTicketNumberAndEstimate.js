@@ -51,8 +51,9 @@ async function generateTicketNumberAndEstimate(
         lastFinish.getTime() + lastDuration * 60000
       );
     } else {
-      let startWIB = new Date(toWIB(new Date()));
-      startWIB.setHours(8, 0, 0, 0);
+      let bookingWIB = toWIB(bookingDate);
+      let startWIB = new Date(bookingWIB);
+      if (startWIB.getHours() < 8) startWIB.setHours(8, 0, 0, 0);
       csAvailableTimes[cs.id] = startWIB;
     }
   }
@@ -105,8 +106,9 @@ async function generateTicketNumberAndEstimate(
           lastFinish.getTime() + lastDuration * 60000
         );
       } else {
-        let startWIB = new Date(estimatedTimeWIB);
-        startWIB.setHours(8, 0, 0, 0);
+        let bookingWIB = toWIB(estimatedTimeWIB);
+        let startWIB = new Date(bookingWIB);
+        if (startWIB.getHours() < 8) startWIB.setHours(8, 0, 0, 0);
         csAvailableTimes[cs.id] = startWIB;
       }
     }
