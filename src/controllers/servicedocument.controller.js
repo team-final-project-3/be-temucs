@@ -1,17 +1,11 @@
 const prisma = require("../../prisma/client");
 
-const NON_AGGREGATE_DOCS = [
-  "KTP",
-  "KK",
-  "Tabungan",
-  "Surat",
-  "Berita",
-  "Buku",
-  "Kartu",
-];
+const AGGREGATE_DOCS = ["materai", "copy"];
 
 function shouldAggregate(docName) {
-  return !NON_AGGREGATE_DOCS.some((keyword) => docName.includes(keyword));
+  return AGGREGATE_DOCS.some((keyword) =>
+    docName.toLowerCase().includes(keyword.toLowerCase())
+  );
 }
 
 const getDocumentsByServiceIdForUser = async (req, res, next) => {
@@ -54,7 +48,6 @@ const getDocumentsByServiceIdForUser = async (req, res, next) => {
       } else if (shouldAggregate(docName)) {
         uniqueDocsMap.get(docName).quantity += sd.quantity;
       }
-      // else: untuk dokumen non-aggregate, biarkan quantity tetap (tidak dijumlahkan)
     }
 
     const documents = Array.from(uniqueDocsMap.values());
@@ -104,7 +97,6 @@ const getDocumentsByServiceIdForLoket = async (req, res, next) => {
       } else if (shouldAggregate(docName)) {
         uniqueDocsMap.get(docName).quantity += sd.quantity;
       }
-      // else: untuk dokumen non-aggregate, biarkan quantity tetap (tidak dijumlahkan)
     }
 
     const documents = Array.from(uniqueDocsMap.values());
