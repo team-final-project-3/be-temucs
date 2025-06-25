@@ -39,14 +39,16 @@ const getDocumentsByServiceIdForUser = async (req, res, next) => {
     const uniqueDocsMap = new Map();
     for (const sd of serviceDocuments) {
       const docName = sd.document.documentName;
-      if (!uniqueDocsMap.has(docName)) {
-        uniqueDocsMap.set(docName, {
+      const docKey = docName.trim().toLowerCase();
+
+      if (!uniqueDocsMap.has(docKey)) {
+        uniqueDocsMap.set(docKey, {
           id: sd.document.id,
           name: docName,
           quantity: sd.quantity,
         });
       } else if (shouldAggregate(docName)) {
-        uniqueDocsMap.get(docName).quantity += sd.quantity;
+        uniqueDocsMap.get(docKey).quantity += sd.quantity;
       }
     }
 
@@ -88,14 +90,16 @@ const getDocumentsByServiceIdForLoket = async (req, res, next) => {
     const uniqueDocsMap = new Map();
     for (const sd of serviceDocuments) {
       const docName = sd.document.documentName;
-      if (!uniqueDocsMap.has(docName)) {
-        uniqueDocsMap.set(docName, {
+      const docKey = docName.trim().toLowerCase();
+
+      if (!uniqueDocsMap.has(docKey)) {
+        uniqueDocsMap.set(docKey, {
           id: sd.document.id,
           name: docName,
           quantity: sd.quantity,
         });
       } else if (shouldAggregate(docName)) {
-        uniqueDocsMap.get(docName).quantity += sd.quantity;
+        uniqueDocsMap.get(docKey).quantity += sd.quantity;
       }
     }
 
