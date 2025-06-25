@@ -1328,4 +1328,48 @@ router.get(
   queueController.getCalledCustomerByCS
 );
 
+/**
+ * @swagger
+ * /api/queue/called-customer-tv:
+ *   get:
+ *     summary: Get the oldest "called" queue in CS's branch
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Hanya bisa diakses oleh CS.
+ *       Endpoint ini akan otomatis mengambil branch dari CS yang sedang login.
+ *       Mengembalikan 1 data antrian dengan status "called" paling lama (berdasarkan `calledAt` ascending).
+ *     responses:
+ *       200:
+ *         description: The oldest called queue found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ticketNumber:
+ *                   type: string
+ *                   example: KT-01-003
+ *                 status:
+ *                   type: string
+ *                   example: called
+ *                 calledAt:
+ *                   type: string
+ *                   format: date-time
+ *                   example: 2025-06-25T03:27:08.425Z
+ *       401:
+ *         description: CS ID missing from token or unauthorized
+ *       404:
+ *         description: No queue with status "called" found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/called-customer-tv",
+  verifyCSToken,
+  allowRoles("cs"),
+  queueController.getCalledCustomerTV
+);
+
 module.exports = router;
