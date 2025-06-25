@@ -1,5 +1,13 @@
 const prisma = require("../../prisma/client");
 
+const AGGREGATE_DOCS = ["materai", "copy"];
+
+function shouldAggregate(docName) {
+  return AGGREGATE_DOCS.some((keyword) =>
+    docName.toLowerCase().includes(keyword.toLowerCase())
+  );
+}
+
 const getDocumentsByServiceIdForUser = async (req, res, next) => {
   try {
     const { serviceIds } = req.body;
@@ -30,12 +38,17 @@ const getDocumentsByServiceIdForUser = async (req, res, next) => {
 
     const uniqueDocsMap = new Map();
     for (const sd of serviceDocuments) {
-      if (!uniqueDocsMap.has(sd.document.id)) {
-        uniqueDocsMap.set(sd.document.id, {
+      const docName = sd.document.documentName;
+      const docKey = docName.trim().toLowerCase();
+
+      if (!uniqueDocsMap.has(docKey)) {
+        uniqueDocsMap.set(docKey, {
           id: sd.document.id,
-          name: sd.document.documentName,
+          name: docName,
           quantity: sd.quantity,
         });
+      } else if (shouldAggregate(docName)) {
+        uniqueDocsMap.get(docKey).quantity += sd.quantity;
       }
     }
 
@@ -76,12 +89,17 @@ const getDocumentsByServiceIdForLoket = async (req, res, next) => {
 
     const uniqueDocsMap = new Map();
     for (const sd of serviceDocuments) {
-      if (!uniqueDocsMap.has(sd.document.id)) {
-        uniqueDocsMap.set(sd.document.id, {
+      const docName = sd.document.documentName;
+      const docKey = docName.trim().toLowerCase();
+
+      if (!uniqueDocsMap.has(docKey)) {
+        uniqueDocsMap.set(docKey, {
           id: sd.document.id,
-          name: sd.document.documentName,
+          name: docName,
           quantity: sd.quantity,
         });
+      } else if (shouldAggregate(docName)) {
+        uniqueDocsMap.get(docKey).quantity += sd.quantity;
       }
     }
 
