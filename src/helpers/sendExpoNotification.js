@@ -1,5 +1,16 @@
 const fetch = require("node-fetch");
 
+async function getExpoPushToken({ userId, email, phoneNumber }) {
+  let where = {};
+  if (userId) where.id = userId;
+  else if (email) where.email = email;
+  else if (phoneNumber) where.phoneNumber = phoneNumber;
+  else return null;
+
+  const user = await prisma.user.findUnique({ where });
+  return user && user.expoPushToken ? user.expoPushToken : null;
+}
+
 async function sendExpoNotification(expoPushToken, title, body, data = {}) {
   if (!expoPushToken) return;
   await fetch("https://exp.host/--/api/v2/push/send", {
@@ -15,4 +26,7 @@ async function sendExpoNotification(expoPushToken, title, body, data = {}) {
   });
 }
 
-module.exports = sendExpoNotification;
+module.exports = {
+  sendExpoNotification,
+  getExpoPushToken,
+};

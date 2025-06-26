@@ -2,7 +2,10 @@ const prisma = require("../../prisma/client");
 const {
   generateTicketNumberAndEstimate,
 } = require("../helpers/generateTicketNumberAndEstimate");
-const sendExpoNotification = require("../helpers/sendExpoNotification");
+const {
+  sendExpoNotification,
+  getExpoPushToken,
+} = require("../helpers/sendExpoNotification");
 
 const allowedTransitions = {
   waiting: ["called", "canceled"],
@@ -93,24 +96,6 @@ const bookQueueOnline = async (req, res, next) => {
 
       return queue;
     });
-
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user && user.expoPushToken) {
-      let estimasi = "-";
-      if (queue.estimatedTime) {
-        const now = new Date();
-        const est = new Date(queue.estimatedTime);
-        const diffMs = est - now;
-        const diffMin = Math.max(Math.round(diffMs / 60000), 0);
-        estimasi = diffMin > 0 ? `${diffMin} menit lagi` : "segera";
-      }
-      await sendExpoNotification(
-        user.expoPushToken,
-        "Booking Antrian Berhasil",
-        `Tiket Anda: ${queue.ticketNumber}\nEstimasi waktu: ${estimasi}`,
-        { ticketNumber: queue.ticketNumber, estimatedTime: queue.estimatedTime }
-      );
-    }
 
     res.status(201).json({ message: "Queue booked (online)", queue });
   } catch (error) {
@@ -306,12 +291,12 @@ const updateStatus = (newStatus) => async (req, res, next) => {
         if (nextQueues.length === 5) {
           const queueKe5 = nextQueues[4];
           if (queueKe5.userId) {
-            const user = await tx.user.findUnique({
-              where: { id: queueKe5.userId },
+            const expoPushToken = await getExpoPushToken({
+              userId: queueKe5.userId,
             });
-            if (user && user.expoPushToken) {
+            if (expoPushToken) {
               await sendExpoNotification(
-                user.expoPushToken,
+                expoPushToken,
                 "Antrian Anda Hampir Dipanggil",
                 "Antrian Anda tinggal 5 lagi. Mohon bersiap-siap.",
                 { ticketNumber: queueKe5.ticketNumber }
