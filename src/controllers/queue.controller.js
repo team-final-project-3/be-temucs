@@ -475,15 +475,16 @@ const takeQueue = async (req, res, next) => {
       select: {
         name: true,
         id: true,
-        username: true,
       },
     });
 
+    // Emit event 
     // Emit event 
     global.io.emit("queue:in-progress", {
       ticketNumber: queue.ticketNumber,
       status: queue.status,
       updatedAt: queue.updatedAt,
+      cs, // ini akan langsung dikonsumsi di FE
     });
 
     res.json({ message: "Queue status updated to in progress", queue });
