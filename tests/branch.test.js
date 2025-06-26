@@ -186,8 +186,8 @@ describe("Branch Controller (Integration)", () => {
       .set("Authorization", adminToken)
       .send();
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.branches)).toBe(true);
-    expect(res.body.branches.some((b) => b.id === branch.id)).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.some((b) => b.id === branch.id)).toBe(true);
 
     // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });
@@ -255,8 +255,8 @@ describe("Branch Controller (Integration)", () => {
       .set("Authorization", loketToken)
       .send();
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.branches)).toBe(true);
-    expect(res.body.branches.some((b) => b.id === branch.id)).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.some((b) => b.id === branch.id)).toBe(true);
 
     // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });

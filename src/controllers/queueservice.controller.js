@@ -67,7 +67,7 @@ const getQueueServicesByQueueId = async (req, res, next) => {
   try {
     const { queueId } = req.params;
 
-    if (!queueId) {
+    if (!queueId || isNaN(Number(queueId))) {
       throw Object.assign(new Error("queueId wajib diisi"), { status: 400 });
     }
 
