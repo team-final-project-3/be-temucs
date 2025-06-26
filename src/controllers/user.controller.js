@@ -359,6 +359,21 @@ const changePassword = async (req, res, next) => {
 
 const getAllUsers = async (req, res, next) => {
   try {
+    let { page = 1, size = 10 } = req.query;
+    page = parseInt(page);
+    size = parseInt(size);
+
+    const allowedSizes = [5, 10, 15, 20];
+    if (!allowedSizes.includes(size)) size = 10;
+
+    const skip = (page - 1) * size;
+
+    const total = await prisma.user.count({
+      where: {
+        NOT: { role: "admin" },
+      },
+    });
+
     const users = await prisma.user.findMany({
       where: {
         NOT: { role: "admin" },
@@ -374,8 +389,21 @@ const getAllUsers = async (req, res, next) => {
         createdAt: true,
         updatedAt: true,
       },
+      skip,
+      take: size,
+      orderBy: { createdAt: "desc" },
     });
-    res.json({ success: true, data: users });
+
+    res.json({
+      success: true,
+      data: users,
+      pagination: {
+        page,
+        size,
+        total,
+        totalPages: Math.ceil(total / size),
+      },
+    });
   } catch (error) {
     next(error);
   }

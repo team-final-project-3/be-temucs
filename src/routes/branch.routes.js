@@ -187,17 +187,35 @@ router.put(
  * @swagger
  * /api/branch:
  *   get:
- *     summary: Get all branches
+ *     summary: Get all branches (paginated)
  *     tags: [Branch]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (default 1)
+ *       - in: query
+ *         name: size
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           enum: [5, 10, 15, 20]
+ *           default: 10
  *     responses:
  *       200:
- *         description: List of branches
+ *         description: List of branches (paginated)
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 branches:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
  *                   type: array
  *                   items:
  *                     type: object
@@ -235,6 +253,21 @@ router.put(
  *                       activeQueueCount:
  *                         type: integer
  *                         example: 5
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     size:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 42
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
  *       500:
  *         description: Internal server error
  */

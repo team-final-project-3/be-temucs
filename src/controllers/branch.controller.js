@@ -200,7 +200,22 @@ const updateBranchStatus = async (req, res, next) => {
 
 const getAllBranch = async (req, res, next) => {
   try {
-    const branches = await prisma.branch.findMany();
+    let { page = 1, size = 10 } = req.query;
+    page = parseInt(page);
+    size = parseInt(size);
+
+    const allowedSizes = [5, 10, 15, 20];
+    if (!allowedSizes.includes(size)) size = 10;
+
+    const skip = (page - 1) * size;
+
+    const total = await prisma.branch.count();
+
+    const branches = await prisma.branch.findMany({
+      skip,
+      take: size,
+      orderBy: { createdAt: "desc" },
+    });
 
     const branchIds = branches.map((b) => b.id);
     const queueCounts = await prisma.queue.groupBy({
@@ -222,7 +237,16 @@ const getAllBranch = async (req, res, next) => {
       activeQueueCount: countMap[branch.id] || 0,
     }));
 
-    res.json({ branches: result });
+    res.json({
+      success: true,
+      data: result,
+      pagination: {
+        page,
+        size,
+        total,
+        totalPages: Math.ceil(total / size),
+      },
+    });
   } catch (error) {
     next(error);
   }

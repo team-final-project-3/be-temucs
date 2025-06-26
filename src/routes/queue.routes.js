@@ -833,8 +833,23 @@ router.get(
  * @swagger
  * /api/queue:
  *   get:
- *     summary: Get all queue data
+ *     summary: Get all queue data (paginated)
  *     tags: [Queue]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (default 1)
+ *       - in: query
+ *         name: size
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           enum: [5, 10, 15, 20]
+ *           default: 10
  *     responses:
  *       200:
  *         description: get all queue
@@ -849,71 +864,22 @@ router.get(
  *                 data:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       userId:
- *                         type: integer
- *                       branchId:
- *                         type: integer
- *                       csId:
- *                         type: integer
- *                         nullable: true
- *                       loketId:
- *                         type: integer
- *                         nullable: true
- *                       bookingDate:
- *                         type: string
- *                         format: date-time
- *                       ticketNumber:
- *                         type: string
- *                       name:
- *                         type: string
- *                       email:
- *                         type: string
- *                       phoneNumber:
- *                         type: string
- *                       estimatedTime:
- *                         type: string
- *                         format: date-time
- *                         nullable: true
- *                       calledAt:
- *                         type: string
- *                         format: date-time
- *                         nullable: true
- *                       status:
- *                         type: string
- *                       notification:
- *                         type: boolean
- *                       createdAt:
- *                         type: string
- *                         format: date-time
- *                       createdBy:
- *                         type: string
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
- *                       updatedBy:
- *                         type: string
- *                       user:
- *                         type: object
- *                       branch:
- *                         type: object
- *                       cs:
- *                         type: object
- *                         nullable: true
- *                       loket:
- *                         type: object
- *                         nullable: true
- *                       queueLogs:
- *                         type: array
- *                         items:
- *                           type: object
- *                       services:
- *                         type: array
- *                         items:
- *                           type: object
+ *                     $ref: '#/components/schemas/Queue'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     size:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 42
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
  *       500:
  *         description: Internal server error
  */
