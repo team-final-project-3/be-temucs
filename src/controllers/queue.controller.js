@@ -94,6 +94,24 @@ const bookQueueOnline = async (req, res, next) => {
       return queue;
     });
 
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user && user.expoPushToken) {
+      let estimasi = "-";
+      if (queue.estimatedTime) {
+        const now = new Date();
+        const est = new Date(queue.estimatedTime);
+        const diffMs = est - now;
+        const diffMin = Math.max(Math.round(diffMs / 60000), 0);
+        estimasi = diffMin > 0 ? `${diffMin} menit lagi` : "segera";
+      }
+      await sendExpoNotification(
+        user.expoPushToken,
+        "Booking Antrian Berhasil",
+        `Tiket Anda: ${queue.ticketNumber}\nEstimasi waktu: ${estimasi}`,
+        { ticketNumber: queue.ticketNumber, estimatedTime: queue.estimatedTime }
+      );
+    }
+
     res.status(201).json({ message: "Queue booked (online)", queue });
   } catch (error) {
     next(error);
