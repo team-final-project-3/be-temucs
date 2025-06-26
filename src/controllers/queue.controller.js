@@ -306,6 +306,15 @@ const updateStatus = (newStatus) => async (req, res, next) => {
       return queue;
     });
 
+    //websocket
+    if (["done", "skipped", "canceled"].includes(newStatus)) {
+      global.io.emit("queue:status-updated", {
+        ticketNumber: result.ticketNumber,
+        status: newStatus,
+        updatedAt: result.updatedAt,
+      });
+    }
+
     res.json({
       message: `Queue status updated to ${newStatus}`,
       queue: result,
