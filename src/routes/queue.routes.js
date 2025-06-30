@@ -883,7 +883,12 @@ router.get(
  *       500:
  *         description: Internal server error
  */
-router.get("/queue", queueController.getAllQueues);
+router.get(
+  "/queue",
+  verifyUserToken,
+  allowRoles("admin"),
+  queueController.getAllQueues
+);
 
 /**
  * @swagger

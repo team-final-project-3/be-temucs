@@ -71,6 +71,18 @@ describe("Queue Booking Integration", () => {
         updatedBy: "admin",
       },
     });
+
+    await prisma.user.create({
+      data: {
+        fullname: "Admin Test",
+        username: "admintest" + unique,
+        email: `admintest${unique}@mail.com`,
+        passwordHash: hashed,
+        phoneNumber: "0812345678" + (unique + 99),
+        role: "admin",
+        isVerified: true,
+      },
+    });
   });
 
   afterAll(async () => {
@@ -314,5 +326,292 @@ describe("Queue Booking Integration", () => {
       .send();
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("message");
+  });
+
+  it("Get total active queues for Loket's branch", async () => {
+    const loginRes = await request(app)
+      .post("/api/loket/login")
+      .send({
+        username: "lokettest" + unique,
+        password: "dummyhash",
+      });
+    expect(loginRes.status).toBe(200);
+    loketToken = "Bearer " + loginRes.body.token;
+
+    const res = await request(app)
+      .get("/api/queue/count/loket")
+      .set("Authorization", loketToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("branchId", branch.id);
+    expect(res.body).toHaveProperty("totalQueue");
+    expect(typeof res.body.totalQueue).toBe("number");
+  });
+
+  it("Get all waiting queues for Loket's branch", async () => {
+    const res = await request(app)
+      .get("/api/queue/waiting/loket")
+      .set("Authorization", loketToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("Get latest in-progress queue for CS branch", async () => {
+    const res = await request(app)
+      .get("/api/queue/inprogress/cs")
+      .set("Authorization", csToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("id");
+      expect(res.body).toHaveProperty("status", "in progress");
+    }
+  });
+
+  it("Get latest in-progress queue for Loket branch", async () => {
+    const res = await request(app)
+      .get("/api/queue/inprogress/loket")
+      .set("Authorization", loketToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("id");
+      expect(res.body).toHaveProperty("status", "in progress");
+    }
+  });
+
+  it("Get all waiting queues for Loket's branch", async () => {
+    const res = await request(app)
+      .get("/api/queue/waiting/loket")
+      .set("Authorization", loketToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("Get all waiting queues for CS's branch", async () => {
+    const res = await request(app)
+      .get("/api/queue/waiting/cs")
+      .set("Authorization", csToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("Get oldest waiting queue for Loket's branch", async () => {
+    const res = await request(app)
+      .get("/api/queue/oldest-waiting/loket")
+      .set("Authorization", loketToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("status", "waiting");
+    }
+  });
+
+  it("Get oldest waiting queue for CS's branch", async () => {
+    const res = await request(app)
+      .get("/api/queue/oldest-waiting/cs")
+      .set("Authorization", csToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("status", "waiting");
+    }
+  });
+
+  it("Get active CS-customer pairs in branch", async () => {
+    const res = await request(app)
+      .get("/api/queue/active-cs-customer")
+      .set("Authorization", csToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("Get nasabah yang sedang dilayani oleh CS login", async () => {
+    const res = await request(app)
+      .get("/api/queue/active-customer/cs")
+      .set("Authorization", csToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("queueId");
+      expect(res.body).toHaveProperty("cs");
+      expect(res.body).toHaveProperty("nasabah");
+    }
+  });
+
+  it("Get detail antrean aktif yang sedang ditangani CS", async () => {
+    const res = await request(app)
+      .get("/api/queue/cs/handling")
+      .set("Authorization", csToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("ticketNumber");
+      expect(res.body).toHaveProperty("name");
+    }
+  });
+
+  it("Get data nasabah yang sedang dipanggil oleh CS", async () => {
+    const res = await request(app)
+      .get("/api/queue/cs/called-customer")
+      .set("Authorization", csToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("isCalling");
+    if (res.body.isCalling) {
+      expect(res.body).toHaveProperty("queueId");
+      expect(res.body).toHaveProperty("ticketNumber");
+    }
+  });
+
+  it("Get the oldest called queue for TV display", async () => {
+    const res = await request(app)
+      .get("/api/queue/called-customer-tv")
+      .set("Authorization", csToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("ticketNumber");
+      expect(res.body).toHaveProperty("status", "called");
+    }
+  });
+
+  it("Get all queue data (paginated)", async () => {
+    const loginRes = await request(app)
+      .post("/api/users/login")
+      .send({
+        username: "admintest" + unique,
+        password: "dummyhash",
+      });
+    adminToken = "Bearer " + loginRes.body.token;
+    const res = await request(app)
+      .get("/api/queue?page=1&size=5")
+      .set("Authorization", adminToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("success", true);
+    expect(res.body).toHaveProperty("data");
+    expect(res.body).toHaveProperty("pagination");
+  });
+
+  it("Get ticket detail by queue ID (user)", async () => {
+    const res = await request(app)
+      .get(`/api/queue/ticket/${queueOnline.id}`)
+      .set("Authorization", nasabahToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("ticketNumber");
+      expect(res.body).toHaveProperty("status");
+      expect(res.body).toHaveProperty("branch");
+    }
+  });
+
+  it("Get loket ticket detail by queue ID", async () => {
+    const res = await request(app)
+      .get(`/api/queue/loket-ticket/${queueOffline.id}`)
+      .set("Authorization", loketToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("ticketNumber");
+      expect(res.body).toHaveProperty("status");
+      expect(res.body).toHaveProperty("branch");
+    }
+  });
+
+  it("Get all queue tickets (history) for current user", async () => {
+    const res = await request(app)
+      .get("/api/queue/history")
+      .set("Authorization", nasabahToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("success", true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
+
+  it("Get list of CS who are currently serving which customer in their branch", async () => {
+    const res = await request(app)
+      .get("/api/queue/active-cs-customer")
+      .set("Authorization", csToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("Get nasabah yang sedang dilayani oleh CS login", async () => {
+    const res = await request(app)
+      .get("/api/queue/active-customer/cs")
+      .set("Authorization", csToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("queueId");
+      expect(res.body).toHaveProperty("cs");
+      expect(res.body).toHaveProperty("nasabah");
+    }
+  });
+
+  it("Get detail antrean aktif yang sedang ditangani CS", async () => {
+    const res = await request(app)
+      .get("/api/queue/cs/handling")
+      .set("Authorization", csToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("ticketNumber");
+      expect(res.body).toHaveProperty("name");
+    }
+  });
+
+  it("Get data nasabah yang sedang dipanggil oleh CS", async () => {
+    const res = await request(app)
+      .get("/api/queue/cs/called-customer")
+      .set("Authorization", csToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("isCalling");
+    if (res.body.isCalling) {
+      expect(res.body).toHaveProperty("queueId");
+      expect(res.body).toHaveProperty("ticketNumber");
+    }
+  });
+
+  it("Get the oldest called queue for TV display", async () => {
+    const res = await request(app)
+      .get("/api/queue/called-customer-tv")
+      .set("Authorization", csToken)
+      .send();
+
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.body).toHaveProperty("ticketNumber");
+      expect(res.body).toHaveProperty("status", "called");
+    }
   });
 });
