@@ -97,6 +97,17 @@ const bookQueueOnline = async (req, res, next) => {
       return queue;
     });
 
+    //websocket
+    global.io.emit("queue:booked", {
+      ticketNumber: queue.ticketNumber,
+      status: queue.status,
+      bookedAt: queue.bookingDate,
+      services: queue.services.map((s) => ({
+        serviceName: s.serviceName,
+        estimatedTime: s.estimatedTime,
+      })),
+    });
+
     res.status(201).json({ message: "Queue booked (online)", queue });
   } catch (error) {
     next(error);
@@ -197,6 +208,7 @@ const bookQueueOffline = async (req, res, next) => {
       bookedAt: queue.bookingDate,
       services: queue.services.map((s) => ({
         serviceName: s.serviceName,
+        estimatedTime: s.estimatedTime,
       })),
     });
 
