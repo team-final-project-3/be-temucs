@@ -209,4 +209,130 @@ describe("Loket Controller (Integration)", () => {
     expect(res.status).toBe(401);
     expect(res.body.message).toMatch(/tidak ditemukan/i);
   });
+
+  it("should return 400 if addLoket missing required fields", async () => {
+    const res = await request(app)
+      .post("/api/loket/add")
+      .set("Authorization", adminToken)
+      .send({}); // kosong
+    expect(res.status).toBe(400);
+    expect(res.body.message.toLowerCase()).toContain("tidak lengkap");
+  });
+
+  it("should return 404 if editLoket not found", async () => {
+    const res = await request(app)
+      .put("/api/loket/99999999")
+      .set("Authorization", adminToken)
+      .send({ name: "Loket Jest Edited", password: "PasswordBaru123!" });
+    expect(res.status).toBe(404);
+    expect(res.body.message.toLowerCase()).toContain("tidak ditemukan");
+  });
+
+  it("should return 404 if updateLoketStatus not found", async () => {
+    const res = await request(app)
+      .put("/api/loket/99999999/status")
+      .set("Authorization", adminToken)
+      .send();
+    expect(res.status).toBe(404);
+    expect(res.body.message.toLowerCase()).toContain("tidak ditemukan");
+  });
+
+  it("should return 400 if getLoket called without loketId", async () => {
+    // Buat token tanpa loketId
+    const loketToken =
+      "Bearer " +
+      jwt.sign(
+        { username: "loketjestnotfound", role: "loket" },
+        process.env.JWT_SECRET || "secret"
+      );
+    const res = await request(app)
+      .get("/api/loket/99999999/profile")
+      .set("Authorization", loketToken)
+      .send();
+    expect(res.status).toBe(400);
+    expect(res.body.message.toLowerCase()).toContain("tidak ditemukan");
+  });
+
+  it("should return 400 if loginLoket missing required fields", async () => {
+    const res = await request(app).post("/api/loket/login").send({}); // kosong
+    expect(res.status).toBe(400);
+    expect(res.body.message.toLowerCase()).toContain("wajib diisi");
+  });
+
+  it("should return 400 if editLoket called with no fields", async () => {
+    // Buat dummy loket dulu
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const loket = await prisma.loket.create({
+      data: {
+        branchId: branch.id,
+        name: "Loket Jest " + unique,
+        username: "loketjestemptyedit" + unique,
+        passwordHash: await hashPassword("Password123!"),
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    // Kirim request tanpa field yang diubah
+    const res = await request(app)
+      .put(`/api/loket/${loket.id}`)
+      .set("Authorization", adminToken)
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.message.toLowerCase()).toContain("tidak boleh kosong");
+
+    // Cleanup
+    await prisma.loket.deleteMany({ where: { id: loket.id } });
+  });
+
+  it("should return 400 if editLoket with password less than 8 chars", async () => {
+    // Buat dummy loket dulu
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const loket = await prisma.loket.create({
+      data: {
+        branchId: branch.id,
+        name: "Loket Jest " + unique,
+        username: "loketjestshortpw" + unique,
+        passwordHash: await hashPassword("Password123!"),
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .put(`/api/loket/${loket.id}`)
+      .set("Authorization", adminToken)
+      .send({ password: "short" }); // kurang dari 8 karakter
+    expect(res.status).toBe(400);
+    expect(res.body.message.toLowerCase()).toContain("minimal 8 karakter");
+
+    // Cleanup
+    await prisma.loket.deleteMany({ where: { id: loket.id } });
+  });
+
+  it("should return 400 if editLoket called with all fields empty", async () => {
+    // Buat dummy loket dulu
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const loket = await prisma.loket.create({
+      data: {
+        branchId: branch.id,
+        name: "Loket Jest " + unique,
+        username: "loketjestemptyedit" + unique,
+        passwordHash: await hashPassword("Password123!"),
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    // Kirim request tanpa field yang diubah
+    const res = await request(app)
+      .put(`/api/loket/${loket.id}`)
+      .set("Authorization", adminToken)
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.message.toLowerCase()).toContain("tidak boleh kosong");
+
+    // Cleanup
+    await prisma.loket.deleteMany({ where: { id: loket.id } });
+  });
 });
