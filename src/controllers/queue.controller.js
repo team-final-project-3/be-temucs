@@ -114,6 +114,110 @@ const bookQueueOnline = async (req, res, next) => {
   }
 };
 
+// const bookQueueOffline = async (req, res, next) => {
+//   const { username, loketId, branchId } = req.loket;
+//   const { name, email, phoneNumber, serviceIds } = req.body;
+
+//   try {
+//     if (
+//       !name ||
+//       (!email && !phoneNumber) ||
+//       !Array.isArray(serviceIds) ||
+//       serviceIds.length === 0
+//     ) {
+//       throw Object.assign(new Error("Data tidak lengkap"), { status: 400 });
+//     }
+
+//     const now = new Date();
+//     // if (now.getHours() >= 15) {
+//     //   throw Object.assign(
+//     //     new Error("Booking offline hanya bisa dilakukan sebelum jam 15.00"),
+//     //     { status: 403 }
+//     //   );
+//     // }
+
+//     const existingQueue = await prisma.queue.findFirst({
+//       where: {
+//         OR: [
+//           { email, phoneNumber, status: { in: ["waiting", "in progress"] } },
+//         ],
+//       },
+//     });
+
+//     if (existingQueue) {
+//       throw Object.assign(new Error("Sudah ada antrian aktif"), {
+//         status: 400,
+//       });
+//     }
+
+//     let bookingDate = new Date(now);
+
+//     const queue = await prisma.$transaction(async (tx) => {
+//       const { ticketNumber, estimatedTimeDate, notification } =
+//         await generateTicketNumberAndEstimate(
+//           tx,
+//           branchId,
+//           bookingDate,
+//           serviceIds,
+//           username
+//         );
+
+//       const queue = await tx.queue.create({
+//         data: {
+//           loketId,
+//           branchId,
+//           bookingDate: new Date(bookingDate),
+//           name,
+//           email: email || null,
+//           phoneNumber: phoneNumber || null,
+//           ticketNumber,
+//           status: "waiting",
+//           notification,
+//           estimatedTime: estimatedTimeDate,
+//           createdBy: username,
+//           updatedBy: username,
+//           services: {
+//             create: serviceIds.map((serviceId) => ({
+//               serviceId,
+//               createdBy: username,
+//               updatedBy: username,
+//             })),
+//           },
+//         },
+//         include: {
+//           services: true,
+//         },
+//       });
+
+//       await tx.queueLog.create({
+//         data: {
+//           queueId: queue.id,
+//           status: "waiting",
+//           createdBy: username,
+//           updatedBy: username,
+//         },
+//       });
+
+//       return queue;
+//     });
+
+//     //websocket
+//     global.io.emit("queue:booked", {
+//       ticketNumber: queue.ticketNumber,
+//       status: queue.status,
+//       bookedAt: queue.bookingDate,
+//       services: queue.services.map((s) => ({
+//         serviceName: s.serviceName,
+//         estimatedTime: s.estimatedTime,
+//       })),
+//     });
+
+//     res.status(201).json({ message: "Queue booked (offline)", queue });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 const bookQueueOffline = async (req, res, next) => {
   const { username, loketId, branchId } = req.loket;
   const { name, email, phoneNumber, serviceIds } = req.body;
@@ -129,12 +233,6 @@ const bookQueueOffline = async (req, res, next) => {
     }
 
     const now = new Date();
-    // if (now.getHours() >= 15) {
-    //   throw Object.assign(
-    //     new Error("Booking offline hanya bisa dilakukan sebelum jam 15.00"),
-    //     { status: 403 }
-    //   );
-    // }
 
     const existingQueue = await prisma.queue.findFirst({
       where: {
@@ -201,15 +299,25 @@ const bookQueueOffline = async (req, res, next) => {
       return queue;
     });
 
-    //websocket
+    const queueServices = await prisma.queueService.findMany({
+      where: { queueId: queue.id },
+      include: {
+        service: {
+          select: {
+            serviceName: true,
+          },
+        },
+      },
+    });
+
+    const services = queueServices.map((qs) => qs.service.serviceName);
+
     global.io.emit("queue:booked", {
       ticketNumber: queue.ticketNumber,
       status: queue.status,
       bookedAt: queue.bookingDate,
-      services: queue.services.map((s) => ({
-        serviceName: s.serviceName,
-        estimatedTime: s.estimatedTime,
-      })),
+      services: services,
+      branchId: queue.branchId,
     });
 
     res.status(201).json({ message: "Queue booked (offline)", queue });
@@ -1033,8 +1141,8 @@ const getAllQueues = async (req, res, next) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-            "*".repeat(Math.max(domainMain.length - 2, 0)) +
-            domainMain.slice(-1);
+          "*".repeat(Math.max(domainMain.length - 2, 0)) +
+          domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -1051,10 +1159,10 @@ const getAllQueues = async (req, res, next) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-            ...queue.user,
-            email: censorEmail(queue.user.email),
-            phoneNumber: censorPhone(queue.user.phoneNumber),
-          }
+          ...queue.user,
+          email: censorEmail(queue.user.email),
+          phoneNumber: censorPhone(queue.user.phoneNumber),
+        }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -1264,12 +1372,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
@@ -1330,12 +1438,12 @@ const getActiveCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
       calledAt: queue.calledAt,
     };
@@ -1449,12 +1557,12 @@ const getCalledCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
     });
   } catch (error) {
