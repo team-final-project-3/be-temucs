@@ -86,6 +86,7 @@ describe("Queue Booking Integration", () => {
   });
 
   afterAll(async () => {
+    // Hapus queueLog dulu
     await prisma.queueLog.deleteMany({
       where: {
         queue: {
@@ -93,6 +94,7 @@ describe("Queue Booking Integration", () => {
         },
       },
     });
+    // Hapus queueService
     await prisma.queueService.deleteMany({
       where: {
         queueId: {
@@ -105,13 +107,15 @@ describe("Queue Booking Integration", () => {
         },
       },
     });
+    // Hapus queue
     await prisma.queue.deleteMany({ where: { branchId: branch.id } });
-    await prisma.service.deleteMany({ where: { id: service.id } });
-    await prisma.loket.deleteMany({
-      where: { username: "lokettest" + unique },
-    });
-    await prisma.cS.deleteMany({ where: { username: "cstest" + unique } });
+    // Hapus cS
+    await prisma.cS.deleteMany({ where: { branchId: branch.id } });
+    // Hapus loket
+    await prisma.loket.deleteMany({ where: { branchId: branch.id } });
+    // Hapus branch
     await prisma.branch.deleteMany({ where: { id: branch.id } });
+    // Hapus user
     await prisma.user.deleteMany({
       where: { username: "nasabahtest" + unique },
     });
@@ -613,5 +617,115 @@ describe("Queue Booking Integration", () => {
       expect(res.body).toHaveProperty("ticketNumber");
       expect(res.body).toHaveProperty("status", "called");
     }
+  });
+
+  it("should return 401 if CS not found in getCalledCustomerTV", async () => {
+    // Buat token CS dengan id yang tidak ada
+    const jwt = require("jsonwebtoken");
+    const fakeCsToken =
+      "Bearer " +
+      jwt.sign(
+        { csId: 99999999, username: "notfound", role: "cs" },
+        process.env.JWT_SECRET || "secret"
+      );
+
+    const res = await request(app)
+      .get("/api/queue/called-customer-tv")
+      .set("Authorization", fakeCsToken)
+      .send();
+
+    expect(res.status).toBe(401);
+    expect(res.body.message.toLowerCase()).toContain("cs tidak ditemukan");
+  });
+
+  it("should return 404 if no called queue in getCalledCustomerTV", async () => {
+    // Buat CS valid, pastikan tidak ada queue status 'called' di branch-nya
+    const cs = await prisma.cS.create({
+      data: {
+        name: "CS TV Test",
+        username: "cstvtest" + unique,
+        passwordHash: require("bcryptjs").hashSync("dummyhash", 10),
+        branchId: branch.id,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+
+    const jwt = require("jsonwebtoken");
+    const csToken =
+      "Bearer " +
+      jwt.sign(
+        { csId: cs.id, username: cs.username, role: "cs" },
+        process.env.JWT_SECRET || "secret"
+      );
+
+    // Ambil semua queue id yang akan dihapus
+    const calledQueueIds = (
+      await prisma.queue.findMany({
+        where: { branchId: branch.id, status: "called" },
+        select: { id: true },
+      })
+    ).map((q) => q.id);
+
+    // Hapus queueLog yang berelasi
+    await prisma.queueLog.deleteMany({
+      where: { queueId: { in: calledQueueIds } },
+    });
+
+    // Hapus queueService yang berelasi
+    await prisma.queueService.deleteMany({
+      where: { queueId: { in: calledQueueIds } },
+    });
+    await prisma.queue.deleteMany({
+      where: { branchId: branch.id, status: "called" },
+    });
+
+    const res = await request(app)
+      .get("/api/queue/called-customer-tv")
+      .set("Authorization", csToken)
+      .send();
+
+    expect(res.status).toBe(404);
+    expect(res.body.message.toLowerCase()).toContain(
+      "tidak ada antrian dengan status 'called'"
+    );
+
+    // Cleanup
+    await prisma.cS.deleteMany({ where: { id: cs.id } });
+  });
+
+  it("should return 404 if CS exists in token but not in DB in getCalledCustomerTV", async () => {
+    // Buat CS, ambil id, lalu hapus CS-nya
+    const cs = await prisma.cS.create({
+      data: {
+        name: "CS TV Test NotFound",
+        username: "cstvtestnotfound" + unique,
+        passwordHash: require("bcryptjs").hashSync("dummyhash", 10),
+        branchId: branch.id,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+
+    const jwt = require("jsonwebtoken");
+    const csToken =
+      "Bearer " +
+      jwt.sign(
+        { csId: cs.id, username: cs.username, role: "cs" },
+        process.env.JWT_SECRET || "secret"
+      );
+
+    // Hapus CS dari DB
+    await prisma.cS.deleteMany({ where: { id: cs.id } });
+
+    const res = await request(app)
+      .get("/api/queue/called-customer-tv")
+      .set("Authorization", csToken)
+      .send();
+
+    expect(res.status).toBe(404);
+    expect(res.body.message.toLowerCase()).toContain("cs tidak ditemukan");
   });
 });
