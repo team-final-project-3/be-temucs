@@ -190,11 +190,14 @@ const bookQueueOffline = async (req, res, next) => {
       return queue;
     });
 
-    //Websocket
+    //websocket
     global.io.emit("queue:booked", {
       ticketNumber: queue.ticketNumber,
       status: queue.status,
       bookedAt: queue.bookingDate,
+      services: queue.services.map((s) => ({
+        serviceName: s.serviceName,
+      })),
     });
 
     res.status(201).json({ message: "Queue booked (offline)", queue });
