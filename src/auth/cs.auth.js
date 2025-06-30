@@ -13,6 +13,10 @@ const verifyCSToken = async (req, res, next) => {
     if (decoded.role !== "cs")
       throw Object.assign(new Error(), { status: 403 });
 
+    req.cs = decoded;
+
+    if (!decoded.csId) return next();
+
     const cs = await prisma.cS.findUnique({ where: { id: decoded.csId } });
     if (!cs)
       throw Object.assign(new Error("CS tidak ditemukan"), { status: 401 });
@@ -29,7 +33,6 @@ const verifyCSToken = async (req, res, next) => {
       );
     }
 
-    req.cs = decoded;
     next();
   } catch (error) {
     next(error);

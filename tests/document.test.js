@@ -41,9 +41,9 @@ describe("Document Controller (Integration)", () => {
         },
       });
     }
-    // Buat user loket dummy yang sesuai dengan token
-    await prisma.loket.upsert({
-      where: { id: 3 },
+    await prisma.loket.deleteMany({ where: { username: "loketjest" } });
+    const loket = await prisma.loket.upsert({
+      where: { username: "loketjest" },
       update: {},
       create: {
         id: 3,
@@ -197,5 +197,61 @@ describe("Document Controller (Integration)", () => {
 
     // Cleanup
     await prisma.document.deleteMany({ where: { id: doc.id } });
+  });
+
+  it("should return 400 if documentName is null when adding document", async () => {
+    const res = await request(app)
+      .post("/api/document")
+      .set("Authorization", adminToken)
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/wajib diisi/i);
+  });
+
+  it("should return 400 if documentName is null when editing document", async () => {
+    const doc = await prisma.document.create({
+      data: {
+        documentName: "Dummy Edit Null",
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .put(`/api/document/${doc.id}`)
+      .set("Authorization", adminToken)
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/wajib diisi/i);
+
+    // Cleanup
+    await prisma.document.deleteMany({ where: { id: doc.id } });
+  });
+
+  it("should return 404 if document not found for user", async () => {
+    const res = await request(app)
+      .get("/api/document/99999999")
+      .set("Authorization", adminToken)
+      .send();
+    expect(res.status).toBe(404);
+    expect(res.body.message).toMatch(/tidak ditemukan/i);
+  });
+
+  it("should return 404 if document not found when editing", async () => {
+    const res = await request(app)
+      .put("/api/document/99999999")
+      .set("Authorization", adminToken)
+      .send({ documentName: "Doesn't Matter" });
+    expect(res.status).toBe(404);
+    expect(res.body.message).toMatch(/tidak ditemukan/i);
+  });
+
+  it("should return 404 if document not found when updating status", async () => {
+    const res = await request(app)
+      .put("/api/document/99999999/status")
+      .set("Authorization", adminToken)
+      .send();
+    expect(res.status).toBe(404);
+    expect(res.body.message).toMatch(/tidak ditemukan/i);
   });
 });

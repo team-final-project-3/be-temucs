@@ -331,11 +331,7 @@ const changePassword = async (req, res, next) => {
       throw Object.assign(new Error("User tidak ditemukan"), { status: 404 });
     }
 
-    console.log("Old Password from request:", oldPassword);
-    console.log("User password hash from DB:", user.passwordHash);
-
     const isMatch = await comparePassword(oldPassword, user.passwordHash);
-    console.log("isMatch result:", isMatch); // Check this output
 
     if (oldPassword === newPassword) {
       // This block is reached if isMatch is true
@@ -367,10 +363,9 @@ const getAllUsers = async (req, res, next) => {
     page = parseInt(page);
     size = parseInt(size);
 
-    // Add '1' to the allowedSizes array to permit the test's size value
-    const allowedSizes = [1, 5, 10, 15, 20]; // Changed this line
+    const allowedSizes = [1, 5, 10, 15, 20];
     if (!allowedSizes.includes(size)) {
-      size = 10; // Default to 10 if the requested size is not allowed
+      size = 10;
     }
 
     const skip = (page - 1) * size;

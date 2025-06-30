@@ -17,8 +17,6 @@ const verifyUserToken = (req, res, next) => {
   }
 };
 
-// Untuk proteksi endpoint khusus admin: verifyRole(['admin'])
-// Untuk proteksi endpoint khusus nasabah: verifyRole(['nasabah'])
 const verifyRole =
   (roles = []) =>
   (req, res, next) => {

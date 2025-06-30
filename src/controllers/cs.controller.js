@@ -155,7 +155,7 @@ const login = async (req, res, next) => {
 
 const getCS = async (req, res, next) => {
   try {
-    const csId = req.cs.csId;
+    const csId = req.cs?.csId;
 
     if (!csId) {
       throw Object.assign(new Error("CS ID tidak valid"), { status: 400 });

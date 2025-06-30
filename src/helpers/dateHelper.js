@@ -1,5 +1,5 @@
 function getStartEndOfBookingDateWIB(bookingDate) {
-  const offsetMs = 7 * 60 * 60 * 1000; // GMT+7
+  const offsetMs = 7 * 60 * 60 * 1000;
   const start = new Date(bookingDate);
   start.setHours(0, 0, 0, 0);
   const end = new Date(bookingDate);

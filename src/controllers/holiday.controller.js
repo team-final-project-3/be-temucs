@@ -43,6 +43,13 @@ const editHoliday = async (req, res, next) => {
       );
     }
 
+    const holidayExist = await prisma.holiday.findUnique({ where: { id } });
+    if (!holidayExist) {
+      throw Object.assign(new Error("Holiday tidak ditemukan"), {
+        status: 404,
+      });
+    }
+
     const holiday = await prisma.holiday.update({
       where: { id },
       data: {

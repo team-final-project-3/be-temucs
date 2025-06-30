@@ -84,6 +84,15 @@ describe("CS Controller (Integration)", () => {
     await prisma.cS.deleteMany({ where: { id: cs.id } });
   });
 
+  it("should return 400 if data CS tidak lengkap saat add", async () => {
+    const res = await request(app)
+      .post("/api/cs/add")
+      .set("Authorization", adminToken)
+      .send({}); // kosong
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Data CS tidak lengkap/i);
+  });
+
   it("should login CS", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const password = "Password123!";
@@ -135,6 +144,20 @@ describe("CS Controller (Integration)", () => {
 
     // Cleanup
     await prisma.cS.deleteMany({ where: { id: cs.id } });
+  });
+
+  it("should return 400 if username/password kosong saat login", async () => {
+    const res = await request(app).post("/api/cs/login").send({});
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Username dan password wajib diisi/i);
+  });
+
+  it("should return 401 if username tidak ditemukan saat login", async () => {
+    const res = await request(app)
+      .post("/api/cs/login")
+      .send({ username: "tidakada", password: "bebas" });
+    expect(res.status).toBe(401);
+    expect(res.body.message).toMatch(/CS tidak ditemukan/i);
   });
 
   it("should edit CS", async () => {
@@ -224,6 +247,36 @@ describe("CS Controller (Integration)", () => {
 
     // Cleanup
     await prisma.cS.deleteMany({ where: { id: cs.id } });
+  });
+
+  it("should return 400 if CS ID tidak valid saat getCS", async () => {
+    const token =
+      "Bearer " +
+      require("jsonwebtoken").sign(
+        { username: "csjest", role: "cs" },
+        process.env.JWT_SECRET || "secret"
+      );
+    const res = await request(app)
+      .get("/api/cs/profile")
+      .set("Authorization", token)
+      .send();
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/CS ID tidak valid/i);
+  });
+
+  it("should return 401 if CS tidak ditemukan saat getCS", async () => {
+    const token =
+      "Bearer " +
+      require("jsonwebtoken").sign(
+        { csId: 999999, username: "csjest", role: "cs" },
+        process.env.JWT_SECRET || "secret"
+      );
+    const res = await request(app)
+      .get("/api/cs/profile")
+      .set("Authorization", token)
+      .send();
+    expect(res.status).toBe(401);
+    expect(res.body.message).toMatch(/CS tidak ditemukan/i);
   });
 
   it("should return 404 if CS not found on edit", async () => {

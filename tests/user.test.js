@@ -811,6 +811,19 @@ describe("User Get All Users (Integration)", () => {
   let admin, adminToken, user1, user2;
 
   beforeAll(async () => {
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { username: "adminjest" },
+          { email: "adminjest@example.com" },
+          { username: "userjest1" },
+          { email: "userjest1@example.com" },
+          { username: "userjest2" },
+          { email: "userjest2@example.com" },
+        ],
+      },
+    });
+
     admin = await prisma.user.create({
       data: {
         fullname: "Admin Jest",

@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 
 const authMiddleware = require("./middlewares/auth");
-const holidayCron = require("./middlewares/holidayCron");
+const { holidayBlock } = require("./middlewares/holidayCron");
 
 const userRoutes = require("./routes/user.routes");
 const csRoutes = require("./routes/cs.routes");
@@ -29,7 +29,7 @@ app.use(logger);
 app.use(cors());
 app.use(express.json());
 require("./middlewares/queueRescheduler");
-app.use(holidayCron);
+app.use(holidayBlock);
 app.use(
   "/api",
   authMiddleware,

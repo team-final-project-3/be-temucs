@@ -123,7 +123,6 @@ describe("ServiceDocument Controller (Integration)", () => {
       .send({
         serviceIds: [service1.id, service2.id],
       });
-    console.log(res.body);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.data.some((d) => d.id === document.id)).toBe(true);
@@ -138,7 +137,6 @@ describe("ServiceDocument Controller (Integration)", () => {
       .send({
         serviceIds: [service1.id, service2.id],
       });
-    console.log(res.body);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.data.some((d) => d.id === document.id)).toBe(true);

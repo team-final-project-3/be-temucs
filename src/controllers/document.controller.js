@@ -27,18 +27,15 @@ const addDocument = async (req, res, next) => {
 
 const getDocumentForUser = async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    const document = await prisma.document.findFirst({
-      where: { id, status: true },
-    });
-
-    if (!document) {
-      throw Object.assign(new Error("Document tidak ditemukan"), {
+    const { id } = req.params;
+    const doc = await prisma.document.findUnique({ where: { id: Number(id) } });
+    if (!doc) {
+      throw Object.assign(new Error("Dokumen tidak ditemukan"), {
         status: 404,
       });
     }
 
-    res.status(200).json(document);
+    res.status(200).json(doc);
   } catch (error) {
     next(error);
   }
@@ -99,9 +96,15 @@ const editDocument = async (req, res, next) => {
     const username = req.user.username;
     const { documentName } = req.body;
 
-    if (documentName == null) {
-      throw Object.assign(new Error("Nama dokumen dan updatedBy wajib diisi"), {
+    if (!documentName) {
+      throw Object.assign(new Error("Nama dokumen wajib diisi"), {
         status: 400,
+      });
+    }
+    const doc = await prisma.document.findUnique({ where: { id: Number(id) } });
+    if (!doc) {
+      throw Object.assign(new Error("Dokumen tidak ditemukan"), {
+        status: 404,
       });
     }
 

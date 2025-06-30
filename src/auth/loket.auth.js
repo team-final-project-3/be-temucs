@@ -13,6 +13,12 @@ const verifyLoketToken = async (req, res, next) => {
     if (decoded.role !== "loket")
       throw Object.assign(new Error(), { status: 403 });
 
+    req.loket = decoded;
+
+    console.log("decoded:", decoded);
+
+    if (!decoded.loketId) return next();
+
     const loket = await prisma.loket.findUnique({
       where: { id: decoded.loketId },
     });
@@ -30,8 +36,6 @@ const verifyLoketToken = async (req, res, next) => {
         { status: 403 }
       );
     }
-    console.log(req.loket);
-    req.loket = decoded;
     next();
   } catch (error) {
     next(error);

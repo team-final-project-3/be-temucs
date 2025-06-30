@@ -3,62 +3,78 @@ const jwt = require("jsonwebtoken");
 const app = require("../src/app");
 const prisma = require("../prisma/client");
 
-const adminToken =
-  "Bearer " +
-  jwt.sign(
-    { id: 1, username: "admin", role: "admin" },
-    process.env.JWT_SECRET || "secret"
-  );
-const userToken =
-  "Bearer " +
-  jwt.sign(
-    { id: 2, username: "nasabahjest", role: "nasabah" },
-    process.env.JWT_SECRET || "secret"
-  );
-const loketToken =
-  "Bearer " +
-  jwt.sign(
-    { loketId: 3, username: "loketjest", role: "loket" },
-    process.env.JWT_SECRET || "secret"
-  );
-
 describe("Service Controller (Integration)", () => {
+  const unique = Date.now() + Math.floor(Math.random() * 10000);
+  const branchCode = "SERVICEBRANCH" + unique;
+  const loketUsername = "serviceloket" + unique;
+  const adminUsername = "serviceadmin" + unique;
+  const userUsername = "servicenasa" + unique;
+  const plainPassword = "Password123!";
+  let adminToken, userToken, loketToken;
   let document;
-
   beforeAll(async () => {
-    // Buat document dummy untuk relasi service
+    // Setup document
     document = await prisma.document.create({
       data: {
-        documentName: "Dokumen Service Jest " + Date.now(),
+        documentName: "Dokumen Service Jest " + unique,
         status: true,
         createdBy: "admin",
         updatedBy: "admin",
       },
     });
-    // Buat user loket dummy agar endpoint /service/loket tidak error
-    let branch = await prisma.branch.findFirst();
-    if (!branch) {
-      branch = await prisma.branch.create({
-        data: {
-          name: "Branch Loket Jest",
-          branchCode: "LOKETJEST" + Date.now(),
-          address: "Jl. Loket Jest",
-          longitude: 106.8,
-          latitude: -6.1,
-          holiday: false,
-          status: true,
-          createdBy: "admin",
-          updatedBy: "admin",
-        },
-      });
-    }
-    await prisma.loket.upsert({
-      where: { id: 3 },
-      update: {},
-      create: {
-        id: 3,
-        username: "loketjest",
-        passwordHash: "dummyhash",
+
+    // Setup branch unik
+    await prisma.branch.deleteMany({ where: { branchCode } });
+    const branch = await prisma.branch.create({
+      data: {
+        name: "Branch Service Jest " + unique,
+        branchCode,
+        address: "Jl. Service Jest",
+        longitude: 106.8,
+        latitude: -6.1,
+        holiday: false,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+
+    // Hash password
+    const bcrypt = require("bcryptjs");
+    const hashed = bcrypt.hashSync(plainPassword, 10);
+
+    // Upsert admin, user, loket unik
+    await prisma.user.deleteMany({
+      where: { username: { in: [adminUsername, userUsername] } },
+    });
+    await prisma.loket.deleteMany({ where: { username: loketUsername } });
+
+    await prisma.user.create({
+      data: {
+        fullname: "Admin Jest",
+        username: adminUsername,
+        email: adminUsername + "@mail.com",
+        passwordHash: hashed,
+        phoneNumber: "081234567899",
+        role: "admin",
+        isVerified: true,
+      },
+    });
+    await prisma.user.create({
+      data: {
+        fullname: "Nasabah Jest",
+        username: userUsername,
+        email: userUsername + "@mail.com",
+        passwordHash: hashed,
+        phoneNumber: "081234567888",
+        role: "nasabah",
+        isVerified: true,
+      },
+    });
+    await prisma.loket.create({
+      data: {
+        username: loketUsername,
+        passwordHash: hashed,
         name: "Loket Jest",
         status: true,
         createdBy: "admin",
@@ -66,6 +82,24 @@ describe("Service Controller (Integration)", () => {
         branchId: branch.id,
       },
     });
+
+    // Login admin
+    const adminLogin = await request(app)
+      .post("/api/users/login")
+      .send({ username: adminUsername, password: plainPassword });
+    adminToken = "Bearer " + adminLogin.body.token;
+
+    // Login user
+    const userLogin = await request(app)
+      .post("/api/users/login")
+      .send({ username: userUsername, password: plainPassword });
+    userToken = "Bearer " + userLogin.body.token;
+
+    // Login loket
+    const loketLogin = await request(app)
+      .post("/api/loket/login")
+      .send({ username: loketUsername, password: plainPassword });
+    loketToken = "Bearer " + loketLogin.body.token;
   });
 
   afterAll(async () => {
@@ -73,7 +107,11 @@ describe("Service Controller (Integration)", () => {
       where: { serviceName: { contains: "Jest" } },
     });
     await prisma.document.deleteMany({ where: { id: document.id } });
-    await prisma.loket.deleteMany({ where: { username: "loketjest" } });
+    await prisma.loket.deleteMany({ where: { username: loketUsername } });
+    await prisma.user.deleteMany({
+      where: { username: { in: [adminUsername, userUsername] } },
+    });
+    await prisma.branch.deleteMany({ where: { branchCode } });
     await prisma.$disconnect();
   });
 

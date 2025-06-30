@@ -31,13 +31,14 @@ cron.schedule("1 0 * * *", () => {
 const holidayBlock = async (req, res, next) => {
   try {
     if (isHolidayCache) {
-      const role = req.user?.role;
-      if (role !== "admin") {
-        throw Object.assign(
-          new Error(
-            "Hari ini libur, hanya admin yang dapat mengakses layanan."
-          ),
-          { status: 503 }
+      if (!req.user || req.user.role !== "admin") {
+        return next(
+          Object.assign(
+            new Error(
+              "Hari ini libur, hanya admin yang dapat mengakses layanan."
+            ),
+            { status: 503 }
+          )
         );
       }
     }
@@ -47,4 +48,4 @@ const holidayBlock = async (req, res, next) => {
   }
 };
 
-module.exports = holidayBlock;
+module.exports = { holidayBlock, updateHolidayCache };
