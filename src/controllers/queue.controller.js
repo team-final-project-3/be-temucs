@@ -526,6 +526,7 @@ const callQueue = async (req, res, next) => {
       status: queue.status,
       calledAt: queue.calledAt,
       csName: cs?.name || null,
+      branchId: queue.branchId,
     });
 
     res.json({ message: "Queue status updated to called", queue });
@@ -1150,8 +1151,8 @@ const getAllQueues = async (req, res, next) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-            "*".repeat(Math.max(domainMain.length - 2, 0)) +
-            domainMain.slice(-1);
+          "*".repeat(Math.max(domainMain.length - 2, 0)) +
+          domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -1168,10 +1169,10 @@ const getAllQueues = async (req, res, next) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-            ...queue.user,
-            email: censorEmail(queue.user.email),
-            phoneNumber: censorPhone(queue.user.phoneNumber),
-          }
+          ...queue.user,
+          email: censorEmail(queue.user.email),
+          phoneNumber: censorPhone(queue.user.phoneNumber),
+        }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -1375,12 +1376,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
@@ -1441,12 +1442,12 @@ const getActiveCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
       calledAt: queue.calledAt,
     };
@@ -1557,12 +1558,12 @@ const getCalledCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-            fullname: queue.name,
-            username: null,
-            email: queue.email,
-            phoneNumber: queue.phoneNumber,
-            id: null,
-          },
+          fullname: queue.name,
+          username: null,
+          email: queue.email,
+          phoneNumber: queue.phoneNumber,
+          id: null,
+        },
       status: queue.status,
     });
   } catch (error) {
