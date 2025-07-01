@@ -1615,7 +1615,7 @@ const getCalledCustomerTV = async (req, res, next) => {
 
     let queueCS = null;
     if (queue.csId) {
-      queueCS = await prisma.cs.findUnique({
+      queueCS = await prisma.cS.findUnique({
         where: { id: queue.csId },
         select: {
           name: true,
