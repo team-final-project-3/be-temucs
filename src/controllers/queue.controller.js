@@ -1081,6 +1081,9 @@ const getAllQueues = async (req, res, next) => {
     page = parseInt(page);
     size = parseInt(size);
 
+    if (isNaN(page) || page < 1) page = 1;
+    if (isNaN(size) || size < 1) size = 10;
+
     const allowedSizes = [5, 10, 15, 20];
     if (!allowedSizes.includes(size)) size = 10;
 
@@ -1586,6 +1589,7 @@ const getCalledCustomerTV = async (req, res, next) => {
       where: {
         branchId: csLogin.branchId,
         status: "called",
+        NOT: { calledAt: null },
       },
       orderBy: {
         calledAt: "asc",
