@@ -136,6 +136,67 @@ describe("Queue Booking Integration", () => {
     queueOnline = bookRes.body.queue;
   });
 
+  it("should return 400 if branchId is missing", async () => {
+    const res = await request(app)
+      .post("/api/queue/book-online")
+      .set("Authorization", nasabahToken)
+      .send({
+        serviceIds: [service.id],
+      });
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 if serviceIds is not array", async () => {
+    const res = await request(app)
+      .post("/api/queue/book-online")
+      .set("Authorization", nasabahToken)
+      .send({
+        branchId: branch.id,
+        serviceIds: "not-an-array",
+      });
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 if serviceIds is empty array", async () => {
+    const res = await request(app)
+      .post("/api/queue/book-online")
+      .set("Authorization", nasabahToken)
+      .send({
+        branchId: branch.id,
+        serviceIds: [],
+      });
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 if user already has active queue", async () => {
+    const user = await prisma.user.findFirst({
+      where: { username: "nasabahtest" + unique },
+    });
+    await prisma.queue.create({
+      data: {
+        userId: user.id,
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test Nasabah",
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        ticketNumber: "A" + (unique + 500),
+        status: "waiting",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .post("/api/queue/book-online")
+      .set("Authorization", nasabahToken)
+      .send({
+        branchId: branch.id,
+        serviceIds: [service.id],
+      });
+    expect(res.status).toBe(400);
+  });
+
   it("Login as loket and book queue offline", async () => {
     const loginRes = await request(app)
       .post("/api/loket/login")
@@ -1001,6 +1062,161 @@ describe("Queue Booking Integration", () => {
       },
     });
     const res = await request(app).patch(`/api/queue/${queue.id}/done`).send();
+    expect(res.status).toBe(401);
+  });
+
+  it("should return empty history for user with no queue", async () => {
+    const uniqueUser = "nohistory" + unique;
+    const hashed = bcrypt.hashSync("dummyhash", 10);
+    await prisma.user.create({
+      data: {
+        fullname: "NoHistory User",
+        username: uniqueUser,
+        email: uniqueUser + "@mail.com",
+        passwordHash: hashed,
+        phoneNumber: "0812345678" + (unique + 200),
+        role: "nasabah",
+        isVerified: true,
+      },
+    });
+    const loginRes = await request(app)
+      .post("/api/users/login")
+      .send({ username: uniqueUser, password: "dummyhash" });
+    const token = "Bearer " + loginRes.body.token;
+    const res = await request(app)
+      .get("/api/queue/history")
+      .set("Authorization", token)
+      .send();
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(0);
+  });
+
+  it("should return empty array if no CS-customer pairs in branch", async () => {
+    await prisma.queue.updateMany({
+      where: { branchId: branch.id },
+      data: { status: "done" },
+    });
+    const res = await request(app)
+      .get("/api/queue/active-cs-customer")
+      .set("Authorization", csToken)
+      .send();
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBe(0);
+  });
+
+  it("should handle queue with empty services in getUserQueueHistory", async () => {
+    const user = await prisma.user.findFirst({
+      where: { username: "nasabahtest" + unique },
+    });
+    const queue = await prisma.queue.create({
+      data: {
+        userId: user.id,
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test Nasabah",
+        email: `emptyservice${unique}@mail.com`,
+        phoneNumber: "0812345678" + (unique + 300),
+        ticketNumber: "A" + (unique + 300),
+        status: "done",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    await prisma.queueService.deleteMany({ where: { queueId: queue.id } });
+
+    const loginRes = await request(app)
+      .post("/api/users/login")
+      .send({ username: "nasabahtest" + unique, password: "dummyhash" });
+    const token = "Bearer " + loginRes.body.token;
+
+    const res = await request(app)
+      .get("/api/queue/history")
+      .set("Authorization", token)
+      .send();
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
+
+  it("should return 400 if queueId is missing in getLoketTicketById", async () => {
+    const res = await request(app)
+      .get("/api/queue/loket-ticket/")
+      .set("Authorization", loketToken)
+      .send();
+    expect([400, 404]).toContain(res.status);
+  });
+
+  it("should return 400 if loketId is missing in getLoketTicketById", async () => {
+    const jwt = require("jsonwebtoken");
+    const fakeLoketToken =
+      "Bearer " +
+      jwt.sign(
+        { username: "lokettest" + unique, role: "loket" },
+        process.env.JWT_SECRET || "secret"
+      );
+    const queue = await prisma.queue.create({
+      data: {
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test Nasabah",
+        ticketNumber: "A" + (unique + 999),
+        status: "waiting",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .get(`/api/queue/loket-ticket/${queue.id}`)
+      .set("Authorization", fakeLoketToken)
+      .send();
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 403 if loket not authorized to access ticket", async () => {
+    const loket2 = await prisma.loket.create({
+      data: {
+        name: "Loket Test 2",
+        username: "lokettest2" + unique,
+        passwordHash: bcrypt.hashSync("dummyhash", 10),
+        branchId: branch.id,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const loketLogin2 = await request(app)
+      .post("/api/loket/login")
+      .send({ username: "lokettest2" + unique, password: "dummyhash" });
+    const loketToken2 = "Bearer " + loketLogin2.body.token;
+
+    const queue = await prisma.queue.create({
+      data: {
+        branchId: branch.id,
+        loketId: null,
+        bookingDate: new Date(),
+        name: "Test Nasabah",
+        ticketNumber: "A" + (unique + 888),
+        status: "waiting",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+
+    const res = await request(app)
+      .get(`/api/queue/loket-ticket/${queue.id}`)
+      .set("Authorization", loketToken2)
+      .send();
+    expect(res.status).toBe(403);
+
+    await prisma.loket.delete({ where: { id: loket2.id } });
+  });
+
+  it("should return 401 if userId is missing in getUserQueueHistory", async () => {
+    const res = await request(app).get("/api/queue/history").send();
     expect(res.status).toBe(401);
   });
 });

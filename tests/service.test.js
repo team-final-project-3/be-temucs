@@ -108,6 +108,11 @@ describe("Service Controller (Integration)", () => {
     await prisma.$disconnect();
   });
 
+  it("should return 401 if no token provided", async () => {
+    const res = await request(app).get("/api/service/user").send();
+    expect([401, 403]).toContain(res.status);
+  });
+
   it("should add a new service", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const res = await request(app)
@@ -286,6 +291,88 @@ describe("Service Controller (Integration)", () => {
     expect(res.body.service).toHaveProperty("status");
 
     await prisma.service.deleteMany({ where: { id: service.id } });
+  });
+
+  it("should return 404 if service not found", async () => {
+    const res = await request(app)
+      .get("/api/service/99999999")
+      .set("Authorization", adminToken)
+      .send();
+    expect(res.status).toBe(404);
+    expect(res.body.message).toMatch(/tidak ditemukan/i);
+  });
+
+  it("should return 400 if serviceName or estimatedTime missing", async () => {
+    const res = await request(app)
+      .post("/api/service")
+      .set("Authorization", adminToken)
+      .send({
+        estimatedTime: 10,
+        documents: [{ documentId: document.id, quantity: 1 }],
+      });
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 if documents is not array", async () => {
+    const res = await request(app)
+      .post("/api/service")
+      .set("Authorization", adminToken)
+      .send({
+        serviceName: "Service Jest",
+        estimatedTime: 10,
+        documents: "not-an-array",
+      });
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 if documents array contains invalid documentId or quantity", async () => {
+    const res = await request(app)
+      .post("/api/service")
+      .set("Authorization", adminToken)
+      .send({
+        serviceName: "Service Jest",
+        estimatedTime: 10,
+        documents: [{ documentId: "abc", quantity: 1 }], // invalid documentId
+      });
+    expect(res.status).toBe(400);
+
+    const res2 = await request(app)
+      .post("/api/service")
+      .set("Authorization", adminToken)
+      .send({
+        serviceName: "Service Jest",
+        estimatedTime: 10,
+        documents: [{ documentId: document.id, quantity: 0 }],
+      });
+    expect(res2.status).toBe(400);
+  });
+
+  it("should return 500 if prisma error in getAllServiceForUser", async () => {
+    const spy = jest
+      .spyOn(prisma.service, "findMany")
+      .mockImplementation(() => {
+        throw new Error("DB error");
+      });
+    const res = await request(app)
+      .get("/api/service/user")
+      .set("Authorization", userToken)
+      .send();
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+  });
+
+  it("should return 500 if prisma error in getAllServiceForLoket", async () => {
+    const spy = jest
+      .spyOn(prisma.service, "findMany")
+      .mockImplementation(() => {
+        throw new Error("DB error");
+      });
+    const res = await request(app)
+      .get("/api/service/loket")
+      .set("Authorization", loketToken)
+      .send();
+    expect(res.status).toBe(500);
+    spy.mockRestore();
   });
 
   it("should return 404 if service not found", async () => {
