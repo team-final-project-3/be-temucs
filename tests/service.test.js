@@ -13,7 +13,6 @@ describe("Service Controller (Integration)", () => {
   let adminToken, userToken, loketToken;
   let document;
   beforeAll(async () => {
-    // Setup document
     document = await prisma.document.create({
       data: {
         documentName: "Dokumen Service Jest " + unique,
@@ -23,7 +22,6 @@ describe("Service Controller (Integration)", () => {
       },
     });
 
-    // Setup branch unik
     await prisma.branch.deleteMany({ where: { branchCode } });
     const branch = await prisma.branch.create({
       data: {
@@ -39,11 +37,9 @@ describe("Service Controller (Integration)", () => {
       },
     });
 
-    // Hash password
     const bcrypt = require("bcryptjs");
     const hashed = bcrypt.hashSync(plainPassword, 10);
 
-    // Upsert admin, user, loket unik
     await prisma.user.deleteMany({
       where: { username: { in: [adminUsername, userUsername] } },
     });
@@ -83,19 +79,16 @@ describe("Service Controller (Integration)", () => {
       },
     });
 
-    // Login admin
     const adminLogin = await request(app)
       .post("/api/users/login")
       .send({ username: adminUsername, password: plainPassword });
     adminToken = "Bearer " + adminLogin.body.token;
 
-    // Login user
     const userLogin = await request(app)
       .post("/api/users/login")
       .send({ username: userUsername, password: plainPassword });
     userToken = "Bearer " + userLogin.body.token;
 
-    // Login loket
     const loketLogin = await request(app)
       .post("/api/loket/login")
       .send({ username: loketUsername, password: plainPassword });
@@ -128,7 +121,6 @@ describe("Service Controller (Integration)", () => {
     expect(res.status).toBe(201);
     expect(res.body.service).toHaveProperty("id");
 
-    // Cleanup
     await prisma.service.deleteMany({ where: { id: res.body.service.id } });
   });
 
@@ -161,7 +153,6 @@ describe("Service Controller (Integration)", () => {
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.some((s) => s.id === service.id)).toBe(true);
 
-    // Cleanup
     await prisma.service.deleteMany({ where: { id: service.id } });
   });
 
@@ -194,7 +185,6 @@ describe("Service Controller (Integration)", () => {
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.some((s) => s.id === service.id)).toBe(true);
 
-    // Cleanup
     await prisma.service.deleteMany({ where: { id: service.id } });
   });
 
@@ -227,7 +217,6 @@ describe("Service Controller (Integration)", () => {
     expect(res.body).toHaveProperty("id");
     expect(res.body.id).toBe(service.id);
 
-    // Cleanup
     await prisma.service.deleteMany({ where: { id: service.id } });
   });
 
@@ -265,7 +254,6 @@ describe("Service Controller (Integration)", () => {
       "Service Jest Edited " + unique
     );
 
-    // Cleanup
     await prisma.service.deleteMany({ where: { id: service.id } });
   });
 
@@ -297,7 +285,6 @@ describe("Service Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.service).toHaveProperty("status");
 
-    // Cleanup
     await prisma.service.deleteMany({ where: { id: service.id } });
   });
 

@@ -34,7 +34,6 @@ describe("Branch Controller (Integration)", () => {
     expect(res.status).toBe(201);
     expect(res.body.branch).toHaveProperty("id");
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: res.body.branch.id } });
   });
 
@@ -68,7 +67,6 @@ describe("Branch Controller (Integration)", () => {
     expect(res.status).toBe(409);
     expect(res.body.message).toMatch(/Nama cabang sudah terdaftar/i);
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });
   });
 
@@ -102,7 +100,6 @@ describe("Branch Controller (Integration)", () => {
     expect(res.status).toBe(409);
     expect(res.body.message).toMatch(/Kode cabang sudah terdaftar/i);
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });
   });
 
@@ -136,7 +133,6 @@ describe("Branch Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.branch.name).toBe("Test Branch Jest Edited " + unique);
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });
   });
 
@@ -162,7 +158,6 @@ describe("Branch Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.branch).toHaveProperty("status");
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });
   });
 
@@ -189,7 +184,6 @@ describe("Branch Controller (Integration)", () => {
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.data.some((b) => b.id === branch.id)).toBe(true);
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });
   });
 
@@ -216,7 +210,6 @@ describe("Branch Controller (Integration)", () => {
     expect(res.body.branch).toHaveProperty("id");
     expect(res.body.branch.id).toBe(branch.id);
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });
   });
 
@@ -258,7 +251,6 @@ describe("Branch Controller (Integration)", () => {
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.data.some((b) => b.id === branch.id)).toBe(true);
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });
   });
 
@@ -322,7 +314,6 @@ describe("Branch Controller (Integration)", () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/Format longitude\/latitude tidak valid/i);
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch.id } });
   });
 
@@ -384,7 +375,6 @@ describe("Branch Controller (Integration)", () => {
     expect(res.status).toBe(409);
     expect(res.body.message).toMatch(/Kode cabang sudah digunakan/i);
 
-    // Cleanup
     await prisma.branch.deleteMany({ where: { id: branch1.id } });
     await prisma.branch.deleteMany({ where: { id: branch2.id } });
   });

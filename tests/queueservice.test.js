@@ -64,7 +64,7 @@ describe("QueueService Integration", () => {
         name: nasabah.fullname,
         email: nasabah.email,
         phoneNumber: nasabah.phoneNumber,
-        ticketNumber: "A" + unique, // pastikan unik
+        ticketNumber: "A" + unique,
         status: "waiting",
         notification: false,
         createdBy: "admin",

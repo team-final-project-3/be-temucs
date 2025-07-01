@@ -6,12 +6,11 @@ const prisma = require("../prisma/client");
 const { hashPassword } = require("../src/auth/user.auth");
 const password = "Password123!";
 
-// Helper to generate a token with userId in payload
 const generateTestToken = (userPayload) => {
   return (
     "Bearer " +
     jwt.sign(
-      { ...userPayload, userId: userPayload.id || userPayload.userId }, // Ensure userId is in payload
+      { ...userPayload, userId: userPayload.id || userPayload.userId },
       process.env.JWT_SECRET || "secret"
     )
   );
@@ -24,19 +23,17 @@ const userToken = generateTestToken({
 });
 
 describe("User Register (Integration)", () => {
-  const originalCoreBankingFindUnique = prisma.coreBanking.findUnique; // Store original
+  const originalCoreBankingFindUnique = prisma.coreBanking.findUnique;
 
   beforeEach(() => {
-    // Reset mock before each test in this suite
     prisma.coreBanking.findUnique = jest.fn().mockResolvedValue({
-      id: 999, // A dummy ID
+      id: 999,
       email: "mock@example.com",
       accountNumber: "12345",
     });
   });
 
   afterEach(async () => {
-    // Clean up users created in each test
     await prisma.user.deleteMany({
       where: {
         OR: [
@@ -48,14 +45,12 @@ describe("User Register (Integration)", () => {
   });
 
   afterAll(() => {
-    // Restore original implementation after all tests in this suite are done
     prisma.coreBanking.findUnique = originalCoreBankingFindUnique;
   });
 
   it("should register a new user", async () => {
     const unique = Date.now();
     const email = `jestregister${unique}@example.com`;
-    // Ensure mock is set for this specific email if coreBanking check happens
     prisma.coreBanking.findUnique.mockResolvedValueOnce({ id: 1, email });
 
     const res = await request(app)
@@ -69,7 +64,7 @@ describe("User Register (Integration)", () => {
       });
     expect([200, 201]).toContain(res.status);
     expect(res.body).toHaveProperty("message");
-    expect(res.body.message).toMatch(/OTP telah dikirim/i); // New user registration sends OTP
+    expect(res.body.message).toMatch(/OTP telah dikirim/i);
   });
 
   it("should return 400 if email format is invalid", async () => {
@@ -78,7 +73,7 @@ describe("User Register (Integration)", () => {
       .send({
         fullname: "Invalid Email Format",
         username: "invalidemailformat",
-        email: "invalid-email", // Invalid email format
+        email: "invalid-email",
         password: "Password123!",
         phoneNumber: `0812${Math.floor(Math.random() * 1e8)}`,
       });
@@ -90,9 +85,8 @@ describe("User Register (Integration)", () => {
   it("should return 400 if email already registered and verified", async () => {
     const unique = Date.now();
     const email = `jestregisterverified${unique}@example.com`;
-    prisma.coreBanking.findUnique.mockResolvedValueOnce({ id: 1, email }); // Mock for coreBanking check
+    prisma.coreBanking.findUnique.mockResolvedValueOnce({ id: 1, email });
 
-    // Create a user that is already verified
     await prisma.user.create({
       data: {
         fullname: "Jest Register Verified " + unique,
@@ -105,7 +99,6 @@ describe("User Register (Integration)", () => {
       },
     });
 
-    // Attempt to register again with the same email
     const res = await request(app)
       .post("/api/users/register")
       .send({
@@ -124,9 +117,8 @@ describe("User Register (Integration)", () => {
   it("should return 200 and resend OTP if email already registered but not verified", async () => {
     const unique = Date.now();
     const email = `jestregisterunverified${unique}@example.com`;
-    prisma.coreBanking.findUnique.mockResolvedValueOnce({ id: 1, email }); // Mock for coreBanking check
+    prisma.coreBanking.findUnique.mockResolvedValueOnce({ id: 1, email });
 
-    // Create a user that is not verified
     await prisma.user.create({
       data: {
         fullname: "Jest Register Unverified " + unique,
@@ -141,7 +133,6 @@ describe("User Register (Integration)", () => {
       },
     });
 
-    // Attempt to register again with the same email
     const res = await request(app)
       .post("/api/users/register")
       .send({
@@ -155,7 +146,6 @@ describe("User Register (Integration)", () => {
     expect(res.body.message).toMatch(/OTP telah dikirim ulang/i);
     expect(res.body).toHaveProperty("userId");
 
-    // Verify OTP was updated
     const updatedUser = await prisma.user.findUnique({ where: { email } });
     expect(updatedUser.otp).not.toBe("oldotp");
   });
@@ -163,7 +153,7 @@ describe("User Register (Integration)", () => {
   it("should return 403 if user is not a core banking nasabah", async () => {
     const unique = Date.now();
     const email = `notnasabah${unique}@example.com`;
-    prisma.coreBanking.findUnique.mockResolvedValueOnce(null); // Mock that user is NOT in core banking
+    prisma.coreBanking.findUnique.mockResolvedValueOnce(null);
 
     const res = await request(app)
       .post("/api/users/register")
@@ -350,14 +340,14 @@ describe("User Resend OTP (Integration)", () => {
         phoneNumber: `0812${Math.floor(Math.random() * 1e8)}`,
         role: "nasabah",
         isVerified: true,
-        otp: null, // No OTP needed if already verified, but controller will set a new one
+        otp: null,
         otpExpiresAt: null,
       },
     });
     const res = await request(app)
       .post("/api/users/resend-otp")
       .send({ email: email2 });
-    expect(res.status).toBe(200); // Controller still sends OTP even if verified
+    expect(res.status).toBe(200);
     expect(res.body.message.toLowerCase()).toMatch(/otp|resent|dikirim/);
   });
 
@@ -405,10 +395,6 @@ describe("User Login (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("token");
     expect(res.body.message).toBe("Login successful");
-    // The controller does not return the user object, only token and message.
-    // So, remove the user property checks.
-    // expect(res.body).toHaveProperty("user");
-    // expect(res.body.user.username).toBe(username);
   });
 
   it("should return 401 with wrong password", async () => {
@@ -533,7 +519,6 @@ describe("User Reset Password (Integration)", () => {
   });
 
   it("should reset password successfully with correct OTP (after verifying OTP)", async () => {
-    // Controller requires OTP verification before reset password can succeed
     const verifyRes = await request(app)
       .post("/api/users/verify-otp-forgot")
       .send({ email, otp });
@@ -608,7 +593,7 @@ describe("User Verify OTP Forgot Password (Integration)", () => {
     const res = await request(app)
       .post("/api/users/verify-otp-forgot")
       .send({ email, otp: "WRONGOTP" });
-    expect(res.status).toBe(404); // Controller returns 404 for wrong OTP
+    expect(res.status).toBe(404);
     expect(res.body.message).toBe("OTP salah");
   });
 
@@ -694,7 +679,7 @@ describe("User Get Profile (Integration)", () => {
       .get("/api/users/profile")
       .set("Authorization", "Bearer invalidtoken")
       .send();
-    expect(res.status).toBe(403); // Changed from 401 to 403 based on common auth middleware behavior
+    expect(res.status).toBe(403);
   });
 });
 
@@ -766,7 +751,7 @@ describe("User Change Password (Integration)", () => {
       .set("Authorization", token)
       .send({
         oldPassword: oldPassword,
-        newPassword: oldPassword, // New password is the same as old
+        newPassword: oldPassword,
       });
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("Password baru tidak boleh sama dengan lama");
@@ -786,7 +771,6 @@ describe("User Change Password (Integration)", () => {
       .set("Authorization", token)
       .send({
         oldPassword: oldPassword,
-        // newPassword is missing
       });
     expect(resMissingNew.status).toBe(400);
     expect(resMissingNew.body.message).toBe(
@@ -798,7 +782,6 @@ describe("User Change Password (Integration)", () => {
       .set("Authorization", token)
       .send({
         newPassword: newPassword,
-        // oldPassword is missing
       });
     expect(resMissingOld.status).toBe(400);
     expect(resMissingOld.body.message).toBe(
@@ -893,18 +876,18 @@ describe("User Get All Users (Integration)", () => {
     expect(emails).toEqual(
       expect.arrayContaining(["userjest1@example.com", "userjest2@example.com"])
     );
-    expect(emails).not.toContain("adminjest@example.com"); // Admin user should be excluded by NOT: { role: "admin" }
+    expect(emails).not.toContain("adminjest@example.com");
   });
 
   it("should get all users with custom pagination", async () => {
     const res = await request(app)
-      .get("/api/users?page=1&size=1") // Changed size to 1 to ensure data.length check is meaningful
+      .get("/api/users?page=1&size=1")
       .set("Authorization", adminToken)
       .send();
     expect(res.status).toBe(200);
     expect(res.body.pagination.page).toBe(1);
     expect(res.body.pagination.size).toBe(1);
-    expect(res.body.data.length).toBe(1); // Expect only one user
+    expect(res.body.data.length).toBe(1);
   });
 
   it("should use default size if invalid size is provided", async () => {
@@ -939,10 +922,9 @@ describe("User Expo Token (Integration)", () => {
   let user;
 
   beforeAll(async () => {
-    // Ensure the ID used here matches a potential existing user or create a unique one
     const unique = Date.now();
     user = await prisma.user.upsert({
-      where: { email: `nasabahjest${unique}@example.com` }, // Use a unique email for upsert
+      where: { email: `nasabahjest${unique}@example.com` },
       update: {},
       create: {
         fullname: "Nasabah Jest " + unique,
@@ -978,7 +960,7 @@ describe("User Expo Token (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.message).toMatch(/berhasil/i);
 
-    const updated = await prisma.user.findUnique({ where: { id: user.id } }); // Use dynamic user.id
+    const updated = await prisma.user.findUnique({ where: { id: user.id } });
     expect(updated.expoPushToken).toBe(
       "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
     );

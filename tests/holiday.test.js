@@ -35,7 +35,6 @@ describe("Holiday Controller (Integration)", () => {
     expect(res.status).toBe(201);
     expect(res.body.holiday).toHaveProperty("id");
 
-    // Cleanup
     await prisma.holiday.deleteMany({ where: { id: res.body.holiday.id } });
   });
 
@@ -57,7 +56,6 @@ describe("Holiday Controller (Integration)", () => {
     expect(Array.isArray(res.body.holidays)).toBe(true);
     expect(res.body.holidays.some((h) => h.id === holiday.id)).toBe(true);
 
-    // Cleanup
     await prisma.holiday.deleteMany({ where: { id: holiday.id } });
   });
 
@@ -79,7 +77,6 @@ describe("Holiday Controller (Integration)", () => {
     expect(res.body.holiday).toHaveProperty("id");
     expect(res.body.holiday.id).toBe(holiday.id);
 
-    // Cleanup
     await prisma.holiday.deleteMany({ where: { id: holiday.id } });
   });
 
@@ -103,7 +100,6 @@ describe("Holiday Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.holiday.holidayName).toBe("Holiday Jest Edited " + unique);
 
-    // Cleanup
     await prisma.holiday.deleteMany({ where: { id: holiday.id } });
   });
 
@@ -125,7 +121,6 @@ describe("Holiday Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.holiday).toHaveProperty("status");
 
-    // Cleanup
     await prisma.holiday.deleteMany({ where: { id: holiday.id } });
   });
 
@@ -182,7 +177,6 @@ describe("Holiday Controller (Integration)", () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/wajib diisi/i);
 
-    // Cleanup
     await prisma.holiday.deleteMany({ where: { id: holiday.id } });
   });
 

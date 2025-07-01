@@ -24,7 +24,6 @@ const loketToken =
 
 describe("Document Controller (Integration)", () => {
   beforeAll(async () => {
-    // Pastikan ada branch dummy
     let branch = await prisma.branch.findFirst();
     if (!branch) {
       branch = await prisma.branch.create({
@@ -74,7 +73,6 @@ describe("Document Controller (Integration)", () => {
     expect(res.status).toBe(201);
     expect(res.body.document).toHaveProperty("id");
 
-    // Cleanup
     await prisma.document.deleteMany({ where: { id: res.body.document.id } });
   });
 
@@ -96,7 +94,6 @@ describe("Document Controller (Integration)", () => {
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.some((d) => d.id === doc.id)).toBe(true);
 
-    // Cleanup
     await prisma.document.deleteMany({ where: { id: doc.id } });
   });
 
@@ -118,7 +115,6 @@ describe("Document Controller (Integration)", () => {
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.some((d) => d.id === doc.id)).toBe(true);
 
-    // Cleanup
     await prisma.document.deleteMany({ where: { id: doc.id } });
   });
 
@@ -140,7 +136,6 @@ describe("Document Controller (Integration)", () => {
     expect(res.body).toHaveProperty("id");
     expect(res.body.id).toBe(doc.id);
 
-    // Cleanup
     await prisma.document.deleteMany({ where: { id: doc.id } });
   });
 
@@ -174,7 +169,6 @@ describe("Document Controller (Integration)", () => {
       "Dokumen Jest Edited " + unique
     );
 
-    // Cleanup
     await prisma.document.deleteMany({ where: { id: doc.id } });
   });
 
@@ -195,7 +189,6 @@ describe("Document Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.document).toHaveProperty("status");
 
-    // Cleanup
     await prisma.document.deleteMany({ where: { id: doc.id } });
   });
 
@@ -224,7 +217,6 @@ describe("Document Controller (Integration)", () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/wajib diisi/i);
 
-    // Cleanup
     await prisma.document.deleteMany({ where: { id: doc.id } });
   });
 

@@ -51,7 +51,6 @@ describe("Loket Controller (Integration)", () => {
     expect(res.status).toBe(201);
     expect(res.body.loket).toHaveProperty("id");
 
-    // Cleanup
     await prisma.loket.deleteMany({ where: { id: res.body.loket.id } });
   });
 
@@ -81,7 +80,6 @@ describe("Loket Controller (Integration)", () => {
     expect(res.status).toBe(400);
     expect(res.body.message.toLowerCase()).toContain("terdaftar");
 
-    // Cleanup
     await prisma.loket.deleteMany({ where: { id: loket.id } });
   });
 
@@ -108,7 +106,6 @@ describe("Loket Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("token");
 
-    // Cleanup
     await prisma.loket.deleteMany({ where: { id: loket.id } });
   });
 
@@ -135,7 +132,6 @@ describe("Loket Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.loket.name).toBe("Loket Jest Edited " + unique);
 
-    // Cleanup
     await prisma.loket.deleteMany({ where: { id: loket.id } });
   });
 
@@ -159,7 +155,6 @@ describe("Loket Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.loket).toHaveProperty("status");
 
-    // Cleanup
     await prisma.loket.deleteMany({ where: { id: loket.id } });
   });
 
@@ -176,7 +171,6 @@ describe("Loket Controller (Integration)", () => {
         updatedBy: "admin",
       },
     });
-    // Buat token sesuai id
     const loketToken =
       "Bearer " +
       jwt.sign(
@@ -191,7 +185,6 @@ describe("Loket Controller (Integration)", () => {
     expect(res.body.loket).toHaveProperty("id");
     expect(res.body.loket.id).toBe(loket.id);
 
-    // Cleanup
     await prisma.loket.deleteMany({ where: { id: loket.id } });
   });
 
@@ -214,7 +207,7 @@ describe("Loket Controller (Integration)", () => {
     const res = await request(app)
       .post("/api/loket/add")
       .set("Authorization", adminToken)
-      .send({}); // kosong
+      .send({});
     expect(res.status).toBe(400);
     expect(res.body.message.toLowerCase()).toContain("tidak lengkap");
   });
@@ -238,7 +231,6 @@ describe("Loket Controller (Integration)", () => {
   });
 
   it("should return 400 if getLoket called without loketId", async () => {
-    // Buat token tanpa loketId
     const loketToken =
       "Bearer " +
       jwt.sign(
@@ -254,13 +246,12 @@ describe("Loket Controller (Integration)", () => {
   });
 
   it("should return 400 if loginLoket missing required fields", async () => {
-    const res = await request(app).post("/api/loket/login").send({}); // kosong
+    const res = await request(app).post("/api/loket/login").send({});
     expect(res.status).toBe(400);
     expect(res.body.message.toLowerCase()).toContain("wajib diisi");
   });
 
   it("should return 400 if editLoket called with no fields", async () => {
-    // Buat dummy loket dulu
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const loket = await prisma.loket.create({
       data: {
@@ -273,7 +264,6 @@ describe("Loket Controller (Integration)", () => {
         updatedBy: "admin",
       },
     });
-    // Kirim request tanpa field yang diubah
     const res = await request(app)
       .put(`/api/loket/${loket.id}`)
       .set("Authorization", adminToken)
@@ -281,12 +271,10 @@ describe("Loket Controller (Integration)", () => {
     expect(res.status).toBe(400);
     expect(res.body.message.toLowerCase()).toContain("tidak boleh kosong");
 
-    // Cleanup
     await prisma.loket.deleteMany({ where: { id: loket.id } });
   });
 
   it("should return 400 if editLoket with password less than 8 chars", async () => {
-    // Buat dummy loket dulu
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const loket = await prisma.loket.create({
       data: {
@@ -302,16 +290,14 @@ describe("Loket Controller (Integration)", () => {
     const res = await request(app)
       .put(`/api/loket/${loket.id}`)
       .set("Authorization", adminToken)
-      .send({ password: "short" }); // kurang dari 8 karakter
+      .send({ password: "short" });
     expect(res.status).toBe(400);
     expect(res.body.message.toLowerCase()).toContain("minimal 8 karakter");
 
-    // Cleanup
     await prisma.loket.deleteMany({ where: { id: loket.id } });
   });
 
   it("should return 400 if editLoket called with all fields empty", async () => {
-    // Buat dummy loket dulu
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const loket = await prisma.loket.create({
       data: {
@@ -324,7 +310,6 @@ describe("Loket Controller (Integration)", () => {
         updatedBy: "admin",
       },
     });
-    // Kirim request tanpa field yang diubah
     const res = await request(app)
       .put(`/api/loket/${loket.id}`)
       .set("Authorization", adminToken)
@@ -332,7 +317,6 @@ describe("Loket Controller (Integration)", () => {
     expect(res.status).toBe(400);
     expect(res.body.message.toLowerCase()).toContain("tidak boleh kosong");
 
-    // Cleanup
     await prisma.loket.deleteMany({ where: { id: loket.id } });
   });
 });

@@ -31,7 +31,6 @@ const register = async (req, res, next) => {
     username = username.toLowerCase();
     email = email.toLowerCase();
 
-    // Cek apakah sudah jadi nasabah (coreBanking)
     const coreBanking = await prisma.coreBanking.findUnique({
       where: { email },
     });
@@ -43,7 +42,6 @@ const register = async (req, res, next) => {
       });
     }
 
-    // Cek duplikasi user berdasarkan email, username, atau phoneNumber
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { username }, { phoneNumber }],
@@ -52,7 +50,6 @@ const register = async (req, res, next) => {
 
     if (existingUser) {
       if (!existingUser.isVerified) {
-        // Kirim ulang OTP jika belum verifikasi
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -70,13 +67,11 @@ const register = async (req, res, next) => {
         });
       }
 
-      // Jika sudah terverifikasi → tidak boleh daftar lagi
       return res.status(400).json({
         message: "Email, username, atau nomor telepon sudah terdaftar.",
       });
     }
 
-    // Buat user baru
     const passwordHash = await hashPassword(password);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -110,7 +105,6 @@ const register = async (req, res, next) => {
       });
     }
 
-    // Tangani error lainnya
     return res.status(error.status || 500).json({
       message: error.message || "Terjadi kesalahan saat proses registrasi.",
     });
@@ -334,7 +328,6 @@ const changePassword = async (req, res, next) => {
     const isMatch = await comparePassword(oldPassword, user.passwordHash);
 
     if (oldPassword === newPassword) {
-      // This block is reached if isMatch is true
       throw Object.assign(
         new Error("Password baru tidak boleh sama dengan lama"),
         { status: 400 }

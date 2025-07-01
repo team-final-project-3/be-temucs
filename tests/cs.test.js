@@ -16,7 +16,6 @@ describe("CS Controller (Integration)", () => {
   let branch;
 
   beforeAll(async () => {
-    // Buat branch dummy untuk relasi CS
     branch = await prisma.branch.create({
       data: {
         name: "Branch CS Jest " + Date.now(),
@@ -52,7 +51,6 @@ describe("CS Controller (Integration)", () => {
     expect(res.status).toBe(201);
     expect(res.body.cs).toHaveProperty("id");
 
-    // Cleanup
     await prisma.cS.deleteMany({ where: { id: res.body.cs.id } });
   });
 
@@ -80,7 +78,6 @@ describe("CS Controller (Integration)", () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/CS sudah terdaftar/i);
 
-    // Cleanup
     await prisma.cS.deleteMany({ where: { id: cs.id } });
   });
 
@@ -88,7 +85,7 @@ describe("CS Controller (Integration)", () => {
     const res = await request(app)
       .post("/api/cs/add")
       .set("Authorization", adminToken)
-      .send({}); // kosong
+      .send({});
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/Data CS tidak lengkap/i);
   });
@@ -116,7 +113,6 @@ describe("CS Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("token");
 
-    // Cleanup
     await prisma.cS.deleteMany({ where: { id: cs.id } });
   });
 
@@ -142,7 +138,6 @@ describe("CS Controller (Integration)", () => {
     expect(res.status).toBe(401);
     expect(res.body.message).toMatch(/Password salah/i);
 
-    // Cleanup
     await prisma.cS.deleteMany({ where: { id: cs.id } });
   });
 
@@ -183,7 +178,6 @@ describe("CS Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.cs.name).toBe("CS Jest Edited " + unique);
 
-    // Cleanup
     await prisma.cS.deleteMany({ where: { id: cs.id } });
   });
 
@@ -207,7 +201,6 @@ describe("CS Controller (Integration)", () => {
     expect(res.status).toBe(200);
     expect(res.body.cs).toHaveProperty("status");
 
-    // Cleanup
     await prisma.cS.deleteMany({ where: { id: cs.id } });
   });
 
@@ -225,7 +218,6 @@ describe("CS Controller (Integration)", () => {
         updatedBy: "admin",
       },
     });
-    // Login untuk dapatkan token
     const loginRes = await request(app)
       .post("/api/cs/login")
       .send({
@@ -245,7 +237,6 @@ describe("CS Controller (Integration)", () => {
     expect(res.body.cs).toHaveProperty("branchId");
     expect(res.body.cs).toHaveProperty("branch");
 
-    // Cleanup
     await prisma.cS.deleteMany({ where: { id: cs.id } });
   });
 

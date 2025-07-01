@@ -26,7 +26,6 @@ describe("ServiceDocument Controller (Integration)", () => {
   let document, service1, service2;
 
   beforeAll(async () => {
-    // Buat document dummy
     document = await prisma.document.create({
       data: {
         documentName: "Materai ServiceDocument Jest " + Date.now(),
@@ -35,7 +34,6 @@ describe("ServiceDocument Controller (Integration)", () => {
         updatedBy: "admin",
       },
     });
-    // Buat service dummy
     service1 = await prisma.service.create({
       data: {
         serviceName: "Service Jest 1 " + Date.now(),
@@ -74,7 +72,6 @@ describe("ServiceDocument Controller (Integration)", () => {
         },
       },
     });
-    // Buat user loket dummy agar endpoint /loket tidak error
     let branch = await prisma.branch.findFirst();
     if (!branch) {
       branch = await prisma.branch.create({

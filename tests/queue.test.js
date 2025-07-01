@@ -86,7 +86,6 @@ describe("Queue Booking Integration", () => {
   });
 
   afterAll(async () => {
-    // Hapus queueLog dulu
     await prisma.queueLog.deleteMany({
       where: {
         queue: {
@@ -94,7 +93,6 @@ describe("Queue Booking Integration", () => {
         },
       },
     });
-    // Hapus queueService
     await prisma.queueService.deleteMany({
       where: {
         queueId: {
@@ -107,22 +105,16 @@ describe("Queue Booking Integration", () => {
         },
       },
     });
-    // Hapus queue
     await prisma.queue.deleteMany({ where: { branchId: branch.id } });
-    // Hapus cS
     await prisma.cS.deleteMany({ where: { branchId: branch.id } });
-    // Hapus loket
     await prisma.loket.deleteMany({ where: { branchId: branch.id } });
-    // Hapus branch
     await prisma.branch.deleteMany({ where: { id: branch.id } });
-    // Hapus user
     await prisma.user.deleteMany({
       where: { username: "nasabahtest" + unique },
     });
   });
 
   it("Login as nasabah and book queue online", async () => {
-    // Login nasabah
     const loginRes = await request(app)
       .post("/api/users/login")
       .send({
@@ -132,7 +124,6 @@ describe("Queue Booking Integration", () => {
     expect(loginRes.status).toBe(200);
     nasabahToken = "Bearer " + loginRes.body.token;
 
-    // Booking online
     const bookRes = await request(app)
       .post("/api/queue/book-online")
       .set("Authorization", nasabahToken)
@@ -146,7 +137,6 @@ describe("Queue Booking Integration", () => {
   });
 
   it("Login as loket and book queue offline", async () => {
-    // Login loket
     const loginRes = await request(app)
       .post("/api/loket/login")
       .send({
@@ -156,7 +146,6 @@ describe("Queue Booking Integration", () => {
     expect(loginRes.status).toBe(200);
     loketToken = "Bearer " + loginRes.body.token;
 
-    // Booking offline
     const bookRes = await request(app)
       .post("/api/queue/book-offline")
       .set("Authorization", loketToken)
@@ -620,7 +609,6 @@ describe("Queue Booking Integration", () => {
   });
 
   it("should return 401 if CS not found in getCalledCustomerTV", async () => {
-    // Buat token CS dengan id yang tidak ada
     const jwt = require("jsonwebtoken");
     const fakeCsToken =
       "Bearer " +
@@ -639,7 +627,6 @@ describe("Queue Booking Integration", () => {
   });
 
   it("should return 404 if no called queue in getCalledCustomerTV", async () => {
-    // Buat CS valid, pastikan tidak ada queue status 'called' di branch-nya
     const cs = await prisma.cS.create({
       data: {
         name: "CS TV Test",
@@ -660,7 +647,6 @@ describe("Queue Booking Integration", () => {
         process.env.JWT_SECRET || "secret"
       );
 
-    // Ambil semua queue id yang akan dihapus
     const calledQueueIds = (
       await prisma.queue.findMany({
         where: { branchId: branch.id, status: "called" },
@@ -668,12 +654,10 @@ describe("Queue Booking Integration", () => {
       })
     ).map((q) => q.id);
 
-    // Hapus queueLog yang berelasi
     await prisma.queueLog.deleteMany({
       where: { queueId: { in: calledQueueIds } },
     });
 
-    // Hapus queueService yang berelasi
     await prisma.queueService.deleteMany({
       where: { queueId: { in: calledQueueIds } },
     });
@@ -691,12 +675,10 @@ describe("Queue Booking Integration", () => {
       "tidak ada antrian dengan status 'called'"
     );
 
-    // Cleanup
     await prisma.cS.deleteMany({ where: { id: cs.id } });
   });
 
-  it("should return 404 if CS exists in token but not in DB in getCalledCustomerTV", async () => {
-    // Buat CS, ambil id, lalu hapus CS-nya
+  it("should return 401 if CS exists in token but not in DB in getCalledCustomerTV", async () => {
     const cs = await prisma.cS.create({
       data: {
         name: "CS TV Test NotFound",
@@ -717,7 +699,6 @@ describe("Queue Booking Integration", () => {
         process.env.JWT_SECRET || "secret"
       );
 
-    // Hapus CS dari DB
     await prisma.cS.deleteMany({ where: { id: cs.id } });
 
     const res = await request(app)
@@ -725,7 +706,7 @@ describe("Queue Booking Integration", () => {
       .set("Authorization", csToken)
       .send();
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(401);
     expect(res.body.message.toLowerCase()).toContain("cs tidak ditemukan");
   });
 });
