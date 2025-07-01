@@ -1141,8 +1141,8 @@ const getAllQueues = async (req, res, next) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-          "*".repeat(Math.max(domainMain.length - 2, 0)) +
-          domainMain.slice(-1);
+            "*".repeat(Math.max(domainMain.length - 2, 0)) +
+            domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -1159,10 +1159,10 @@ const getAllQueues = async (req, res, next) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-          ...queue.user,
-          email: censorEmail(queue.user.email),
-          phoneNumber: censorPhone(queue.user.phoneNumber),
-        }
+            ...queue.user,
+            email: censorEmail(queue.user.email),
+            phoneNumber: censorPhone(queue.user.phoneNumber),
+          }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -1217,9 +1217,7 @@ const getTicketById = async (req, res, next) => {
       });
     }
 
-    const services = Array.isArray(queue.services)
-      ? queue.services.map((qs) => qs.service)
-      : [];
+    const services = queue.services.map((qs) => qs.service);
 
     res.status(200).json({
       ticketNumber: queue.ticketNumber,
@@ -1275,9 +1273,7 @@ const getLoketTicketById = async (req, res, next) => {
       });
     }
 
-    const services = Array.isArray(queue.services)
-      ? queue.services.map((qs) => qs.service)
-      : [];
+    const services = queue.services.map((qs) => qs.service);
 
     res.status(200).json({
       ticketNumber: queue.ticketNumber,
@@ -1318,9 +1314,7 @@ const getUserQueueHistory = async (req, res, next) => {
 
     const formattedQueues = queues.map((queue) => ({
       ...queue,
-      services: Array.isArray(queue.services)
-        ? queue.services.map((qs) => qs.service)
-        : [],
+      services: queue.services.map((qs) => qs.service),
     }));
 
     res.status(200).json({ success: true, data: formattedQueues });
@@ -1372,12 +1366,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
@@ -1438,12 +1432,12 @@ const getActiveCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     };
@@ -1493,10 +1487,7 @@ const getQueueDetailByCSId = async (req, res, next) => {
       },
     });
 
-    const services =
-      Array.isArray(queueServices) && queueServices.length > 0
-        ? queueServices.map((qs) => qs.service.serviceName)
-        : [];
+    const services = queueServices.map((qs) => qs.service.serviceName);
 
     res.json({
       id: queue.id,
@@ -1557,12 +1548,12 @@ const getCalledCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
     });
   } catch (error) {
@@ -1635,7 +1626,6 @@ const getCalledCustomerTV = async (req, res, next) => {
     next(error);
   }
 };
-
 
 module.exports = {
   bookQueueOnline,
