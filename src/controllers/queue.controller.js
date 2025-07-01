@@ -1580,22 +1580,20 @@ const getCalledCustomerTV = async (req, res, next) => {
         .json({ message: "Unauthorized: CS ID tidak ditemukan." });
     }
 
-    const cs = await prisma.cS.findUnique({
+    const csLogin = await prisma.cS.findUnique({
       where: { id: csId },
       select: {
-        id: true,
-        name: true,
         branchId: true,
       },
     });
 
-    if (!cs) {
+    if (!csLogin) {
       return res.status(404).json({ message: "CS tidak ditemukan." });
     }
 
     const queue = await prisma.queue.findFirst({
       where: {
-        branchId: cs.branchId,
+        branchId: csLogin.branchId,
         status: "called",
       },
       orderBy: {
@@ -1605,6 +1603,7 @@ const getCalledCustomerTV = async (req, res, next) => {
         ticketNumber: true,
         status: true,
         calledAt: true,
+        csId: true,
       },
     });
 
@@ -1614,17 +1613,22 @@ const getCalledCustomerTV = async (req, res, next) => {
         .json({ message: "Tidak ada antrian dengan status 'called'." });
     }
 
+    const queueCS = await prisma.cS.findUnique({
+      where: { id: queue.csId },
+      select: {
+        name: true,
+      },
+    });
+
     res.json({
-      csId: cs.id,
-      csName: cs.name,
       ...queue,
+      csName: queueCS?.name || null,
     });
   } catch (error) {
     console.error(error);
     next(error);
   }
 };
-
 
 module.exports = {
   bookQueueOnline,
