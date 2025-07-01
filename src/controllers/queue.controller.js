@@ -1582,7 +1582,11 @@ const getCalledCustomerTV = async (req, res, next) => {
 
     const cs = await prisma.cS.findUnique({
       where: { id: csId },
-      select: { branchId: true },
+      select: {
+        id: true,
+        name: true,
+        branchId: true,
+      },
     });
 
     if (!cs) {
@@ -1610,12 +1614,17 @@ const getCalledCustomerTV = async (req, res, next) => {
         .json({ message: "Tidak ada antrian dengan status 'called'." });
     }
 
-    res.json(queue);
+    res.json({
+      csId: cs.id,
+      csName: cs.fullname,
+      ...queue,
+    });
   } catch (error) {
     console.error(error);
     next(error);
   }
 };
+
 
 module.exports = {
   bookQueueOnline,
