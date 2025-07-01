@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const prisma = require("../../prisma/client");
 
 async function getExpoPushToken({ userId, email, phoneNumber }) {
   let where = {};
