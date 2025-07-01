@@ -84,7 +84,7 @@ const register = async (req, res, next) => {
         phoneNumber,
         passwordHash,
         role,
-        isVerified: true,
+        isVerified: false,
         otp,
         otpExpiresAt,
       },
