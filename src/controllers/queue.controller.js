@@ -430,10 +430,12 @@ const updateStatus = (newStatus) => async (req, res, next) => {
 
         if (nextQueues.length === 5) {
           const queueKe5 = nextQueues[4];
+          console.log("queueKe5", queueKe5);
           if (queueKe5.userId) {
             const expoPushToken = await getExpoPushToken({
               userId: queueKe5.userId,
             });
+            console.log("expoPushToken", expoPushToken);
             if (expoPushToken) {
               await sendExpoNotification(
                 expoPushToken,
