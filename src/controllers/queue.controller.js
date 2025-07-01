@@ -1613,22 +1613,29 @@ const getCalledCustomerTV = async (req, res, next) => {
         .json({ message: "Tidak ada antrian dengan status 'called'." });
     }
 
-    const queueCS = await prisma.cS.findUnique({
-      where: { id: queue.csId },
-      select: {
-        name: true,
-      },
-    });
+    let queueCS = null;
+    if (queue.csId) {
+      queueCS = await prisma.cs.findUnique({
+        where: { id: queue.csId },
+        select: {
+          name: true,
+        },
+      });
+    }
 
     res.json({
-      ...queue,
+      csId: queue.csId,
       csName: queueCS?.name || null,
+      ticketNumber: queue.ticketNumber,
+      status: queue.status,
+      calledAt: queue.calledAt,
     });
   } catch (error) {
     console.error(error);
     next(error);
   }
 };
+
 
 module.exports = {
   bookQueueOnline,
