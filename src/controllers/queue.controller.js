@@ -515,11 +515,17 @@ const callQueue = async (req, res, next) => {
 
     res.json({ message: "Queue status updated to called", queue });
 
-    // Emit
+    const cs = await prisma.cS.findUnique({
+      where: { id: csId },
+      select: { name: true },
+    });
+
+    //Emit
     global.io.emit("queue:called", {
       ticketNumber: queue.ticketNumber,
       status: queue.status,
       calledAt: queue.calledAt,
+      csName: cs?.name || null,
     });
 
     res.json({ message: "Queue status updated to called", queue });
