@@ -1,17 +1,39 @@
 const request = require("supertest");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const app = require("../src/app");
 const prisma = require("../prisma/client");
 
-const adminToken =
-  "Bearer " +
-  jwt.sign(
-    { id: 1, username: "admin", role: "admin" },
-    process.env.JWT_SECRET || "secret"
-  );
+const unique = Date.now() + Math.floor(Math.random() * 10000);
+const adminUsername = "branchadminjest" + unique;
+const plainPassword = "Password123!";
+let adminToken;
 
 describe("Branch Controller (Integration)", () => {
+  beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { username: adminUsername } });
+
+    const hashed = bcrypt.hashSync(plainPassword, 10);
+    await prisma.user.create({
+      data: {
+        fullname: "Admin Branch Jest",
+        username: adminUsername,
+        email: adminUsername + "@mail.com",
+        passwordHash: hashed,
+        phoneNumber: "081234" + unique,
+        role: "admin",
+        isVerified: true,
+      },
+    });
+
+    const loginRes = await request(app)
+      .post("/api/users/login")
+      .send({ username: adminUsername, password: plainPassword });
+    adminToken = "Bearer " + loginRes.body.token;
+  });
+
   afterAll(async () => {
+    await prisma.user.deleteMany({ where: { username: adminUsername } });
     await prisma.$disconnect();
   });
 
@@ -226,7 +248,7 @@ describe("Branch Controller (Integration)", () => {
     const loketToken =
       "Bearer " +
       jwt.sign(
-        { id: 2, username: "loketjest", role: "loket" },
+        { id: 2, username: "branchloketjest", role: "loket" },
         process.env.JWT_SECRET || "secret"
       );
     const unique = Date.now() + Math.floor(Math.random() * 10000);

@@ -8,18 +8,39 @@ const {
   updateHolidayCache,
 } = require("../src/middlewares/holidayCron");
 
-const adminToken =
-  "Bearer " +
-  jwt.sign(
-    { id: 1, username: "admin", role: "admin" },
-    process.env.JWT_SECRET || "secret"
-  );
+const unique = Date.now() + Math.floor(Math.random() * 10000);
+const adminUsername = "holidayadminjest" + unique;
+const plainPassword = "Password123!";
+let adminToken;
 
 describe("Holiday Controller (Integration)", () => {
+  beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { username: adminUsername } });
+
+    const hashed = require("bcryptjs").hashSync(plainPassword, 10);
+    await prisma.user.create({
+      data: {
+        fullname: "Admin Holiday Jest",
+        username: adminUsername,
+        email: adminUsername + "@mail.com",
+        passwordHash: hashed,
+        phoneNumber: "081234" + unique,
+        role: "admin",
+        isVerified: true,
+      },
+    });
+
+    const loginRes = await request(app)
+      .post("/api/users/login")
+      .send({ username: adminUsername, password: plainPassword });
+    adminToken = "Bearer " + loginRes.body.token;
+  });
+
   afterAll(async () => {
     await prisma.holiday.deleteMany({
       where: { holidayName: { contains: "Jest" } },
     });
+    await prisma.user.deleteMany({ where: { username: adminUsername } });
     await prisma.$disconnect();
   });
 

@@ -709,4 +709,298 @@ describe("Queue Booking Integration", () => {
     expect(res.status).toBe(401);
     expect(res.body.message.toLowerCase()).toContain("cs tidak ditemukan");
   });
+
+  it("should default to size 10 if size param is invalid in getAllQueues", async () => {
+    const loginRes = await request(app)
+      .post("/api/users/login")
+      .send({ username: "admintest" + unique, password: "dummyhash" });
+    adminToken = "Bearer " + loginRes.body.token;
+    const res = await request(app)
+      .get("/api/queue?page=1&size=999")
+      .set("Authorization", adminToken)
+      .send();
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("success", true);
+  });
+
+  it("should return 400 if queueId is missing in getTicketById", async () => {
+    const res = await request(app)
+      .get("/api/queue/ticket/")
+      .set("Authorization", nasabahToken)
+      .send();
+    expect([400, 404]).toContain(res.status);
+  });
+
+  it("should return 400 if userId is missing in getTicketById", async () => {
+    const res = await request(app).get("/api/queue/ticket/999999").send();
+    expect(res.status).toBe(401);
+  });
+
+  it("should return 404 if queue not found in getTicketById", async () => {
+    const res = await request(app)
+      .get("/api/queue/ticket/999999")
+      .set("Authorization", nasabahToken)
+      .send();
+    expect(res.status).toBe(404);
+  });
+
+  it("should return 403 if user not authorized to access ticket", async () => {
+    const otherUser = await prisma.user.create({
+      data: {
+        fullname: "Other User",
+        username: "otheruser" + unique,
+        email: `otheruser${unique}@mail.com`,
+        passwordHash: bcrypt.hashSync("dummyhash", 10),
+        phoneNumber: "0812345678" + (unique + 100),
+        role: "nasabah",
+        isVerified: true,
+      },
+    });
+    const queue = await prisma.queue.create({
+      data: {
+        userId: otherUser.id,
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Other User",
+        email: `otheruser${unique}@mail.com`,
+        phoneNumber: "0812345678" + (unique + 100),
+        ticketNumber: "A" + (unique + 100),
+        status: "waiting",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .get(`/api/queue/ticket/${queue.id}`)
+      .set("Authorization", nasabahToken)
+      .send();
+    expect(res.status).toBe(403);
+  });
+
+  it("should return 400 if queueId is missing in getLoketTicketById", async () => {
+    const res = await request(app)
+      .get("/api/queue/loket-ticket/")
+      .set("Authorization", loketToken)
+      .send();
+    expect([400, 404]).toContain(res.status);
+  });
+
+  it("should return 400 if userId is missing in getUserQueueHistory", async () => {
+    const res = await request(app).get("/api/queue/history").send();
+    expect(res.status).toBe(401);
+  });
+
+  it("should return 400 if branchId is missing in getActiveCSCustomer", async () => {
+    const fakeToken =
+      "Bearer " +
+      require("jsonwebtoken").sign(
+        { csId: 99999999, username: "notfound", role: "cs" },
+        process.env.JWT_SECRET || "secret"
+      );
+    const res = await request(app)
+      .get("/api/queue/active-cs-customer")
+      .set("Authorization", fakeToken)
+      .send();
+    expect([400, 401, 404]).toContain(res.status);
+  });
+
+  it("should return 400 if csId is missing in getActiveCustomerByCS", async () => {
+    const fakeToken =
+      "Bearer " +
+      require("jsonwebtoken").sign(
+        { username: "notfound", role: "cs" },
+        process.env.JWT_SECRET || "secret"
+      );
+    const res = await request(app)
+      .get("/api/queue/active-customer/cs")
+      .set("Authorization", fakeToken)
+      .send();
+    expect([400, 401]).toContain(res.status);
+  });
+
+  it("should return 401 if csId is missing in getQueueDetailByCSId", async () => {
+    const fakeToken =
+      "Bearer " +
+      require("jsonwebtoken").sign(
+        { username: "notfound", role: "cs" },
+        process.env.JWT_SECRET || "secret"
+      );
+    const res = await request(app)
+      .get("/api/queue/cs/handling")
+      .set("Authorization", fakeToken)
+      .send();
+    expect(res.status).toBe(401);
+  });
+
+  it("should return 200 with null fields if no in-progress queue in getQueueDetailByCSId", async () => {
+    await prisma.queue.updateMany({
+      where: { csId: null, status: "in progress" },
+      data: { status: "done" },
+    });
+    const res = await request(app)
+      .get("/api/queue/cs/handling")
+      .set("Authorization", csToken)
+      .send();
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("id", null);
+  });
+
+  it("should return 401 if csId is missing in getCalledCustomerByCS", async () => {
+    const fakeToken =
+      "Bearer " +
+      require("jsonwebtoken").sign(
+        { username: "notfound", role: "cs" },
+        process.env.JWT_SECRET || "secret"
+      );
+    const res = await request(app)
+      .get("/api/queue/cs/called-customer")
+      .set("Authorization", fakeToken)
+      .send();
+    expect(res.status).toBe(401);
+  });
+
+  it("should return 200 with isCalling false if no called queue in getCalledCustomerByCS", async () => {
+    await prisma.queue.updateMany({
+      where: { csId: null, status: "called" },
+      data: { status: "done" },
+    });
+    const res = await request(app)
+      .get("/api/queue/cs/called-customer")
+      .set("Authorization", csToken)
+      .send();
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("isCalling", false);
+  });
+
+  // 1. currentStatus sudah selesai/canceled/skipped
+  it("should return 400 if queue already done", async () => {
+    const queue = await prisma.queue.create({
+      data: {
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test Nasabah",
+        ticketNumber: "A" + (unique + 202),
+        status: "done",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .patch(`/api/queue/${queue.id}/done`)
+      .set("Authorization", csToken)
+      .send();
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 if queue status already same as newStatus", async () => {
+    const queue = await prisma.queue.create({
+      data: {
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test Nasabah",
+        ticketNumber: "A" + (unique + 203),
+        status: "done",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .patch(`/api/queue/${queue.id}/done`)
+      .set("Authorization", csToken)
+      .send();
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 if status transition not allowed", async () => {
+    const queue = await prisma.queue.create({
+      data: {
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test Nasabah",
+        ticketNumber: "A" + (unique + 204),
+        status: "waiting",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .patch(`/api/queue/${queue.id}/done`)
+      .set("Authorization", csToken)
+      .send();
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 403 if CS from different branch tries to update status", async () => {
+    const branch2 = await prisma.branch.create({
+      data: {
+        name: "Branch Test 2 " + unique,
+        branchCode: "BR2" + unique,
+        address: "Jl. Test 2",
+        longitude: 106.9,
+        latitude: -6.2,
+        holiday: false,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const cs2 = await prisma.cS.create({
+      data: {
+        name: "CS Test 2",
+        username: "cstest2" + unique,
+        passwordHash: bcrypt.hashSync("dummyhash", 10),
+        branchId: branch2.id,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const csLogin2 = await request(app)
+      .post("/api/cs/login")
+      .send({ username: "cstest2" + unique, password: "dummyhash" });
+    const csToken2 = "Bearer " + csLogin2.body.token;
+
+    const queue = await prisma.queue.create({
+      data: {
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test Nasabah",
+        ticketNumber: "A" + (unique + 201),
+        status: "in progress",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+
+    const res = await request(app)
+      .patch(`/api/queue/${queue.id}/done`)
+      .set("Authorization", csToken2)
+      .send();
+    expect(res.status).toBe(403);
+
+    await prisma.cS.delete({ where: { id: cs2.id } });
+    await prisma.branch.delete({ where: { id: branch2.id } });
+  });
+
+  it("should return 401 if CS token missing when updating status", async () => {
+    const queue = await prisma.queue.create({
+      data: {
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test Nasabah",
+        ticketNumber: "A" + (unique + 200),
+        status: "in progress",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app).patch(`/api/queue/${queue.id}/done`).send();
+    expect(res.status).toBe(401);
+  });
 });

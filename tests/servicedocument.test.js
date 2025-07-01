@@ -1,34 +1,94 @@
 const request = require("supertest");
-const jwt = require("jsonwebtoken");
 const app = require("../src/app");
 const prisma = require("../prisma/client");
+const bcrypt = require("bcryptjs");
 
-const adminToken =
-  "Bearer " +
-  jwt.sign(
-    { id: 1, username: "admin", role: "admin" },
-    process.env.JWT_SECRET || "secret"
-  );
-const userToken =
-  "Bearer " +
-  jwt.sign(
-    { id: 2, username: "nasabahjest", role: "nasabah" },
-    process.env.JWT_SECRET || "secret"
-  );
-const loketToken =
-  "Bearer " +
-  jwt.sign(
-    { loketId: 3, username: "loketjest", role: "loket" },
-    process.env.JWT_SECRET || "secret"
-  );
+const unique = Date.now() + Math.floor(Math.random() * 10000);
+const adminUsername = "serdocadminjest" + unique;
+const userUsername = "serdocuserjest" + unique;
+const loketUsername = "serdocloketjest" + unique;
+const plainPassword = "Password123!";
+let adminToken, userToken, loketToken;
+let document, service1, service2;
 
 describe("ServiceDocument Controller (Integration)", () => {
-  let document, service1, service2;
-
   beforeAll(async () => {
+    await prisma.user.deleteMany({
+      where: { username: { in: [adminUsername, userUsername] } },
+    });
+    await prisma.loket.deleteMany({ where: { username: loketUsername } });
+
+    const hashed = bcrypt.hashSync(plainPassword, 10);
+    await prisma.user.create({
+      data: {
+        fullname: "Admin Jest",
+        username: adminUsername,
+        email: adminUsername + "@mail.com",
+        passwordHash: hashed,
+        phoneNumber: "081234" + unique,
+        role: "admin",
+        isVerified: true,
+      },
+    });
+    await prisma.user.create({
+      data: {
+        fullname: "User Jest",
+        username: userUsername,
+        email: userUsername + "@mail.com",
+        passwordHash: hashed,
+        phoneNumber: "081235" + unique,
+        role: "nasabah",
+        isVerified: true,
+      },
+    });
+
+    const adminLogin = await request(app)
+      .post("/api/users/login")
+      .send({ username: adminUsername, password: plainPassword });
+    adminToken = "Bearer " + adminLogin.body.token;
+
+    const userLogin = await request(app)
+      .post("/api/users/login")
+      .send({ username: userUsername, password: plainPassword });
+    userToken = "Bearer " + userLogin.body.token;
+
+    let branch = await prisma.branch.findFirst();
+    if (!branch) {
+      branch = await prisma.branch.create({
+        data: {
+          name: "Branch Loket Jest",
+          branchCode: "LOKETJEST" + unique,
+          address: "Jl. Loket Jest",
+          longitude: 106.8,
+          latitude: -6.1,
+          holiday: false,
+          status: true,
+          createdBy: "admin",
+          updatedBy: "admin",
+        },
+      });
+    }
+
+    await prisma.loket.create({
+      data: {
+        username: loketUsername,
+        passwordHash: hashed,
+        name: "Loket Jest",
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+        branchId: branch.id,
+      },
+    });
+
+    const loketLogin = await request(app)
+      .post("/api/loket/login")
+      .send({ username: loketUsername, password: plainPassword });
+    loketToken = "Bearer " + loketLogin.body.token;
+
     document = await prisma.document.create({
       data: {
-        documentName: "Materai ServiceDocument Jest " + Date.now(),
+        documentName: "Materai ServiceDocument Jest " + unique,
         status: true,
         createdBy: "admin",
         updatedBy: "admin",
@@ -36,7 +96,7 @@ describe("ServiceDocument Controller (Integration)", () => {
     });
     service1 = await prisma.service.create({
       data: {
-        serviceName: "Service Jest 1 " + Date.now(),
+        serviceName: "Service Jest 1 " + unique,
         estimatedTime: 10,
         status: true,
         createdBy: "admin",
@@ -55,7 +115,7 @@ describe("ServiceDocument Controller (Integration)", () => {
     });
     service2 = await prisma.service.create({
       data: {
-        serviceName: "Service Jest 2 " + Date.now(),
+        serviceName: "Service Jest 2 " + unique,
         estimatedTime: 15,
         status: true,
         createdBy: "admin",
@@ -72,36 +132,6 @@ describe("ServiceDocument Controller (Integration)", () => {
         },
       },
     });
-    let branch = await prisma.branch.findFirst();
-    if (!branch) {
-      branch = await prisma.branch.create({
-        data: {
-          name: "Branch Loket Jest",
-          branchCode: "LOKETJEST" + Date.now(),
-          address: "Jl. Loket Jest",
-          longitude: 106.8,
-          latitude: -6.1,
-          holiday: false,
-          status: true,
-          createdBy: "admin",
-          updatedBy: "admin",
-        },
-      });
-    }
-    await prisma.loket.upsert({
-      where: { id: 3 },
-      update: {},
-      create: {
-        id: 3,
-        username: "loketjest",
-        passwordHash: "dummyhash",
-        name: "Loket Jest",
-        status: true,
-        createdBy: "admin",
-        updatedBy: "admin",
-        branchId: branch.id,
-      },
-    });
   });
 
   afterAll(async () => {
@@ -109,14 +139,17 @@ describe("ServiceDocument Controller (Integration)", () => {
       where: { id: { in: [service1.id, service2.id] } },
     });
     await prisma.document.deleteMany({ where: { id: document.id } });
-    await prisma.loket.deleteMany({ where: { username: "loketjest" } });
+    await prisma.loket.deleteMany({ where: { username: loketUsername } });
+    await prisma.user.deleteMany({
+      where: { username: { in: [adminUsername, userUsername] } },
+    });
     await prisma.$disconnect();
   });
 
   it("should get documents by serviceIds for user", async () => {
     const res = await request(app)
       .post("/api/documents/by-services/user")
-      .set("Authorization", adminToken)
+      .set("Authorization", userToken)
       .send({
         serviceIds: [service1.id, service2.id],
       });
@@ -144,7 +177,7 @@ describe("ServiceDocument Controller (Integration)", () => {
   it("should return 400 if serviceIds is missing", async () => {
     const res = await request(app)
       .post("/api/documents/by-services/user")
-      .set("Authorization", adminToken)
+      .set("Authorization", userToken)
       .send({});
     expect(res.status).toBe(400);
   });

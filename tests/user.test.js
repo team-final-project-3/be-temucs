@@ -49,8 +49,9 @@ describe("User Register (Integration)", () => {
   });
 
   it("should register a new user", async () => {
-    const unique = Date.now();
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
     const email = `jestregister${unique}@example.com`;
+    const phoneNumber = `0812${unique}${Math.floor(Math.random() * 1000)}`;
     prisma.coreBanking.findUnique.mockResolvedValueOnce({ id: 1, email });
 
     const res = await request(app)
@@ -60,8 +61,9 @@ describe("User Register (Integration)", () => {
         username: "jestregister" + unique,
         email,
         password: "Password123!",
-        phoneNumber: `0812${Math.floor(Math.random() * 1e8)}`,
+        phoneNumber,
       });
+    if (res.status === 500) console.log(res.body);
     expect([200, 201]).toContain(res.status);
     expect(res.body).toHaveProperty("message");
     expect(res.body.message).toMatch(/OTP telah dikirim/i);

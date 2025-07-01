@@ -1,31 +1,35 @@
 const request = require("supertest");
 const app = require("../src/app");
 const prisma = require("../prisma/client");
-const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 describe("QueueService Integration", () => {
-  let nasabah, nasabahToken, queue, service1, service2;
+  let nasabah, nasabahToken, queue, service1, service2, branch;
 
   const unique = Date.now();
+  const nasabahUsername = "nasabahqueueservicejest" + unique;
+  const plainPassword = "Password123!";
 
   beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { username: nasabahUsername } });
+
+    const hashed = bcrypt.hashSync(plainPassword, 10);
     nasabah = await prisma.user.create({
       data: {
         fullname: "Nasabah QueueService Jest",
-        username: "nasabahqueueservicejest" + unique,
+        username: nasabahUsername,
         email: `nasabahqueueservicejest${unique}@example.com`,
-        passwordHash: "dummyhash",
+        passwordHash: hashed,
         phoneNumber: "08123456799" + unique,
         role: "nasabah",
         isVerified: true,
       },
     });
-    nasabahToken =
-      "Bearer " +
-      jwt.sign(
-        { id: nasabah.id, username: nasabah.username, role: nasabah.role },
-        process.env.JWT_SECRET || "secret"
-      );
+
+    const loginRes = await request(app)
+      .post("/api/users/login")
+      .send({ username: nasabahUsername, password: plainPassword });
+    nasabahToken = "Bearer " + loginRes.body.token;
 
     service1 = await prisma.service.create({
       data: {
@@ -83,6 +87,7 @@ describe("QueueService Integration", () => {
     await prisma.user.deleteMany({
       where: { id: nasabah.id },
     });
+    await prisma.$disconnect();
   });
 
   it("POST /api/queue-service - should create queue services", async () => {

@@ -1,14 +1,12 @@
 const request = require("supertest");
-const jwt = require("jsonwebtoken");
 const app = require("../src/app");
 const prisma = require("../prisma/client");
+const bcrypt = require("bcryptjs");
 
-const adminToken =
-  "Bearer " +
-  jwt.sign(
-    { id: 1, username: "admin", role: "admin" },
-    process.env.JWT_SECRET || "secret"
-  );
+const unique = Date.now() + Math.floor(Math.random() * 10000);
+const adminUsername = "csadminjest" + unique;
+const plainPassword = "Password123!";
+let adminToken, branch;
 
 const hashPassword = require("../src/auth/cs.auth").hashPassword;
 
@@ -16,10 +14,29 @@ describe("CS Controller (Integration)", () => {
   let branch;
 
   beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { username: adminUsername } });
+    const hashed = bcrypt.hashSync(plainPassword, 10);
+    await prisma.user.create({
+      data: {
+        fullname: "Admin CS Jest",
+        username: adminUsername,
+        email: adminUsername + "@mail.com",
+        passwordHash: hashed,
+        phoneNumber: "081234" + unique,
+        role: "admin",
+        isVerified: true,
+      },
+    });
+
+    const loginRes = await request(app)
+      .post("/api/users/login")
+      .send({ username: adminUsername, password: plainPassword });
+    adminToken = "Bearer " + loginRes.body.token;
+
     branch = await prisma.branch.create({
       data: {
-        name: "Branch CS Jest " + Date.now(),
-        branchCode: "CSJEST" + Date.now(),
+        name: "Branch CS Jest " + unique,
+        branchCode: "CSJEST" + unique,
         address: "Jl. CS Jest",
         longitude: 106.8,
         latitude: -6.1,
@@ -34,6 +51,7 @@ describe("CS Controller (Integration)", () => {
   afterAll(async () => {
     await prisma.cS.deleteMany({ where: { branchId: branch.id } });
     await prisma.branch.deleteMany({ where: { id: branch.id } });
+    await prisma.user.deleteMany({ where: { username: adminUsername } });
     await prisma.$disconnect();
   });
 
