@@ -245,6 +245,10 @@ describe("Queue Booking Integration", () => {
   });
 
   it("should return 400 if serviceIds is not array in bookQueueOffline", async () => {
+    const loginRes = await request(app)
+      .post("/api/loket/login")
+      .send({ username: "lokettest" + unique, password: "dummyhash" });
+    loketToken = "Bearer " + loginRes.body.token;
     const res = await request(app)
       .post("/api/queue/book-offline")
       .set("Authorization", loketToken)
@@ -258,6 +262,10 @@ describe("Queue Booking Integration", () => {
   });
 
   it("should return 400 if serviceIds is empty array in bookQueueOffline", async () => {
+    const loginRes = await request(app)
+      .post("/api/loket/login")
+      .send({ username: "lokettest" + unique, password: "dummyhash" });
+    loketToken = "Bearer " + loginRes.body.token;
     const res = await request(app)
       .post("/api/queue/book-offline")
       .set("Authorization", loketToken)
@@ -271,6 +279,10 @@ describe("Queue Booking Integration", () => {
   });
 
   it("should return 400 if there is already an active queue with same email/phoneNumber in bookQueueOffline", async () => {
+    const loginRes = await request(app)
+      .post("/api/loket/login")
+      .send({ username: "lokettest" + unique, password: "dummyhash" });
+    loketToken = "Bearer " + loginRes.body.token;
     await prisma.queue.create({
       data: {
         branchId: branch.id,
@@ -754,12 +766,9 @@ describe("Queue Booking Integration", () => {
   it("Get total active queues for Loket's branch", async () => {
     const loginRes = await request(app)
       .post("/api/loket/login")
-      .send({
-        username: "lokettest" + unique,
-        password: "dummyhash",
-      });
-    expect(loginRes.status).toBe(200);
+      .send({ username: "lokettest" + unique, password: "dummyhash" });
     loketToken = "Bearer " + loginRes.body.token;
+    expect(loginRes.status).toBe(200);
 
     const res = await request(app)
       .get("/api/queue/count/loket")
@@ -788,6 +797,10 @@ describe("Queue Booking Integration", () => {
   });
 
   it("Get all waiting queues for Loket's branch", async () => {
+    const loginRes = await request(app)
+      .post("/api/loket/login")
+      .send({ username: "lokettest" + unique, password: "dummyhash" });
+    loketToken = "Bearer " + loginRes.body.token;
     const res = await request(app)
       .get("/api/queue/waiting/loket")
       .set("Authorization", loketToken)
@@ -826,6 +839,10 @@ describe("Queue Booking Integration", () => {
   });
 
   it("Get latest in-progress queue for Loket branch", async () => {
+    const loginRes = await request(app)
+      .post("/api/loket/login")
+      .send({ username: "lokettest" + unique, password: "dummyhash" });
+    loketToken = "Bearer " + loginRes.body.token;
     const res = await request(app)
       .get("/api/queue/inprogress/loket")
       .set("Authorization", loketToken)
@@ -897,6 +914,10 @@ describe("Queue Booking Integration", () => {
   });
 
   it("Get all waiting queues for Loket's branch", async () => {
+    const loginRes = await request(app)
+      .post("/api/loket/login")
+      .send({ username: "lokettest" + unique, password: "dummyhash" });
+    loketToken = "Bearer " + loginRes.body.token;
     const res = await request(app)
       .get("/api/queue/waiting/loket")
       .set("Authorization", loketToken)
@@ -947,6 +968,10 @@ describe("Queue Booking Integration", () => {
   });
 
   it("Get oldest waiting queue for Loket's branch", async () => {
+    const loginRes = await request(app)
+      .post("/api/loket/login")
+      .send({ username: "lokettest" + unique, password: "dummyhash" });
+    loketToken = "Bearer " + loginRes.body.token;
     const res = await request(app)
       .get("/api/queue/oldest-waiting/loket")
       .set("Authorization", loketToken)
@@ -1149,6 +1174,10 @@ describe("Queue Booking Integration", () => {
   });
 
   it("Get loket ticket detail by queue ID", async () => {
+    const loginRes = await request(app)
+      .post("/api/loket/login")
+      .send({ username: "lokettest" + unique, password: "dummyhash" });
+    loketToken = "Bearer " + loginRes.body.token;
     const res = await request(app)
       .get(`/api/queue/loket-ticket/${queueOffline.id}`)
       .set("Authorization", loketToken)
