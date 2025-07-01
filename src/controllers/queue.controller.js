@@ -1616,7 +1616,7 @@ const getCalledCustomerTV = async (req, res, next) => {
 
     res.json({
       csId: cs.id,
-      csName: cs.fullname,
+      csName: cs.name,
       ...queue,
     });
   } catch (error) {
