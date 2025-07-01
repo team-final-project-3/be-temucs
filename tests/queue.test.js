@@ -556,6 +556,26 @@ describe("Queue Booking Integration", () => {
     await prisma.branch.delete({ where: { id: branch2.id } });
   });
 
+  it("should return 400 if queue status is not waiting in callQueue", async () => {
+    const queue = await prisma.queue.create({
+      data: {
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test",
+        ticketNumber: "A" + (unique + 3001),
+        status: "done", // status bukan waiting
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .patch(`/api/queue/${queue.id}/call`)
+      .set("Authorization", csToken)
+      .send();
+    expect(res.status).toBe(400);
+  });
+
   it("should return 403 if CS token missing branchId in takeQueue", async () => {
     const jwt = require("jsonwebtoken");
     const fakeToken =
@@ -1680,6 +1700,33 @@ describe("Queue Booking Integration", () => {
 
     await prisma.cS.delete({ where: { id: cs2.id } });
     await prisma.branch.delete({ where: { id: branch2.id } });
+  });
+
+  it("should return 403 if CS token missing username in updateStatus", async () => {
+    const jwt = require("jsonwebtoken");
+    const fakeToken =
+      "Bearer " +
+      jwt.sign(
+        { csId: 123456, branchId: branch.id, role: "cs" }, // tanpa username
+        process.env.JWT_SECRET || "secret"
+      );
+    const queue = await prisma.queue.create({
+      data: {
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: "Test",
+        ticketNumber: "A" + (unique + 3000),
+        status: "waiting",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .patch(`/api/queue/${queue.id}/done`)
+      .set("Authorization", fakeToken)
+      .send();
+    expect([401, 403]).toContain(res.status);
   });
 
   it("should return 401 if CS token missing when updating status", async () => {
