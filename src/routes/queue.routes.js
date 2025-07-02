@@ -321,19 +321,25 @@ router.get(
  * @swagger
  * /api/queue/count/admin:
  *   get:
- *     summary: Get total queue, count per status, count per CS, total branch, top 5 antrian, top 5 layanan, dan grouping online/offline (admin only)
+ *     summary: Get queue statistics for admin (grouping by day, week, month, year)
  *     tags: [Queue]
  *     security:
  *       - bearerAuth: []
- *     description: Only accessible by admin. Tambahkan query param `range=day|week|month` (default day) untuk grouping.
+ *     description: |
+ *       Only accessible by admin.
+ *       Gunakan query param `range=day|week|month|year` (default day) untuk grouping.
+ *       - Jika range=week: groups berisi per hari (Senin–Jumat)
+ *       - Jika range=year: groups berisi per bulan (Januari–Desember)
+ *       - Jika range=month: groups berisi per minggu dalam bulan berjalan
+ *       - Jika range=day: groups hanya 1 (hari ini)
  *     parameters:
  *       - in: query
  *         name: range
  *         schema:
  *           type: string
- *           enum: [day, week, month]
+ *           enum: [day, week, month, year]
  *           default: day
- *         description: Grouping range (day/week/month)
+ *         description: Grouping range (day/week/month/year)
  *     responses:
  *       200:
  *         description: Queue count summary for admin
@@ -342,24 +348,38 @@ router.get(
  *             schema:
  *               type: object
  *               properties:
+ *                 range:
+ *                   type: string
+ *                   example: week
+ *                 groups:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       label:
+ *                         type: string
+ *                         example: "2025-07-01"
+ *                       start:
+ *                         type: string
+ *                         example: "2025-07-01"
+ *                       end:
+ *                         type: string
+ *                         example: "2025-07-07"
+ *                       totalQueueInRange:
+ *                         type: integer
+ *                         example: 10
+ *                       totalQueueOnline:
+ *                         type: integer
+ *                         example: 7
+ *                       totalQueueOffline:
+ *                         type: integer
+ *                         example: 3
  *                 totalQueue:
  *                   type: integer
  *                   example: 42
  *                 totalBranch:
  *                   type: integer
  *                   example: 10
- *                 totalQueueInRange:
- *                   type: integer
- *                   example: 10
- *                 totalQueueOnline:
- *                   type: integer
- *                   example: 7
- *                 totalQueueOffline:
- *                   type: integer
- *                   example: 3
- *                 range:
- *                   type: string
- *                   example: day
  *                 statusCounts:
  *                   type: object
  *                   additionalProperties:
@@ -394,22 +414,6 @@ router.get(
  *                         type: integer
  *                         nullable: true
  *                         example: 3
- *                   example:
- *                     - branchId: 1
- *                       branchName: "BNI Kota Tua"
- *                       count: 3
- *                     - branchId: 3
- *                       branchName: "Tebet"
- *                       count: 1
- *                     - branchId: 2
- *                       branchName: "Caringin"
- *                       count: null
- *                     - branchId: 4
- *                       branchName: "BNI Lada Kota"
- *                       count: null
- *                     - branchId: 5
- *                       branchName: "BNI Sudirman"
- *                       count: null
  *                 top5Layanan:
  *                   type: array
  *                   items:
@@ -425,22 +429,6 @@ router.get(
  *                         type: integer
  *                         nullable: true
  *                         example: 2
- *                   example:
- *                     - serviceId: 6
- *                       serviceName: "Customer Onboarding"
- *                       count: 2
- *                     - serviceId: 1
- *                       serviceName: "Buka Rekening"
- *                       count: 2
- *                     - serviceId: 2
- *                       serviceName: "Buku Rusak"
- *                       count: null
- *                     - serviceId: 3
- *                       serviceName: "Kartu ATM"
- *                       count: null
- *                     - serviceId: 4
- *                       serviceName: "Setoran Tunai"
- *                       count: null
  *       401:
  *         description: Unauthorized
  *       403:

@@ -709,53 +709,143 @@ const getQueueCountByBranchIdLoket = async (req, res, next) => {
 const getQueueCountAdmin = async (req, res, next) => {
   try {
     const range = req.query.range || "day";
-    let startDate, endDate;
-
     const now = new Date();
+
+    let groups = [];
+
     if (range === "week") {
       const day = now.getDay() || 7;
-      startDate = new Date(now);
-      startDate.setHours(0, 0, 0, 0);
-      startDate.setDate(now.getDate() - day + 1);
-      endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + 7);
+      const monday = new Date(now);
+      monday.setHours(0, 0, 0, 0);
+      monday.setDate(now.getDate() - day + 1);
+
+      for (let i = 0; i < 5; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+
+        const totalQueueInRange = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end } },
+        });
+        const totalQueueOnline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: { not: null } },
+        });
+        const totalQueueOffline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: null },
+        });
+
+        groups.push({
+          label: new Date(start.getTime() + 7 * 60 * 60 * 1000)
+            .toISOString()
+            .slice(0, 10),
+          totalQueueInRange,
+          totalQueueOnline,
+          totalQueueOffline,
+        });
+      }
+    } else if (range === "year") {
+      const year = now.getFullYear();
+      for (let month = 0; month < 12; month++) {
+        const start = new Date(year, month, 1, 0, 0, 0, 0);
+        const end = new Date(year, month + 1, 1, 0, 0, 0, 0);
+
+        const totalQueueInRange = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end } },
+        });
+        const totalQueueOnline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: { not: null } },
+        });
+        const totalQueueOffline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: null },
+        });
+
+        groups.push({
+          label: new Date(start.getTime() + 7 * 60 * 60 * 1000).toLocaleString(
+            "id-ID",
+            { month: "long" }
+          ),
+          totalQueueInRange,
+          totalQueueOnline,
+          totalQueueOffline,
+        });
+      }
     } else if (range === "month") {
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      let week = 1;
+      let start = new Date(firstDay);
+      start.setHours(0, 0, 0, 0);
+
+      while (start <= lastDay) {
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        if (end > lastDay) end.setTime(lastDay.getTime());
+        end.setHours(23, 59, 59, 999);
+
+        const totalQueueInRange = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: new Date(end.getTime() + 1) } },
+        });
+        const totalQueueOnline = await prisma.queue.count({
+          where: {
+            createdAt: { gte: start, lt: new Date(end.getTime() + 1) },
+            userId: { not: null },
+          },
+        });
+        const totalQueueOffline = await prisma.queue.count({
+          where: {
+            createdAt: { gte: start, lt: new Date(end.getTime() + 1) },
+            userId: null,
+          },
+        });
+
+        groups.push({
+          label: `Minggu ${week}`,
+          start: new Date(start.getTime() + 7 * 60 * 60 * 1000)
+            .toISOString()
+            .slice(0, 10),
+          end: new Date(end.getTime() + 7 * 60 * 60 * 1000)
+            .toISOString()
+            .slice(0, 10),
+          totalQueueInRange,
+          totalQueueOnline,
+          totalQueueOffline,
+        });
+
+        week++;
+        start.setDate(start.getDate() + 7);
+      }
     } else {
-      startDate = new Date(now);
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(now);
-      endDate.setHours(23, 59, 59, 999);
+      const now = new Date();
+      const wibNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+      const start = new Date(wibNow);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(wibNow);
+      end.setHours(23, 59, 59, 999);
+
+      const totalQueueInRange = await prisma.queue.count({
+        where: { createdAt: { gte: start, lt: end } },
+      });
+      const totalQueueOnline = await prisma.queue.count({
+        where: { createdAt: { gte: start, lt: end }, userId: { not: null } },
+      });
+      const totalQueueOffline = await prisma.queue.count({
+        where: { createdAt: { gte: start, lt: end }, userId: null },
+      });
+
+      groups.push({
+        label: new Date(start.getTime() + 7 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10),
+        totalQueueInRange,
+        totalQueueOnline,
+        totalQueueOffline,
+      });
     }
-
-    const totalQueueInRange = await prisma.queue.count({
-      where: {
-        createdAt: {
-          gte: startDate,
-          lt: endDate,
-        },
-      },
-    });
-
-    const totalQueueOnline = await prisma.queue.count({
-      where: {
-        createdAt: {
-          gte: startDate,
-          lt: endDate,
-        },
-        userId: { not: null },
-      },
-    });
-    const totalQueueOffline = await prisma.queue.count({
-      where: {
-        createdAt: {
-          gte: startDate,
-          lt: endDate,
-        },
-        userId: null,
-      },
-    });
 
     const totalQueue = await prisma.queue.count();
 
@@ -846,11 +936,10 @@ const getQueueCountAdmin = async (req, res, next) => {
     });
 
     res.status(200).json({
+      range,
+      groups,
       totalQueue,
       totalBranch,
-      totalQueueInRange,
-      totalQueueOnline,
-      totalQueueOffline,
       statusCounts,
       csCounts,
       top5Antrian,
