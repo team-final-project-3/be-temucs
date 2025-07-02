@@ -424,8 +424,6 @@ const updateStatus = (newStatus) => async (req, res, next) => {
         const { startUTC, endUTC } = getStartEndOfBookingDateWIB(
           queue.bookingDate
         );
-        console.log("startUTC: ", startUTC);
-        console.log("endUTC: ", endUTC);
         const nextQueues = await tx.queue.findMany({
           where: {
             branchId: queue.branchId,
