@@ -683,33 +683,53 @@ const getQueueCountByBranchIdLoket = async (req, res, next) => {
   }
 };
 
-// const getQueueCountByBranchIdUser = async (req, res, next) => {
-//   try {
-//     const branchId = req.user.branchId;
+const getQueueCountAdmin = async (req, res, next) => {
+  try {
+    const totalQueue = await prisma.queue.count();
 
-//     if (!branchId) {
-//       throw Object.assign(new Error("Cabang tidak ditemukan pada akun Anda"), {
-//         status: 400,
-//       });
-//     }
+    const statusCountsRaw = await prisma.queue.groupBy({
+      by: ["status"],
+      _count: { status: true },
+    });
+    const statusCounts = {};
+    statusCountsRaw.forEach((row) => {
+      statusCounts[row.status] = row._count.status;
+    });
 
-//     const count = await prisma.queue.count({
-//       where: {
-//         branchId: Number(branchId),
-//         status: {
-//           notIn: ["done", "skipped", "canceled"],
-//         },
-//       },
-//     });
+    const csCountsRaw = await prisma.queue.groupBy({
+      by: ["csId"],
+      _count: { csId: true },
+      where: {
+        csId: { not: null },
+        status: { in: ["in progress", "called"] },
+      },
+    });
 
-//     res.status(200).json({
-//       branchId: Number(branchId),
-//       totalQueue: count,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+    const csIds = csCountsRaw.map((row) => row.csId).filter(Boolean);
+    const csList = await prisma.cS.findMany({
+      where: { id: { in: csIds } },
+      select: { id: true, name: true },
+    });
+    const csMap = {};
+    csList.forEach((cs) => {
+      csMap[cs.id] = cs.name;
+    });
+
+    const csCounts = csCountsRaw.map((row) => ({
+      csId: row.csId,
+      csName: csMap[row.csId] || null,
+      count: row._count.csId,
+    }));
+
+    res.status(200).json({
+      totalQueue,
+      statusCounts,
+      csCounts,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // const getRemainingQueueUser = async (req, res, next) => {
 //   try {
@@ -1660,7 +1680,7 @@ module.exports = {
   doneQueue: updateStatus("done"),
   // getQueueCountByBranchIdCS,
   getQueueCountByBranchIdLoket,
-  // getQueueCountByBranchIdUser,
+  getQueueCountAdmin,
   // getRemainingQueueCS,
   // getRemainingQueueLoket,
   // getRemainingQueueUser,

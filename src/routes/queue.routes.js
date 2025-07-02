@@ -317,38 +317,58 @@ router.get(
   queueController.getQueueCountByBranchIdLoket
 );
 
-// /**
-//  * @swagger
-//  * /api/queue/count/user:
-//  *   get:
-//  *     summary: Get total active queues for user's latest visited branch
-//  *     tags: [Queue]
-//  *     security:
-//  *       - bearerAuth: []
-//  *     description: Only accessible by Nasabah. Gets branch based on user's last queue.
-//  *     responses:
-//  *       200:
-//  *         description: Total active queue count for the user's branch
-//  *         content:
-//  *           application/json:
-//  *             schema:
-//  *               type: object
-//  *               properties:
-//  *                 branchId:
-//  *                   type: integer
-//  *                 totalQueue:
-//  *                   type: integer
-//  *       404:
-//  *         description: No recent queue found for user
-//  *       500:
-//  *         description: Internal server error
-//  */
-// router.get(
-//   "/queue/count/user",
-//   verifyUserToken,
-//   allowRoles("nasabah"),
-//   queueController.getQueueCountByBranchIdUser
-// );
+/**
+ * @swagger
+ * /api/queue/count/admin:
+ *   get:
+ *     summary: Get total queue, count per status, and count per CS (admin only)
+ *     tags: [Queue]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only accessible by admin.
+ *     responses:
+ *       200:
+ *         description: Queue count summary for admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalQueue:
+ *                   type: integer
+ *                   example: 42
+ *                 statusCounts:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: integer
+ *                   example: { waiting: 10, called: 5, "in progress": 3, done: 20 }
+ *                 csCounts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       csId:
+ *                         type: integer
+ *                         example: 1
+ *                       csName:
+ *                         type: string
+ *                         example: "CS Budi"
+ *                       count:
+ *                         type: integer
+ *                         example: 2
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/queue/count/admin",
+  verifyUserToken,
+  allowRoles("admin"),
+  queueController.getQueueCountAdmin
+);
 
 // /**
 //  * @swagger
