@@ -2,6 +2,7 @@ const prisma = require("../../prisma/client");
 const {
   generateTicketNumberAndEstimate,
 } = require("../helpers/generateTicketNumberAndEstimate");
+const { getStartEndOfBookingDateWIB } = require("../helpers/dateHelper");
 const {
   sendExpoNotification,
   getExpoPushToken,
@@ -407,11 +408,31 @@ const updateStatus = (newStatus) => async (req, res, next) => {
         },
       });
 
+      if (["skipped"].includes(newStatus) && queue.userId) {
+        const expoPushToken = await getExpoPushToken({ userId: queue.userId });
+        if (expoPushToken) {
+          await sendExpoNotification(
+            expoPushToken,
+            "Antrian Anda di-skip",
+            "Antrian Anda telah di-skip oleh CS. Silakan hubungi petugas jika ada pertanyaan.",
+            { ticketNumber: queue.ticketNumber }
+          );
+        }
+      }
+
       if (["done", "skipped", "canceled"].includes(newStatus)) {
+        const { startUTC, endUTC } = getStartEndOfBookingDateWIB(
+          queue.bookingDate
+        );
+        console.log("startUTC: ", startUTC);
+        console.log("endUTC: ", endUTC);
         const nextQueues = await tx.queue.findMany({
           where: {
             branchId: queue.branchId,
-            bookingDate: queue.bookingDate,
+            bookingDate: {
+              gte: startUTC,
+              lte: endUTC,
+            },
             status: "waiting",
             id: { gt: queue.id },
           },
@@ -427,6 +448,12 @@ const updateStatus = (newStatus) => async (req, res, next) => {
             data: { notification: true },
           });
         }
+
+        console.log(
+          "nextQueues.length",
+          nextQueues.length,
+          nextQueues.map((q) => q.id)
+        );
 
         if (nextQueues.length === 5) {
           const queueKe5 = nextQueues[4];
@@ -524,8 +551,6 @@ const callQueue = async (req, res, next) => {
         updatedBy: username,
       },
     });
-
-    res.json({ message: "Queue status updated to called", queue });
 
     const cs = await prisma.cS.findUnique({
       where: { id: csId },
@@ -721,10 +746,58 @@ const getQueueCountAdmin = async (req, res, next) => {
       count: row._count.csId,
     }));
 
+    const totalBranch = await prisma.branch.count();
+
+    const top5Queue = await prisma.queue.groupBy({
+      by: ["branchId"],
+      _count: { branchId: true },
+      orderBy: { _count: { branchId: "desc" } },
+      take: 5,
+    });
+
+    const branchIds = top5Queue.map((row) => row.branchId);
+    const branchList = await prisma.branch.findMany({
+      where: { id: { in: branchIds } },
+      select: { id: true, branchName: true },
+    });
+    const branchMap = {};
+    branchList.forEach((b) => {
+      branchMap[b.id] = b.branchName;
+    });
+    const top5Antrian = top5Queue.map((row) => ({
+      branchId: row.branchId,
+      branchName: branchMap[row.branchId] || null,
+      count: row._count.branchId,
+    }));
+
+    const top5Service = await prisma.queueService.groupBy({
+      by: ["serviceId"],
+      _count: { serviceId: true },
+      orderBy: { _count: { serviceId: "desc" } },
+      take: 5,
+    });
+    const serviceIds = top5Service.map((row) => row.serviceId);
+    const serviceList = await prisma.service.findMany({
+      where: { id: { in: serviceIds } },
+      select: { id: true, serviceName: true },
+    });
+    const serviceMap = {};
+    serviceList.forEach((s) => {
+      serviceMap[s.id] = s.serviceName;
+    });
+    const top5Layanan = top5Service.map((row) => ({
+      serviceId: row.serviceId,
+      serviceName: serviceMap[row.serviceId] || null,
+      count: row._count.serviceId,
+    }));
+
     res.status(200).json({
       totalQueue,
       statusCounts,
       csCounts,
+      totalBranch,
+      top5Antrian,
+      top5Layanan,
     });
   } catch (error) {
     next(error);

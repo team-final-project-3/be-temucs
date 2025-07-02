@@ -15,8 +15,6 @@ const verifyLoketToken = async (req, res, next) => {
 
     req.loket = decoded;
 
-    console.log("decoded:", decoded);
-
     if (!decoded.loketId) return next();
 
     const loket = await prisma.loket.findUnique({
