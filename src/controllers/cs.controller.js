@@ -132,6 +132,10 @@ const login = async (req, res, next) => {
       throw Object.assign(new Error("CS tidak ditemukan"), { status: 401 });
     }
 
+    if (cs.status === false) {
+      throw Object.assign(new Error("Akun CS tidak aktif"), { status: 403 });
+    }
+
     const isMatch = await comparePassword(password, cs.passwordHash);
     if (!isMatch) {
       throw Object.assign(new Error("Password salah"), { status: 401 });
