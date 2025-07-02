@@ -321,7 +321,7 @@ router.get(
  * @swagger
  * /api/queue/count/admin:
  *   get:
- *     summary: Get total queue, count per status, and count per CS (admin only)
+ *     summary: Get total queue, count per status, count per CS, total branch, top 5 antrian, dan top 5 layanan (admin only)
  *     tags: [Queue]
  *     security:
  *       - bearerAuth: []
@@ -356,6 +356,71 @@ router.get(
  *                       count:
  *                         type: integer
  *                         example: 2
+ *                 totalBranch:
+ *                   type: integer
+ *                   example: 10
+ *                 top5Antrian:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       branchId:
+ *                         type: integer
+ *                         example: 1
+ *                       branchName:
+ *                         type: string
+ *                         example: "BNI Kota Tua"
+ *                       count:
+ *                         type: integer
+ *                         nullable: true
+ *                         example: 3
+ *                   example:
+ *                     - branchId: 1
+ *                       branchName: "BNI Kota Tua"
+ *                       count: 3
+ *                     - branchId: 3
+ *                       branchName: "Tebet"
+ *                       count: 1
+ *                     - branchId: 2
+ *                       branchName: "Caringin"
+ *                       count: null
+ *                     - branchId: 4
+ *                       branchName: "BNI Lada Kota"
+ *                       count: null
+ *                     - branchId: 5
+ *                       branchName: "BNI Sudirman"
+ *                       count: null
+ *                 top5Layanan:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       serviceId:
+ *                         type: integer
+ *                         example: 6
+ *                       serviceName:
+ *                         type: string
+ *                         example: "Customer Onboarding"
+ *                       count:
+ *                         type: integer
+ *                         nullable: true
+ *                         example: 2
+ *                   example:
+ *                     - serviceId: 6
+ *                       serviceName: "Customer Onboarding"
+ *                       count: 2
+ *                     - serviceId: 1
+ *                       serviceName: "Buka Rekening"
+ *                       count: 2
+ *                     - serviceId: 2
+ *                       serviceName: "Buku Rusak"
+ *                       count: null
+ *                     - serviceId: 3
+ *                       serviceName: "Kartu ATM"
+ *                       count: null
+ *                     - serviceId: 4
+ *                       serviceName: "Setoran Tunai"
+ *                       count: null
  *       401:
  *         description: Unauthorized
  *       403:

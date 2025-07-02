@@ -724,7 +724,7 @@ const getQueueCountAdmin = async (req, res, next) => {
       _count: { csId: true },
       where: {
         csId: { not: null },
-        status: { in: ["in progress", "called"] },
+        status: { in: ["done"] },
       },
     });
 
@@ -756,17 +756,25 @@ const getQueueCountAdmin = async (req, res, next) => {
     const branchIds = top5Queue.map((row) => row.branchId);
     const branchList = await prisma.branch.findMany({
       where: { id: { in: branchIds } },
-      select: { id: true, branchName: true },
+      select: { id: true, name: true },
+    });
+    const allBranches = await prisma.branch.findMany({
+      select: { id: true, name: true },
+      orderBy: { id: "asc" },
+      take: 5,
     });
     const branchMap = {};
-    branchList.forEach((b) => {
-      branchMap[b.id] = b.branchName;
+    allBranches.forEach((b) => {
+      branchMap[b.id] = b.name;
     });
-    const top5Antrian = top5Queue.map((row) => ({
-      branchId: row.branchId,
-      branchName: branchMap[row.branchId] || null,
-      count: row._count.branchId,
-    }));
+    const top5Antrian = allBranches.map((b) => {
+      const found = top5Queue.find((row) => row.branchId === b.id);
+      return {
+        branchId: b.id,
+        branchName: b.name,
+        count: found ? found._count.branchId : null,
+      };
+    });
 
     const top5Service = await prisma.queueService.groupBy({
       by: ["serviceId"],
@@ -774,20 +782,24 @@ const getQueueCountAdmin = async (req, res, next) => {
       orderBy: { _count: { serviceId: "desc" } },
       take: 5,
     });
-    const serviceIds = top5Service.map((row) => row.serviceId);
-    const serviceList = await prisma.service.findMany({
-      where: { id: { in: serviceIds } },
+    const allServices = await prisma.service.findMany({
       select: { id: true, serviceName: true },
+      orderBy: { id: "asc" },
+      take: 5,
     });
     const serviceMap = {};
-    serviceList.forEach((s) => {
+    allServices.forEach((s) => {
       serviceMap[s.id] = s.serviceName;
     });
-    const top5Layanan = top5Service.map((row) => ({
-      serviceId: row.serviceId,
-      serviceName: serviceMap[row.serviceId] || null,
-      count: row._count.serviceId,
-    }));
+
+    const top5Layanan = allServices.map((s) => {
+      const found = top5Service.find((row) => row.serviceId === s.id);
+      return {
+        serviceId: s.id,
+        serviceName: s.serviceName,
+        count: found ? found._count.serviceId : null,
+      };
+    });
 
     res.status(200).json({
       totalQueue,
