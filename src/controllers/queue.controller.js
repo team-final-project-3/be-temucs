@@ -708,6 +708,55 @@ const getQueueCountByBranchIdLoket = async (req, res, next) => {
 
 const getQueueCountAdmin = async (req, res, next) => {
   try {
+    const range = req.query.range || "day";
+    let startDate, endDate;
+
+    const now = new Date();
+    if (range === "week") {
+      const day = now.getDay() || 7;
+      startDate = new Date(now);
+      startDate.setHours(0, 0, 0, 0);
+      startDate.setDate(now.getDate() - day + 1);
+      endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 7);
+    } else if (range === "month") {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+    } else {
+      startDate = new Date(now);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(now);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    const totalQueueInRange = await prisma.queue.count({
+      where: {
+        createdAt: {
+          gte: startDate,
+          lt: endDate,
+        },
+      },
+    });
+
+    const totalQueueOnline = await prisma.queue.count({
+      where: {
+        createdAt: {
+          gte: startDate,
+          lt: endDate,
+        },
+        userId: { not: null },
+      },
+    });
+    const totalQueueOffline = await prisma.queue.count({
+      where: {
+        createdAt: {
+          gte: startDate,
+          lt: endDate,
+        },
+        userId: null,
+      },
+    });
+
     const totalQueue = await prisma.queue.count();
 
     const statusCountsRaw = await prisma.queue.groupBy({
@@ -753,11 +802,6 @@ const getQueueCountAdmin = async (req, res, next) => {
       take: 5,
     });
 
-    const branchIds = top5Queue.map((row) => row.branchId);
-    const branchList = await prisma.branch.findMany({
-      where: { id: { in: branchIds } },
-      select: { id: true, name: true },
-    });
     const allBranches = await prisma.branch.findMany({
       select: { id: true, name: true },
       orderBy: { id: "asc" },
@@ -803,9 +847,12 @@ const getQueueCountAdmin = async (req, res, next) => {
 
     res.status(200).json({
       totalQueue,
+      totalBranch,
+      totalQueueInRange,
+      totalQueueOnline,
+      totalQueueOffline,
       statusCounts,
       csCounts,
-      totalBranch,
       top5Antrian,
       top5Layanan,
     });

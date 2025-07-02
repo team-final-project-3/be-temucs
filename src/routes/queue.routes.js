@@ -321,11 +321,19 @@ router.get(
  * @swagger
  * /api/queue/count/admin:
  *   get:
- *     summary: Get total queue, count per status, count per CS, total branch, top 5 antrian, dan top 5 layanan (admin only)
+ *     summary: Get total queue, count per status, count per CS, total branch, top 5 antrian, top 5 layanan, dan grouping online/offline (admin only)
  *     tags: [Queue]
  *     security:
  *       - bearerAuth: []
- *     description: Only accessible by admin.
+ *     description: Only accessible by admin. Tambahkan query param `range=day|week|month` (default day) untuk grouping.
+ *     parameters:
+ *       - in: query
+ *         name: range
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month]
+ *           default: day
+ *         description: Grouping range (day/week/month)
  *     responses:
  *       200:
  *         description: Queue count summary for admin
@@ -337,6 +345,21 @@ router.get(
  *                 totalQueue:
  *                   type: integer
  *                   example: 42
+ *                 totalBranch:
+ *                   type: integer
+ *                   example: 10
+ *                 totalQueueInRange:
+ *                   type: integer
+ *                   example: 10
+ *                 totalQueueOnline:
+ *                   type: integer
+ *                   example: 7
+ *                 totalQueueOffline:
+ *                   type: integer
+ *                   example: 3
+ *                 range:
+ *                   type: string
+ *                   example: day
  *                 statusCounts:
  *                   type: object
  *                   additionalProperties:
@@ -356,9 +379,6 @@ router.get(
  *                       count:
  *                         type: integer
  *                         example: 2
- *                 totalBranch:
- *                   type: integer
- *                   example: 10
  *                 top5Antrian:
  *                   type: array
  *                   items:
