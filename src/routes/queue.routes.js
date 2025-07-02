@@ -321,25 +321,24 @@ router.get(
  * @swagger
  * /api/queue/count/admin:
  *   get:
- *     summary: Get queue statistics for admin (grouping by day, week, month, year)
+ *     summary: Get queue statistics for admin (grouping by day, week, or month)
  *     tags: [Queue]
  *     security:
  *       - bearerAuth: []
  *     description: |
  *       Only accessible by admin.
- *       Gunakan query param `range=day|week|month|year` (default day) untuk grouping.
- *       - Jika range=week: groups berisi per hari (Senin–Jumat)
- *       - Jika range=year: groups berisi per bulan (Januari–Desember)
- *       - Jika range=month: groups berisi per minggu dalam bulan berjalan
- *       - Jika range=day: groups hanya 1 (hari ini)
+ *       Gunakan query param `range=day|week|month` (default day) untuk grouping.
+ *       - Jika range=day: groups berisi per hari (Senin–Jumat) minggu berjalan.
+ *       - Jika range=week: groups berisi per minggu dalam bulan berjalan.
+ *       - Jika range=month: groups berisi per bulan (Januari–Desember) tahun berjalan.
  *     parameters:
  *       - in: query
  *         name: range
  *         schema:
  *           type: string
- *           enum: [day, week, month, year]
+ *           enum: [day, week, month]
  *           default: day
- *         description: Grouping range (day/week/month/year)
+ *         description: Grouping range (day/week/month)
  *     responses:
  *       200:
  *         description: Queue count summary for admin
