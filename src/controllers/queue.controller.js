@@ -110,14 +110,14 @@ const bookQueueOnline = async (req, res, next) => {
       },
     });
 
+    const services = queueServices.map((qs) => qs.service.serviceName);
+
     console.log("Emit queue:booked from bookQueueOnline", {
       ticketNumber: queue.ticketNumber,
       branchId: queue.branchId,
       services,
       clientCount: global.io.engine.clientsCount,
     });
-
-    const services = queueServices.map((qs) => qs.service.serviceName);
 
     global.io.emit("queue:booked", {
       ticketNumber: queue.ticketNumber,
@@ -340,14 +340,14 @@ const bookQueueOffline = async (req, res, next) => {
       },
     });
 
+    const services = queueServices.map((qs) => qs.service.serviceName);
+
     console.log("Emit queue:booked from bookQueueOffline", {
       ticketNumber: queue.ticketNumber,
       branchId: queue.branchId,
       services,
       clientCount: global.io.engine.clientsCount,
     });
-
-    const services = queueServices.map((qs) => qs.service.serviceName);
 
     global.io.emit("queue:booked", {
       ticketNumber: queue.ticketNumber,
