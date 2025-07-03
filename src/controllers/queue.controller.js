@@ -764,7 +764,7 @@ const getQueueCountAdmin = async (req, res, next) => {
       while (start <= lastDay) {
         const end = new Date(start);
         end.setUTCDate(start.getDate() + 6);
-        if (end > lastDay) end.setUTCTime(lastDay.getUTCTime());
+        if (end > lastDay) end.setUTCTime(lastDay.getTime());
         end.setUTCHours(23, 59, 59, 999);
 
         const totalQueueInRange = await prisma.queue.count({
