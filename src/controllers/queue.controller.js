@@ -520,7 +520,6 @@ const callQueue = async (req, res, next) => {
       queue = await prisma.$transaction(async (tx) => {
         const updated = await tx.queue.updateMany({
           where: { id, status: "waiting" },
-          orderBy: { id: "desc" },
           data: {
             status: "called",
             calledAt: new Date(),
@@ -637,12 +636,11 @@ const takeQueue = async (req, res, next) => {
     });
 
     // Emit event
-    // Emit event
     global.io.emit("queue:in-progress", {
       ticketNumber: queue.ticketNumber,
       status: queue.status,
       updatedAt: queue.updatedAt,
-      cs, // ini akan langsung dikonsumsi di FE
+      cs,
     });
 
     res.json({ message: "Queue status updated to in progress", queue });
@@ -1828,7 +1826,7 @@ const getCalledCustomerTV = async (req, res, next) => {
         NOT: { calledAt: null },
       },
       orderBy: {
-        calledAt: "asc",
+        calledAt: "desc",
       },
       select: {
         ticketNumber: true,
