@@ -754,18 +754,24 @@ const getQueueCountAdmin = async (req, res, next) => {
     } else if (range === "week") {
       const year = wibNow.getUTCFullYear();
       const month = wibNow.getUTCMonth();
-      const firstDay = new Date(year, month, 1);
-      firstDay.setUTCHours(0, 0, 0, 0);
-      const lastDay = new Date(year, month + 1, 0);
-      lastDay.setUTCHours(23, 59, 59, 999);
+      const firstDayOfMonth = new Date(year, month, 1);
+      firstDayOfMonth.setUTCHours(0, 0, 0, 0);
+      const lastDayOfMonth = new Date(year, month + 1, 0);
+      lastDayOfMonth.setUTCHours(23, 59, 59, 999);
+
+      let firstMonday = new Date(firstDayOfMonth);
+      const dayOfWeek = firstMonday.getDay() === 0 ? 7 : firstMonday.getDay();
+      if (dayOfWeek !== 1) {
+        firstMonday.setDate(firstMonday.getDate() + (8 - dayOfWeek));
+      }
 
       let week = 1;
-      let start = new Date(firstDay);
-      while (start <= lastDay) {
+      let start = new Date(firstMonday);
+      while (start <= lastDayOfMonth) {
         const end = new Date(start);
-        end.setUTCDate(start.getDate() + 6);
-        if (end > lastDay) end.setTime(lastDay.getTime());
-        end.setUTCHours(23, 59, 59, 999);
+        end.setDate(start.getDate() + 6);
+        if (end > lastDayOfMonth) end.setTime(lastDayOfMonth.getTime());
+        end.setHours(23, 59, 59, 999);
 
         const totalQueueInRange = await prisma.queue.count({
           where: { createdAt: { gte: start, lt: end } },
@@ -787,8 +793,8 @@ const getQueueCountAdmin = async (req, res, next) => {
         });
 
         if (wibNow >= start && wibNow <= end) {
-          startRange = start;
-          endRange = end;
+          startRange = new Date(start);
+          endRange = new Date(end);
         }
 
         week++;
