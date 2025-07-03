@@ -128,6 +128,27 @@ describe("Document Controller (Integration)", () => {
     await prisma.document.deleteMany({ where: { id: doc.id } });
   });
 
+  it("should get all documents for admin", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const doc = await prisma.document.create({
+      data: {
+        documentName: "Dokumen Jest Admin " + unique,
+        status: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .get("/api/document/user")
+      .set("Authorization", adminToken)
+      .send();
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.some((d) => d.id === doc.id)).toBe(true);
+
+    await prisma.document.deleteMany({ where: { id: doc.id } });
+  });
+
   it("should get all active documents for loket", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const doc = await prisma.document.create({

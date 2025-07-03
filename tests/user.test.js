@@ -671,6 +671,23 @@ describe("User Get Profile (Integration)", () => {
     expect(res.body.user.username).toBe(user.username);
   });
 
+  it("should return 400 if userId is missing in token payload (getProfile)", async () => {
+    const tokenWithoutUserId =
+      "Bearer " +
+      require("jsonwebtoken").sign(
+        { username: "jestprofilemissingid", role: "nasabah" },
+        process.env.JWT_SECRET || "secret"
+      );
+
+    const res = await request(app)
+      .get("/api/users/profile")
+      .set("Authorization", tokenWithoutUserId)
+      .send();
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/user tidak ditemukan/i);
+  });
+
   it("should return 401 if token is missing", async () => {
     const res = await request(app).get("/api/users/profile").send();
     expect(res.status).toBe(401);
@@ -682,6 +699,23 @@ describe("User Get Profile (Integration)", () => {
       .set("Authorization", "Bearer invalidtoken")
       .send();
     expect(res.status).toBe(403);
+  });
+
+  it("should return 404 if userId in token does not exist (getProfile)", async () => {
+    const tokenWithInvalidUserId =
+      "Bearer " +
+      require("jsonwebtoken").sign(
+        { userId: 99999999, username: "notfounduser", role: "nasabah" },
+        process.env.JWT_SECRET || "secret"
+      );
+
+    const res = await request(app)
+      .get("/api/users/profile")
+      .set("Authorization", tokenWithInvalidUserId)
+      .send();
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toMatch(/user tidak ditemukan/i);
   });
 });
 
@@ -789,6 +823,26 @@ describe("User Change Password (Integration)", () => {
     expect(resMissingOld.body.message).toBe(
       "Password lama dan baru wajib diisi"
     );
+  });
+
+  it("should return 404 if userId in token does not exist (changePassword)", async () => {
+    const tokenWithInvalidUserId =
+      "Bearer " +
+      require("jsonwebtoken").sign(
+        { userId: 99999999, username: "notfounduser", role: "nasabah" },
+        process.env.JWT_SECRET || "secret"
+      );
+
+    const res = await request(app)
+      .post("/api/users/change-password")
+      .set("Authorization", tokenWithInvalidUserId)
+      .send({
+        oldPassword: "Password123!",
+        newPassword: "PasswordBaru123!",
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toMatch(/user tidak ditemukan/i);
   });
 });
 

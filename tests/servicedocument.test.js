@@ -160,6 +160,17 @@ describe("ServiceDocument Controller (Integration)", () => {
     expect(doc.quantity).toBe(3);
   });
 
+  it("should return 400 if one of the serviceIds is not active or not found (user)", async () => {
+    const res = await request(app)
+      .post("/api/documents/by-services/user")
+      .set("Authorization", userToken)
+      .send({
+        serviceIds: [service1.id, 99999999],
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/tidak aktif atau tidak ditemukan/i);
+  });
+
   it("should get documents by serviceIds for loket", async () => {
     const res = await request(app)
       .post("/api/documents/by-services/loket")
@@ -172,6 +183,48 @@ describe("ServiceDocument Controller (Integration)", () => {
     expect(res.body.data.some((d) => d.id === document.id)).toBe(true);
     const doc = res.body.data.find((d) => d.id === document.id);
     expect(doc.quantity).toBe(3);
+  });
+
+  it("should return 400 if serviceIds is missing or not array (loket)", async () => {
+    // Tidak mengirim serviceIds
+    let res = await request(app)
+      .post("/api/documents/by-services/loket")
+      .set("Authorization", loketToken)
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(
+      /serviceIds wajib diisi dan berupa array/i
+    );
+
+    // Mengirim serviceIds bukan array
+    res = await request(app)
+      .post("/api/documents/by-services/loket")
+      .set("Authorization", loketToken)
+      .send({ serviceIds: "bukan-array" });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(
+      /serviceIds wajib diisi dan berupa array/i
+    );
+
+    res = await request(app)
+      .post("/api/documents/by-services/loket")
+      .set("Authorization", loketToken)
+      .send({ serviceIds: [] });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(
+      /serviceIds wajib diisi dan berupa array/i
+    );
+  });
+
+  it("should return 400 if one of the serviceIds is not active or not found (loket)", async () => {
+    const res = await request(app)
+      .post("/api/documents/by-services/loket")
+      .set("Authorization", loketToken)
+      .send({
+        serviceIds: [service1.id, 99999999],
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/tidak aktif atau tidak ditemukan/i);
   });
 
   it("should return 400 if serviceIds is missing", async () => {

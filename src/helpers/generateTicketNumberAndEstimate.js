@@ -29,6 +29,10 @@ async function generateTicketNumberAndEstimate(
   const csCount = csList.length;
   const csCountWithoutTV = csCount > 0 ? csCount - 1 : 0;
 
+  if (csCountWithoutTV <= 0) {
+    throw new Error("Tidak ada CS yang tersedia di cabang ini.");
+  }
+
   let csAvailableTimes = Array(csCountWithoutTV).fill(toWIB(bookingDate));
   let csSlotIds = csList.slice(0, csCountWithoutTV).map((cs) => cs.id);
 

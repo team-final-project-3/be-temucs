@@ -103,6 +103,39 @@ describe("QueueService Integration", () => {
     expect(res.body).toHaveProperty("message");
   });
 
+  it("POST /api/queue-service - should return 400 if queueId or serviceIds is missing", async () => {
+    // Tanpa queueId
+    let res = await request(app)
+      .post("/api/queue-service")
+      .set("Authorization", nasabahToken)
+      .send({
+        serviceIds: [service1.id],
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/queueId dan serviceIds wajib diisi/i);
+
+    // Tanpa serviceIds
+    res = await request(app)
+      .post("/api/queue-service")
+      .set("Authorization", nasabahToken)
+      .send({
+        queueId: queue.id,
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/queueId dan serviceIds wajib diisi/i);
+
+    // serviceIds bukan array
+    res = await request(app)
+      .post("/api/queue-service")
+      .set("Authorization", nasabahToken)
+      .send({
+        queueId: queue.id,
+        serviceIds: null,
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/queueId dan serviceIds wajib diisi/i);
+  });
+
   it("GET /api/queue-service/:queueId - should get all services linked to a specific queue", async () => {
     const res = await request(app)
       .get(`/api/queue-service/${queue.id}`)
@@ -138,5 +171,34 @@ describe("QueueService Integration", () => {
       .set("Authorization", nasabahToken)
       .send();
     expect(res.status).toBe(400);
+  });
+
+  it("GET /api/documents-by-queue/:queueId - should return 404 if queue has no services", async () => {
+    // Buat queue baru tanpa queueService
+    const queueNoService = await prisma.queue.create({
+      data: {
+        userId: nasabah.id,
+        branchId: branch.id,
+        bookingDate: new Date(),
+        name: nasabah.fullname,
+        email: nasabah.email,
+        phoneNumber: nasabah.phoneNumber,
+        ticketNumber: "B" + unique,
+        status: "waiting",
+        notification: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+
+    const res = await request(app)
+      .get(`/api/documents-by-queue/${queueNoService.id}`)
+      .set("Authorization", nasabahToken)
+      .send();
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toMatch(/tidak ada layanan pada antrian ini/i);
+
+    await prisma.queue.deleteMany({ where: { id: queueNoService.id } });
   });
 });

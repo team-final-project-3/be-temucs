@@ -43,7 +43,7 @@ const addService = async (req, res, next) => {
         documents: {
           create: documents.map((doc) => ({
             documentId: doc.documentId,
-            quantity: doc.quantity !== undefined ? doc.quantity : 1, // default 1
+            quantity: doc.quantity !== undefined ? doc.quantity : 1,
             createdBy: username,
             updatedBy: username,
           })),
@@ -116,27 +116,6 @@ const getServiceForUser = async (req, res, next) => {
   }
 };
 
-// const getServiceForLoket = async (req, res, next) => {
-//   try {
-//     const id = parseInt(req.params.id, 10);
-//     const service = await prisma.service.findFirst({
-//       where: { id, status: true },
-//       include: {
-//         documents: { include: { document: true } },
-//       },
-//     });
-//     if (!service) {
-//       throw Object.assign(new Error("Layanan tidak ditemukan"), {
-//         status: 404,
-//       });
-//     }
-//     const documents = service.documents.map((sd) => sd.document);
-//     res.status(200).json({ ...service, documents });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 const editService = async (req, res, next) => {
   try {
     const username = req.user.username;
@@ -188,7 +167,7 @@ const editService = async (req, res, next) => {
         data: documents.map((doc) => ({
           serviceId: id,
           documentId: doc.documentId,
-          quantity: doc.quantity !== undefined ? doc.quantity : 1, // default 1
+          quantity: doc.quantity !== undefined ? doc.quantity : 1,
           createdBy: username,
           updatedBy: username,
         })),
@@ -240,7 +219,6 @@ module.exports = {
   getAllServiceForUser,
   getAllServiceForLoket,
   getServiceForUser,
-  // getServiceForLoket,
   editService,
   updateServiceStatus,
 };

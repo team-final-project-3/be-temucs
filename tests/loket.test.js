@@ -127,6 +127,68 @@ describe("Loket Controller (Integration)", () => {
     await prisma.loket.deleteMany({ where: { id: loket.id } });
   });
 
+  it("should return 401 if loket not found saat login", async () => {
+    const res = await request(app)
+      .post("/api/loket/login")
+      .send({
+        username: "tidakadadikloket" + Date.now(),
+        password: "Password123!",
+      });
+    expect(res.status).toBe(401);
+    expect(res.body.message.toLowerCase()).toContain("tidak ditemukan");
+  });
+
+  it("should return 403 if loket is not active saat login", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const password = "Password123!";
+    const loket = await prisma.loket.create({
+      data: {
+        branchId: branch.id,
+        name: "Loket Jest Nonaktif " + unique,
+        username: "loketjestnonaktif" + unique,
+        passwordHash: await hashPassword(password),
+        status: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .post("/api/loket/login")
+      .send({
+        username: "loketjestnonaktif" + unique,
+        password,
+      });
+    expect(res.status).toBe(403);
+    expect(res.body.message.toLowerCase()).toContain("tidak aktif");
+
+    await prisma.loket.deleteMany({ where: { id: loket.id } });
+  });
+
+  it("should return 401 if password salah saat login", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const loket = await prisma.loket.create({
+      data: {
+        branchId: branch.id,
+        name: "Loket Jest SalahPW " + unique,
+        username: "loketjestsalahpw" + unique,
+        passwordHash: await hashPassword("Password123!"),
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .post("/api/loket/login")
+      .send({
+        username: "loketjestsalahpw" + unique,
+        password: "PasswordSALAH!",
+      });
+    expect(res.status).toBe(401);
+    expect(res.body.message.toLowerCase()).toContain("password salah");
+
+    await prisma.loket.deleteMany({ where: { id: loket.id } });
+  });
+
   it("should edit loket", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const loket = await prisma.loket.create({

@@ -59,6 +59,39 @@ describe("Branch Controller (Integration)", () => {
     await prisma.branch.deleteMany({ where: { id: res.body.branch.id } });
   });
 
+  it("should return 400 if data branch tidak lengkap on edit", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const branch = await prisma.branch.create({
+      data: {
+        name: "Test Branch Jest " + unique,
+        branchCode: "JEST" + unique,
+        address: "Jl. Jest No.1",
+        longitude: 106.8,
+        latitude: -6.1,
+        holiday: false,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .put(`/api/branch/${branch.id}`)
+      .set("Authorization", adminToken)
+      .send({
+        name: "",
+        branchCode: "",
+        address: "",
+        longitude: null,
+        latitude: null,
+        holiday: false,
+        status: true,
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Data branch tidak lengkap/i);
+
+    await prisma.branch.deleteMany({ where: { id: branch.id } });
+  });
+
   it("should not add branch with duplicate name", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const branch = await prisma.branch.create({

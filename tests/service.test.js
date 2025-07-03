@@ -161,6 +161,40 @@ describe("Service Controller (Integration)", () => {
     await prisma.service.deleteMany({ where: { id: service.id } });
   });
 
+  it("should get all services for admin", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const service = await prisma.service.create({
+      data: {
+        serviceName: "Service Jest Admin " + unique,
+        estimatedTime: 10,
+        status: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+        documents: {
+          create: [
+            {
+              documentId: document.id,
+              quantity: 1,
+              createdBy: "admin",
+              updatedBy: "admin",
+            },
+          ],
+        },
+      },
+    });
+
+    const res = await request(app)
+      .get("/api/service/user")
+      .set("Authorization", adminToken)
+      .send();
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.some((s) => s.id === service.id)).toBe(true);
+
+    await prisma.service.deleteMany({ where: { id: service.id } });
+  });
+
   it("should get all active services for loket", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const service = await prisma.service.create({
@@ -262,6 +296,224 @@ describe("Service Controller (Integration)", () => {
     await prisma.service.deleteMany({ where: { id: service.id } });
   });
 
+  it("should edit service without documents field", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const service = await prisma.service.create({
+      data: {
+        serviceName: "Service Jest " + unique,
+        estimatedTime: 10,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+        documents: {
+          create: [
+            {
+              documentId: document.id,
+              quantity: 1,
+              createdBy: "admin",
+              updatedBy: "admin",
+            },
+          ],
+        },
+      },
+    });
+    const res = await request(app)
+      .put(`/api/service/${service.id}`)
+      .set("Authorization", adminToken)
+      .send({
+        serviceName: "Service Jest Edited " + unique,
+        estimatedTime: 20,
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.updatedService.serviceName).toBe(
+      "Service Jest Edited " + unique
+    );
+
+    await prisma.service.deleteMany({ where: { id: service.id } });
+  });
+
+  it("should update documents on editService", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const service = await prisma.service.create({
+      data: {
+        serviceName: "Service Jest " + unique,
+        estimatedTime: 10,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+        documents: {
+          create: [
+            {
+              documentId: document.id,
+              quantity: 1,
+              createdBy: "admin",
+              updatedBy: "admin",
+            },
+          ],
+        },
+      },
+    });
+    const res = await request(app)
+      .put(`/api/service/${service.id}`)
+      .set("Authorization", adminToken)
+      .send({
+        serviceName: "Service Jest Edited " + unique,
+        estimatedTime: 20,
+        documents: [{ documentId: document.id, quantity: 2 }],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.updatedService.serviceName).toBe(
+      "Service Jest Edited " + unique
+    );
+
+    const docs = await prisma.serviceDocument.findMany({
+      where: { serviceId: service.id },
+    });
+    expect(docs.length).toBe(1);
+    expect(docs[0].quantity).toBe(2);
+
+    await prisma.service.deleteMany({ where: { id: service.id } });
+  });
+
+  it("should return 400 if serviceName or estimatedTime missing on editService", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const service = await prisma.service.create({
+      data: {
+        serviceName: "Service Jest " + unique,
+        estimatedTime: 10,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+        documents: {
+          create: [
+            {
+              documentId: document.id,
+              quantity: 1,
+              createdBy: "admin",
+              updatedBy: "admin",
+            },
+          ],
+        },
+      },
+    });
+
+    let res = await request(app)
+      .put(`/api/service/${service.id}`)
+      .set("Authorization", adminToken)
+      .send({
+        estimatedTime: 20,
+        documents: [{ documentId: document.id, quantity: 2 }],
+      });
+    expect(res.status).toBe(400);
+
+    res = await request(app)
+      .put(`/api/service/${service.id}`)
+      .set("Authorization", adminToken)
+      .send({
+        serviceName: "Service Jest Edited " + unique,
+        documents: [{ documentId: document.id, quantity: 2 }],
+      });
+    expect(res.status).toBe(400);
+
+    await prisma.service.deleteMany({ where: { id: service.id } });
+  });
+
+  it("should return 400 if documents is not array on editService", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const service = await prisma.service.create({
+      data: {
+        serviceName: "Service Jest " + unique,
+        estimatedTime: 10,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+        documents: {
+          create: [
+            {
+              documentId: document.id,
+              quantity: 1,
+              createdBy: "admin",
+              updatedBy: "admin",
+            },
+          ],
+        },
+      },
+    });
+
+    const res = await request(app)
+      .put(`/api/service/${service.id}`)
+      .set("Authorization", adminToken)
+      .send({
+        serviceName: "Service Jest Edited " + unique,
+        estimatedTime: 20,
+        documents: "not-an-array",
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/documents harus berupa array/i);
+
+    await prisma.service.deleteMany({ where: { id: service.id } });
+  });
+
+  it("should return 400 if documents array contains invalid documentId or quantity on editService", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const service = await prisma.service.create({
+      data: {
+        serviceName: "Service Jest " + unique,
+        estimatedTime: 10,
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+        documents: {
+          create: [
+            {
+              documentId: document.id,
+              quantity: 1,
+              createdBy: "admin",
+              updatedBy: "admin",
+            },
+          ],
+        },
+      },
+    });
+
+    let res = await request(app)
+      .put(`/api/service/${service.id}`)
+      .set("Authorization", adminToken)
+      .send({
+        serviceName: "Service Jest Edited " + unique,
+        estimatedTime: 20,
+        documents: [{ documentId: "abc", quantity: 1 }],
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(
+      /Setiap dokumen harus punya documentId dan quantity > 0/i
+    );
+
+    res = await request(app)
+      .put(`/api/service/${service.id}`)
+      .set("Authorization", adminToken)
+      .send({
+        serviceName: "Service Jest Edited " + unique,
+        estimatedTime: 20,
+        documents: [{ documentId: document.id, quantity: 0 }],
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(
+      /Setiap dokumen harus punya documentId dan quantity > 0/i
+    );
+
+    await prisma.service.deleteMany({ where: { id: service.id } });
+  });
+
+  it("should return 404 if updateServiceStatus called with non-existent id", async () => {
+    const res = await request(app)
+      .put("/api/service/99999999/status")
+      .set("Authorization", adminToken)
+      .send();
+    expect(res.status).toBe(404);
+    expect(res.body.message.toLowerCase()).toContain("layanan tidak ditemukan");
+  });
+
   it("should update service status", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const service = await prisma.service.create({
@@ -356,6 +608,20 @@ describe("Service Controller (Integration)", () => {
     const res = await request(app)
       .get("/api/service/user")
       .set("Authorization", userToken)
+      .send();
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+  });
+
+  it("should return 500 if prisma error in getAllServiceForUser (admin)", async () => {
+    const spy = jest
+      .spyOn(prisma.service, "findMany")
+      .mockImplementation(() => {
+        throw new Error("DB error");
+      });
+    const res = await request(app)
+      .get("/api/service/user")
+      .set("Authorization", adminToken)
       .send();
     expect(res.status).toBe(500);
     spy.mockRestore();

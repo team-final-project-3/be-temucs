@@ -134,6 +134,33 @@ describe("CS Controller (Integration)", () => {
     await prisma.cS.deleteMany({ where: { id: cs.id } });
   });
 
+  it("should return 403 if CS is not active saat login", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const password = "Password123!";
+    // Buat CS dengan status false (tidak aktif)
+    const cs = await prisma.cS.create({
+      data: {
+        branchId: branch.id,
+        name: "CS Jest Nonaktif " + unique,
+        username: "csjestnonaktif" + unique,
+        passwordHash: await hashPassword(password),
+        status: false,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .post("/api/cs/login")
+      .send({
+        username: "csjestnonaktif" + unique,
+        password,
+      });
+    expect(res.status).toBe(403);
+    expect(res.body.message).toMatch(/Akun CS tidak aktif/i);
+
+    await prisma.cS.deleteMany({ where: { id: cs.id } });
+  });
+
   it("should fail login with wrong password", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const cs = await prisma.cS.create({
