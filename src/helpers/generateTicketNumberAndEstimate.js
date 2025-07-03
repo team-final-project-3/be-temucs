@@ -3,7 +3,7 @@ const { getStartEndOfBookingDateWIB } = require("./dateHelper");
 function toWIB(date) {
   return new Date(date.getTime() + 7 * 60 * 60 * 1000);
 }
-function toUTC(date) {
+function toUTCfromWIB(date) {
   return new Date(date.getTime() - 7 * 60 * 60 * 1000);
 }
 
@@ -19,108 +19,79 @@ async function generateTicketNumberAndEstimate(
   const branch = await tx.branch.findUnique({ where: { id: branchId } });
 
   const csList = await tx.cS.findMany({
-    where: { branchId },
+    where: {
+      branchId,
+    },
     select: { id: true },
+    orderBy: { id: "asc" },
   });
 
-  let csAvailableTimes = {};
-  for (const cs of csList) {
-    const lastQueue = await tx.queue.findFirst({
-      where: {
-        branchId,
-        csId: cs.id,
-        estimatedTime: {
-          gte: startUTC,
-          lte: endUTC,
-        },
-      },
-      orderBy: { estimatedTime: "desc" },
-      include: {
-        services: {
-          include: { service: { select: { estimatedTime: true } } },
-        },
-      },
-    });
+  const csCount = csList.length;
+  const csCountWithoutTV = csCount > 0 ? csCount - 1 : 0;
 
-    if (lastQueue) {
-      let lastFinish = toWIB(lastQueue.estimatedTime);
-      let lastDuration = 0;
-      for (const s of lastQueue.services)
-        lastDuration += s.service.estimatedTime || 0;
-      csAvailableTimes[cs.id] = new Date(
-        lastFinish.getTime() + lastDuration * 60000
-      );
-    } else {
-      let bookingWIB = toWIB(bookingDate);
-      let startWIB = new Date(bookingWIB);
-      if (startWIB.getHours() < 8) startWIB.setHours(8, 0, 0, 0);
-      csAvailableTimes[cs.id] = startWIB;
+  let csAvailableTimes = Array(csCountWithoutTV).fill(toWIB(bookingDate));
+  let csSlotIds = csList.slice(0, csCountWithoutTV).map((cs) => cs.id);
+
+  const allQueuesToday = await tx.queue.findMany({
+    where: {
+      branchId,
+      estimatedTime: {
+        gte: startUTC,
+        lte: endUTC,
+      },
+    },
+    orderBy: { estimatedTime: "asc" },
+    include: {
+      services: {
+        include: { service: { select: { estimatedTime: true } } },
+      },
+    },
+  });
+
+  for (const queue of allQueuesToday) {
+    let selectedSlot = 0;
+    let earliestTime = csAvailableTimes[0];
+    for (let i = 1; i < csAvailableTimes.length; i++) {
+      if (csAvailableTimes[i] < earliestTime) {
+        earliestTime = csAvailableTimes[i];
+        selectedSlot = i;
+      }
+    }
+    let totalDuration = 0;
+    for (const s of queue.services) {
+      totalDuration += s.service.estimatedTime || 0;
+    }
+    csAvailableTimes[selectedSlot] = new Date(
+      Math.max(
+        csAvailableTimes[selectedSlot].getTime(),
+        toWIB(queue.estimatedTime).getTime()
+      ) +
+        totalDuration * 60000
+    );
+  }
+
+  let selectedSlot = 0;
+  let earliestTime = csAvailableTimes[0];
+  for (let i = 1; i < csAvailableTimes.length; i++) {
+    if (csAvailableTimes[i] < earliestTime) {
+      earliestTime = csAvailableTimes[i];
+      selectedSlot = i;
     }
   }
 
-  let selectedCSId = null;
-  let earliestTime = null;
-  for (const [csId, time] of Object.entries(csAvailableTimes)) {
-    if (!earliestTime || time < earliestTime) {
-      earliestTime = time;
-      selectedCSId = csId;
-    }
-  }
+  let estimatedTimeWIB = new Date(
+    Math.max(earliestTime.getTime(), toWIB(bookingDate).getTime())
+  );
 
-  let estimatedTimeWIB = new Date(earliestTime);
-
-  while (
-    estimatedTimeWIB.getHours() > 15 ||
-    (estimatedTimeWIB.getHours() === 15 && estimatedTimeWIB.getMinutes() > 0)
+  if (estimatedTimeWIB.getUTCHours() < 8) {
+    estimatedTimeWIB.setUTCHours(8, 0, 0, 0);
+  } else if (
+    estimatedTimeWIB.getUTCHours() > 15 ||
+    (estimatedTimeWIB.getUTCHours() === 15 &&
+      estimatedTimeWIB.getUTCMinutes() > 0)
   ) {
-    estimatedTimeWIB.setDate(estimatedTimeWIB.getDate() + 1);
-    estimatedTimeWIB.setHours(8, 0, 0, 0);
-
-    csAvailableTimes = {};
-    for (const cs of csList) {
-      const { startUTC: nextStartUTC, endUTC: nextEndUTC } =
-        getStartEndOfBookingDateWIB(estimatedTimeWIB);
-      const lastQueue = await tx.queue.findFirst({
-        where: {
-          branchId,
-          csId: cs.id,
-          estimatedTime: {
-            gte: nextStartUTC,
-            lte: nextEndUTC,
-          },
-        },
-        orderBy: { estimatedTime: "desc" },
-        include: {
-          services: {
-            include: { service: { select: { estimatedTime: true } } },
-          },
-        },
-      });
-
-      if (lastQueue) {
-        let lastFinish = toWIB(lastQueue.estimatedTime);
-        let lastDuration = 0;
-        for (const s of lastQueue.services)
-          lastDuration += s.service.estimatedTime || 0;
-        csAvailableTimes[cs.id] = new Date(
-          lastFinish.getTime() + lastDuration * 60000
-        );
-      } else {
-        let bookingWIB = toWIB(estimatedTimeWIB);
-        let startWIB = new Date(bookingWIB);
-        if (startWIB.getHours() < 8) startWIB.setHours(8, 0, 0, 0);
-        csAvailableTimes[cs.id] = startWIB;
-      }
-    }
-    selectedCSId = null;
-    earliestTime = null;
-    for (const [csId, time] of Object.entries(csAvailableTimes)) {
-      if (!earliestTime || time < earliestTime) {
-        earliestTime = time;
-        selectedCSId = csId;
-      }
-    }
-    estimatedTimeWIB = new Date(earliestTime);
+    estimatedTimeWIB.setUTCDate(estimatedTimeWIB.getUTCDate() + 1);
+    estimatedTimeWIB.setUTCHours(8, 0, 0, 0);
   }
 
   const { startUTC: ticketStartUTC, endUTC: ticketEndUTC } =
@@ -140,14 +111,21 @@ async function generateTicketNumberAndEstimate(
     "0"
   )}`;
 
-  const estimatedTimeDate = toUTC(estimatedTimeWIB);
+  const estimatedTimeDate = toUTCfromWIB(estimatedTimeWIB);
   const notification = allQueuesThisDay.length < 5;
+
+  console.log({
+    bookingDate,
+    bookingWIB: toWIB(bookingDate),
+    estimatedTimeWIB,
+    estimatedTimeDate: toUTCfromWIB(estimatedTimeWIB),
+  });
 
   return {
     ticketNumber,
     estimatedTimeDate,
     notification,
-    csId: Number(selectedCSId),
+    csId: csSlotIds[selectedSlot],
   };
 }
 
