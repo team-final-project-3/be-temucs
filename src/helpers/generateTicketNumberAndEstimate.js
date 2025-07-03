@@ -21,13 +21,18 @@ async function generateTicketNumberAndEstimate(
   const csList = await tx.cS.findMany({
     where: {
       branchId,
+      NOT: {
+        username: {
+          contains: "tv",
+          mode: "insensitive",
+        },
+      },
     },
     select: { id: true },
     orderBy: { id: "asc" },
   });
 
-  const csCount = csList.length;
-  const csCountWithoutTV = csCount > 0 ? csCount - 1 : 0;
+  const csCountWithoutTV = csList.length;
 
   if (csCountWithoutTV <= 0) {
     throw new Error("Tidak ada CS yang tersedia di cabang ini.");
