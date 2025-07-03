@@ -334,7 +334,7 @@ const bookQueueOffline = async (req, res, next) => {
 
     const services = queueServices.map((qs) => qs.service.serviceName);
 
-    global.io.emit("queue:booked", {
+    global.io.emit("queue:bookedonline", {
       ticketNumber: queue.ticketNumber,
       status: queue.status,
       bookedAt: queue.bookingDate,
@@ -342,7 +342,7 @@ const bookQueueOffline = async (req, res, next) => {
       branchId: queue.branchId,
     });
 
-    res.status(201).json({ message: "Queue booked (offline)", queue });
+    res.status(201).json({ message: "Queue booked (online)", queue });
   } catch (error) {
     next(error);
   }
