@@ -715,33 +715,42 @@ const getQueueCountAdmin = async (req, res, next) => {
     let startRange, endRange;
 
     if (range === "day") {
-      const today = new Date(wibNow);
-      today.setUTCHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setUTCDate(today.getDate() + 1);
+      // Dapatkan Senin minggu berjalan
+      const dayOfWeek = wibNow.getUTCDay() === 0 ? 7 : wibNow.getUTCDay();
+      const monday = new Date(wibNow);
+      monday.setUTCHours(0, 0, 0, 0);
+      monday.setUTCDate(wibNow.getUTCDate() - dayOfWeek + 1);
 
-      startRange = today;
-      endRange = tomorrow;
+      for (let i = 0; i < 5; i++) {
+        const date = new Date(monday);
+        date.setUTCDate(monday.getUTCDate() + i);
+        const start = new Date(date);
+        start.setUTCHours(0, 0, 0, 0);
+        const end = new Date(date);
+        end.setUTCHours(23, 59, 59, 999);
 
-      const totalQueueInRange = await prisma.queue.count({
-        where: { createdAt: { gte: startRange, lt: endRange } },
-      });
-      const totalQueueOnline = await prisma.queue.count({
-        where: {
-          createdAt: { gte: startRange, lt: endRange },
-          userId: { not: null },
-        },
-      });
-      const totalQueueOffline = await prisma.queue.count({
-        where: { createdAt: { gte: startRange, lt: endRange }, userId: null },
-      });
+        const totalQueueInRange = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end } },
+        });
+        const totalQueueOnline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: { not: null } },
+        });
+        const totalQueueOffline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: null },
+        });
 
-      groups.push({
-        label: today.toISOString().slice(0, 10),
-        totalQueueInRange,
-        totalQueueOnline,
-        totalQueueOffline,
-      });
+        groups.push({
+          label: start.toISOString().slice(0, 10),
+          totalQueueInRange,
+          totalQueueOnline,
+          totalQueueOffline,
+        });
+
+        if (wibNow >= start && wibNow < end) {
+          startRange = start;
+          endRange = end;
+        }
+      }
     } else if (range === "week") {
       const year = wibNow.getUTCFullYear();
       const month = wibNow.getUTCMonth();
@@ -752,83 +761,69 @@ const getQueueCountAdmin = async (req, res, next) => {
 
       let week = 1;
       let start = new Date(firstDay);
-      let foundWeek = false;
       while (start <= lastDay) {
         const end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        if (end > lastDay) end.setTime(lastDay.getTime());
-        end.setHours(23, 59, 59, 999);
+        end.setUTCDate(start.getDate() + 6);
+        if (end > lastDay) end.setUTCTime(lastDay.getUTCTime());
+        end.setUTCHours(23, 59, 59, 999);
 
-        if (!foundWeek && wibNow >= start && wibNow <= end) {
-          startRange = new Date(start);
-          endRange = new Date(end);
+        const totalQueueInRange = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end } },
+        });
+        const totalQueueOnline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: { not: null } },
+        });
+        const totalQueueOffline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: null },
+        });
 
-          const totalQueueInRange = await prisma.queue.count({
-            where: { createdAt: { gte: startRange, lt: endRange } },
-          });
-          const totalQueueOnline = await prisma.queue.count({
-            where: {
-              createdAt: { gte: startRange, lt: endRange },
-              userId: { not: null },
-            },
-          });
-          const totalQueueOffline = await prisma.queue.count({
-            where: {
-              createdAt: { gte: startRange, lt: endRange },
-              userId: null,
-            },
-          });
+        groups.push({
+          label: `Minggu ${week}`,
+          start: start.toISOString().slice(0, 10),
+          end: end.toISOString().slice(0, 10),
+          totalQueueInRange,
+          totalQueueOnline,
+          totalQueueOffline,
+        });
 
-          groups.push({
-            label: `Minggu ${week}`,
-            start: startRange.toISOString().slice(0, 10),
-            end: endRange.toISOString().slice(0, 10),
-            totalQueueInRange,
-            totalQueueOnline,
-            totalQueueOffline,
-          });
-          foundWeek = true;
+        if (wibNow >= start && wibNow <= end) {
+          startRange = start;
+          endRange = end;
         }
 
         week++;
         start.setDate(start.getDate() + 7);
       }
-      if (!startRange || !endRange) {
-        startRange = new Date(firstDay);
-        endRange = new Date(firstDay);
-        endRange.setDate(endRange.getDate() + 6);
-        endRange.setHours(23, 59, 59, 999);
-      }
     } else if (range === "month") {
       const year = wibNow.getUTCFullYear();
-      const month = wibNow.getUTCMonth();
-      const start = new Date(year, month, 1);
-      start.setUTCHours(0, 0, 0, 0);
-      const end = new Date(year, month + 1, 1);
-      end.setUTCHours(0, 0, 0, 0);
+      for (let month = 0; month < 12; month++) {
+        const start = new Date(year, month, 1);
+        start.setUTCHours(0, 0, 0, 0);
+        const end = new Date(year, month + 1, 1);
+        end.setUTCHours(0, 0, 0, 0);
 
-      startRange = start;
-      endRange = end;
+        const totalQueueInRange = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end } },
+        });
+        const totalQueueOnline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: { not: null } },
+        });
+        const totalQueueOffline = await prisma.queue.count({
+          where: { createdAt: { gte: start, lt: end }, userId: null },
+        });
 
-      const totalQueueInRange = await prisma.queue.count({
-        where: { createdAt: { gte: startRange, lt: endRange } },
-      });
-      const totalQueueOnline = await prisma.queue.count({
-        where: {
-          createdAt: { gte: startRange, lt: endRange },
-          userId: { not: null },
-        },
-      });
-      const totalQueueOffline = await prisma.queue.count({
-        where: { createdAt: { gte: startRange, lt: endRange }, userId: null },
-      });
+        groups.push({
+          label: start.toLocaleString("id-ID", { month: "long" }),
+          totalQueueInRange,
+          totalQueueOnline,
+          totalQueueOffline,
+        });
 
-      groups.push({
-        label: start.toLocaleString("id-ID", { month: "long" }),
-        totalQueueInRange,
-        totalQueueOnline,
-        totalQueueOffline,
-      });
+        if (wibNow >= start && wibNow < end) {
+          startRange = start;
+          endRange = end;
+        }
+      }
     } else {
       groups = [];
       startRange = null;
