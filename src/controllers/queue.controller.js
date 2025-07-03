@@ -99,13 +99,6 @@ const bookQueueOnline = async (req, res, next) => {
     });
 
     //websocket
-    console.log("Emit queue:booked from bookQueueOnline", {
-      ticketNumber: queue.ticketNumber,
-      branchId: queue.branchId,
-      services,
-      clientCount: global.io.engine.clientsCount,
-    });
-
     const queueServices = await prisma.queueService.findMany({
       where: { queueId: queue.id },
       include: {
@@ -115,6 +108,13 @@ const bookQueueOnline = async (req, res, next) => {
           },
         },
       },
+    });
+
+    console.log("Emit queue:booked from bookQueueOnline", {
+      ticketNumber: queue.ticketNumber,
+      branchId: queue.branchId,
+      services,
+      clientCount: global.io.engine.clientsCount,
     });
 
     const services = queueServices.map((qs) => qs.service.serviceName);
@@ -329,13 +329,6 @@ const bookQueueOffline = async (req, res, next) => {
     });
 
     //websocket
-    console.log("Emit queue:booked from bookQueueOffline", {
-      ticketNumber: queue.ticketNumber,
-      branchId: queue.branchId,
-      services,
-      clientCount: global.io.engine.clientsCount,
-    });
-
     const queueServices = await prisma.queueService.findMany({
       where: { queueId: queue.id },
       include: {
@@ -345,6 +338,13 @@ const bookQueueOffline = async (req, res, next) => {
           },
         },
       },
+    });
+
+    console.log("Emit queue:booked from bookQueueOffline", {
+      ticketNumber: queue.ticketNumber,
+      branchId: queue.branchId,
+      services,
+      clientCount: global.io.engine.clientsCount,
     });
 
     const services = queueServices.map((qs) => qs.service.serviceName);
