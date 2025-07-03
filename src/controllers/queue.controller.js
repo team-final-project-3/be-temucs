@@ -752,25 +752,28 @@ const getQueueCountAdmin = async (req, res, next) => {
         }
       }
     } else if (range === "week") {
-      const year = wibNow.getUTCFullYear();
-      const month = wibNow.getUTCMonth();
+      const year = wibNow.getFullYear();
+      const month = wibNow.getMonth();
       const firstDayOfMonth = new Date(year, month, 1);
-      firstDayOfMonth.setUTCHours(0, 0, 0, 0);
+      firstDayOfMonth.setHours(0, 0, 0, 0);
       const lastDayOfMonth = new Date(year, month + 1, 0);
-      lastDayOfMonth.setUTCHours(23, 59, 59, 999);
-
-      let firstMonday = new Date(firstDayOfMonth);
-      const dayOfWeek = firstMonday.getDay() === 0 ? 7 : firstMonday.getDay();
-      if (dayOfWeek !== 1) {
-        firstMonday.setDate(firstMonday.getDate() + (8 - dayOfWeek));
-      }
+      lastDayOfMonth.setHours(23, 59, 59, 999);
 
       let week = 1;
-      let start = new Date(firstMonday);
+      let start = new Date(firstDayOfMonth);
+
       while (start <= lastDayOfMonth) {
-        const end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        if (end > lastDayOfMonth) end.setTime(lastDayOfMonth.getTime());
+        // Minggu pertama: end = hari Minggu pertama atau tanggal 7
+        let end = new Date(start);
+        if (week === 1) {
+          const dayOfWeek = start.getDay(); // 0=minggu, 1=senin, dst
+          const daysToSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+          end.setDate(start.getDate() + daysToSunday);
+          if (end > lastDayOfMonth) end = new Date(lastDayOfMonth);
+        } else {
+          end.setDate(start.getDate() + 6);
+          if (end > lastDayOfMonth) end = new Date(lastDayOfMonth);
+        }
         end.setHours(23, 59, 59, 999);
 
         const totalQueueInRange = await prisma.queue.count({
@@ -792,13 +795,17 @@ const getQueueCountAdmin = async (req, res, next) => {
           totalQueueOffline,
         });
 
+        // Cek apakah hari ini ada di minggu ini
         if (wibNow >= start && wibNow <= end) {
           startRange = new Date(start);
           endRange = new Date(end);
         }
 
+        // Minggu berikutnya: start = hari Senin setelah end
+        start = new Date(end);
+        start.setDate(start.getDate() + 1);
+        start.setHours(0, 0, 0, 0);
         week++;
-        start.setDate(start.getDate() + 7);
       }
     } else if (range === "month") {
       const year = wibNow.getUTCFullYear();
