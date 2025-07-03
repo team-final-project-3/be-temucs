@@ -712,6 +712,7 @@ const getQueueCountAdmin = async (req, res, next) => {
     const wibNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
 
     let groups = [];
+    let startRange, endRange;
 
     if (range === "day") {
       const day = wibNow.getDay() || 7;
@@ -726,6 +727,13 @@ const getQueueCountAdmin = async (req, res, next) => {
         start.setHours(0, 0, 0, 0);
         const end = new Date(date);
         end.setHours(23, 59, 59, 999);
+
+        if (i === 0) {
+          startRange = start;
+        }
+        if (i === 4) {
+          endRange = end;
+        }
 
         const totalQueueInRange = await prisma.queue.count({
           where: { createdAt: { gte: start, lt: end } },
@@ -755,11 +763,16 @@ const getQueueCountAdmin = async (req, res, next) => {
       let start = new Date(firstDay);
       start.setHours(0, 0, 0, 0);
 
+      startRange = new Date(firstDay);
+      startRange.setHours(0, 0, 0, 0);
+
       while (start <= lastDay) {
         const end = new Date(start);
         end.setDate(start.getDate() + 6);
         if (end > lastDay) end.setTime(lastDay.getTime());
         end.setHours(23, 59, 59, 999);
+
+        endRange = new Date(end);
 
         const totalQueueInRange = await prisma.queue.count({
           where: { createdAt: { gte: start, lt: new Date(end.getTime() + 1) } },
@@ -795,9 +808,14 @@ const getQueueCountAdmin = async (req, res, next) => {
       }
     } else if (range === "month") {
       const year = wibNow.getFullYear();
+      startRange = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
+      endRange = new Date(Date.UTC(year + 1, 0, 1, 0, 0, 0, 0));
       for (let month = 0; month < 12; month++) {
         const start = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
         const end = new Date(Date.UTC(year, month + 1, 1, 0, 0, 0, 0));
+
+        if (month === 0) startRange = start;
+        if (month === 11) endRange = end;
 
         const totalQueueInRange = await prisma.queue.count({
           where: { createdAt: { gte: start, lt: end } },
@@ -821,13 +839,21 @@ const getQueueCountAdmin = async (req, res, next) => {
       }
     } else {
       groups = [];
+      startRange = null;
+      endRange = null;
     }
 
-    const totalQueue = await prisma.queue.count();
+    let queueWhere = {};
+    if (startRange && endRange) {
+      queueWhere = { createdAt: { gte: startRange, lt: endRange } };
+    }
+
+    const totalQueue = await prisma.queue.count({ where: queueWhere });
 
     const statusCountsRaw = await prisma.queue.groupBy({
       by: ["status"],
       _count: { status: true },
+      where: queueWhere,
     });
     const statusCounts = {};
     statusCountsRaw.forEach((row) => {
@@ -838,6 +864,7 @@ const getQueueCountAdmin = async (req, res, next) => {
       by: ["csId"],
       _count: { csId: true },
       where: {
+        ...queueWhere,
         csId: { not: null },
         status: { in: ["done"] },
       },
@@ -866,6 +893,7 @@ const getQueueCountAdmin = async (req, res, next) => {
       _count: { branchId: true },
       orderBy: { _count: { branchId: "desc" } },
       take: 5,
+      where: queueWhere,
     });
 
     const allBranches = await prisma.branch.findMany({
@@ -891,6 +919,10 @@ const getQueueCountAdmin = async (req, res, next) => {
       _count: { serviceId: true },
       orderBy: { _count: { serviceId: "desc" } },
       take: 5,
+      where:
+        startRange && endRange
+          ? { createdAt: { gte: startRange, lt: endRange } }
+          : undefined,
     });
     const allServices = await prisma.service.findMany({
       select: { id: true, serviceName: true },
@@ -1378,8 +1410,8 @@ const getAllQueues = async (req, res, next) => {
         domainMain.length <= 2
           ? "*".repeat(domainMain.length)
           : domainMain[0] +
-          "*".repeat(Math.max(domainMain.length - 2, 0)) +
-          domainMain.slice(-1);
+            "*".repeat(Math.max(domainMain.length - 2, 0)) +
+            domainMain.slice(-1);
 
       const censoredDomainExt =
         domainExt.length <= 2
@@ -1396,10 +1428,10 @@ const getAllQueues = async (req, res, next) => {
       services: queue.services.map((qs) => qs.service),
       user: queue.user
         ? {
-          ...queue.user,
-          email: censorEmail(queue.user.email),
-          phoneNumber: censorPhone(queue.user.phoneNumber),
-        }
+            ...queue.user,
+            email: censorEmail(queue.user.email),
+            phoneNumber: censorPhone(queue.user.phoneNumber),
+          }
         : null,
       email: censorEmail(queue.email),
       phoneNumber: censorPhone(queue.phoneNumber),
@@ -1603,12 +1635,12 @@ const getActiveCSCustomer = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     }));
@@ -1669,12 +1701,12 @@ const getActiveCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
       calledAt: queue.calledAt,
     };
@@ -1785,12 +1817,12 @@ const getCalledCustomerByCS = async (req, res, next) => {
       nasabah: queue.user
         ? queue.user
         : {
-          fullname: queue.name,
-          username: null,
-          email: queue.email,
-          phoneNumber: queue.phoneNumber,
-          id: null,
-        },
+            fullname: queue.name,
+            username: null,
+            email: queue.email,
+            phoneNumber: queue.phoneNumber,
+            id: null,
+          },
       status: queue.status,
     });
   } catch (error) {

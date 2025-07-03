@@ -328,9 +328,10 @@ router.get(
  *     description: |
  *       Only accessible by admin.
  *       Gunakan query param `range=day|week|month` (default day) untuk grouping.
- *       - Jika range=day: groups berisi per hari (Senin–Jumat) minggu berjalan.
- *       - Jika range=week: groups berisi per minggu dalam bulan berjalan.
- *       - Jika range=month: groups berisi per bulan (Januari–Desember) tahun berjalan.
+ *       - Jika range=day: statistik (totalQueue, statusCounts, csCounts, top5Antrian, top5Layanan) hanya untuk minggu berjalan (Senin–Jumat).
+ *       - Jika range=week: statistik hanya untuk bulan berjalan (per minggu).
+ *       - Jika range=month: statistik hanya untuk tahun berjalan (per bulan).
+ *       Semua statistik hanya menghitung data dalam rentang waktu yang dipilih.
  *     parameters:
  *       - in: query
  *         name: range
@@ -341,7 +342,7 @@ router.get(
  *         description: Grouping range (day/week/month)
  *     responses:
  *       200:
- *         description: Queue count summary for admin
+ *         description: Queue count summary for admin (statistik hanya dalam range waktu yang dipilih)
  *         content:
  *           application/json:
  *             schema:
@@ -376,6 +377,7 @@ router.get(
  *                 totalQueue:
  *                   type: integer
  *                   example: 42
+ *                   description: Total queue dalam range waktu yang dipilih
  *                 totalBranch:
  *                   type: integer
  *                   example: 10
@@ -384,6 +386,7 @@ router.get(
  *                   additionalProperties:
  *                     type: integer
  *                   example: { waiting: 10, called: 5, "in progress": 3, done: 20 }
+ *                   description: Jumlah queue per status dalam range waktu yang dipilih
  *                 csCounts:
  *                   type: array
  *                   items:
@@ -398,6 +401,7 @@ router.get(
  *                       count:
  *                         type: integer
  *                         example: 2
+ *                   description: Jumlah queue selesai per CS dalam range waktu yang dipilih
  *                 top5Antrian:
  *                   type: array
  *                   items:
@@ -413,6 +417,7 @@ router.get(
  *                         type: integer
  *                         nullable: true
  *                         example: 3
+ *                   description: 5 cabang dengan jumlah queue terbanyak dalam range waktu yang dipilih
  *                 top5Layanan:
  *                   type: array
  *                   items:
@@ -428,6 +433,7 @@ router.get(
  *                         type: integer
  *                         nullable: true
  *                         example: 2
+ *                   description: 5 layanan dengan jumlah queue terbanyak dalam range waktu yang dipilih
  *       401:
  *         description: Unauthorized
  *       403:
