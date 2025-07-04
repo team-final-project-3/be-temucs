@@ -6,6 +6,14 @@ function toWIB(date) {
 function toUTCfromWIB(date) {
   return new Date(date.getTime() - 7 * 60 * 60 * 1000);
 }
+function getNextWorkingDay(date) {
+  let next = new Date(date);
+  do {
+    next.setUTCDate(next.getUTCDate() + 1);
+  } while (next.getUTCDay() === 0 || next.getUTCDay() === 6);
+  next.setUTCHours(8, 0, 0, 0);
+  return next;
+}
 
 async function generateTicketNumberAndEstimate(
   tx,
@@ -107,9 +115,7 @@ async function generateTicketNumberAndEstimate(
       dateWIB.getUTCHours() > 15 ||
       (dateWIB.getUTCHours() === 15 && dateWIB.getUTCMinutes() > 0)
     ) {
-      const nextDay = new Date(dateWIB);
-      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-      nextDay.setUTCHours(8, 0, 0, 0);
+      const nextDay = getNextWorkingDay(dateWIB);
 
       const { startUTC: nextStartUTC, endUTC: nextEndUTC } =
         getStartEndOfBookingDateWIB(nextDay);
