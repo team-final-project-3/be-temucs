@@ -92,16 +92,74 @@ async function generateTicketNumberAndEstimate(
     Math.max(earliestTime.getTime(), toWIB(bookingDate).getTime())
   );
 
-  if (estimatedTimeWIB.getUTCHours() < 8) {
-    estimatedTimeWIB.setUTCHours(8, 0, 0, 0);
-  } else if (
-    estimatedTimeWIB.getUTCHours() > 15 ||
-    (estimatedTimeWIB.getUTCHours() === 15 &&
-      estimatedTimeWIB.getUTCMinutes() > 0)
-  ) {
-    estimatedTimeWIB.setUTCDate(estimatedTimeWIB.getUTCDate() + 1);
-    estimatedTimeWIB.setUTCHours(8, 0, 0, 0);
+  async function getNextAvailableSlot(dateWIB) {
+    if (dateWIB.getUTCHours() < 8) {
+      dateWIB.setUTCHours(8, 0, 0, 0);
+    } else if (
+      dateWIB.getUTCHours() > 15 ||
+      (dateWIB.getUTCHours() === 15 && dateWIB.getUTCMinutes() > 0)
+    ) {
+      const nextDay = new Date(dateWIB);
+      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+      nextDay.setUTCHours(8, 0, 0, 0);
+
+      const { startUTC: nextStartUTC, endUTC: nextEndUTC } =
+        getStartEndOfBookingDateWIB(nextDay);
+
+      let csAvailableTimesNext = Array(csCountWithoutTV).fill(nextDay);
+      const allQueuesNextDay = await tx.queue.findMany({
+        where: {
+          branchId,
+          estimatedTime: {
+            gte: nextStartUTC,
+            lte: nextEndUTC,
+          },
+        },
+        orderBy: { estimatedTime: "asc" },
+        include: {
+          services: {
+            include: { service: { select: { estimatedTime: true } } },
+          },
+        },
+      });
+
+      for (const queue of allQueuesNextDay) {
+        let selectedSlot = 0;
+        let earliestTime = csAvailableTimesNext[0];
+        for (let i = 1; i < csAvailableTimesNext.length; i++) {
+          if (csAvailableTimesNext[i] < earliestTime) {
+            earliestTime = csAvailableTimesNext[i];
+            selectedSlot = i;
+          }
+        }
+        let totalDuration = 0;
+        for (const s of queue.services) {
+          totalDuration += s.service.estimatedTime || 0;
+        }
+        csAvailableTimesNext[selectedSlot] = new Date(
+          Math.max(
+            csAvailableTimesNext[selectedSlot].getTime(),
+            toWIB(queue.estimatedTime).getTime()
+          ) +
+            totalDuration * 60000
+        );
+      }
+
+      let selectedSlotNext = 0;
+      let earliestTimeNext = csAvailableTimesNext[0];
+      for (let i = 1; i < csAvailableTimesNext.length; i++) {
+        if (csAvailableTimesNext[i] < earliestTimeNext) {
+          earliestTimeNext = csAvailableTimesNext[i];
+          selectedSlotNext = i;
+        }
+      }
+
+      return getNextAvailableSlot(new Date(earliestTimeNext));
+    }
+    return dateWIB;
   }
+
+  estimatedTimeWIB = await getNextAvailableSlot(estimatedTimeWIB);
 
   const { startUTC: ticketStartUTC, endUTC: ticketEndUTC } =
     getStartEndOfBookingDateWIB(estimatedTimeWIB);
@@ -115,7 +173,7 @@ async function generateTicketNumberAndEstimate(
     },
   });
   let nextNumber = allQueuesThisDay.length + 1;
-  const ticketNumber = `${branch.branchCode}-${String(nextNumber).padStart(
+  const ticketNumber = `B-${branch.branchCode}-${String(nextNumber).padStart(
     3,
     "0"
   )}`;
