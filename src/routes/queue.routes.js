@@ -657,48 +657,6 @@ router.get(
 
 /**
  * @swagger
- * /api/queue/inprogress/user:
- *   get:
- *     summary: Get the latest "in progress" queue for the user's branch
- *     tags: [Queue]
- *     security:
- *       - bearerAuth: []
- *     description: |
- *       Only accessible by Nasabah. Automatically gets the branch from the user's login session.
- *       Returns the most recent queue with status "in progress", ordered by the latest call time (`calledAt`).
- *     responses:
- *       200:
- *         description: Latest in-progress queue in the user's branch
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                 ticketNumber:
- *                   type: string
- *                 status:
- *                   type: string
- *                 calledAt:
- *                   type: string
- *                   format: date-time
- *       400:
- *         description: Branch ID missing from user's session
- *       404:
- *         description: No in-progress queue found
- *       500:
- *         description: Internal server error
- */
-router.get(
-  "/queue/inprogress/user",
-  verifyUserToken,
-  allowRoles("nasabah"),
-  queueController.getLatestInProgressQueueUser
-);
-
-/**
- * @swagger
  * /api/queue/waiting/loket:
  *   get:
  *     summary: Get all waiting queues for Loket's branch

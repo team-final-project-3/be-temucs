@@ -17,6 +17,10 @@ async function generateTicketNumberAndEstimate(
   const { startUTC, endUTC } = getStartEndOfBookingDateWIB(bookingDate);
 
   const branch = await tx.branch.findUnique({ where: { id: branchId } });
+  console.log("branch found", branch);
+  if (!branch) {
+    throw new Error("Branch tidak ditemukan.");
+  }
 
   const csList = await tx.cS.findMany({
     where: {
@@ -31,14 +35,16 @@ async function generateTicketNumberAndEstimate(
     select: { id: true },
     orderBy: { id: "asc" },
   });
-
+  console.log("csList", csList);
   const csCountWithoutTV = csList.length;
 
   if (csCountWithoutTV <= 0) {
     throw new Error("Tidak ada CS yang tersedia di cabang ini.");
   }
 
-  let csAvailableTimes = Array(csCountWithoutTV).fill(toWIB(bookingDate));
+  let csAvailableTimes = Array(csCountWithoutTV)
+    .fill(0)
+    .map(() => new Date(toWIB(bookingDate)));
   let csSlotIds = csList.slice(0, csCountWithoutTV).map((cs) => cs.id);
 
   const allQueuesToday = await tx.queue.findMany({
@@ -56,6 +62,8 @@ async function generateTicketNumberAndEstimate(
       },
     },
   });
+
+  console.log("allQueuesToday", allQueuesToday);
 
   for (const queue of allQueuesToday) {
     let selectedSlot = 0;
@@ -106,7 +114,9 @@ async function generateTicketNumberAndEstimate(
       const { startUTC: nextStartUTC, endUTC: nextEndUTC } =
         getStartEndOfBookingDateWIB(nextDay);
 
-      let csAvailableTimesNext = Array(csCountWithoutTV).fill(nextDay);
+      let csAvailableTimesNext = Array(csCountWithoutTV)
+        .fill(0)
+        .map(() => new Date(nextDay));
       const allQueuesNextDay = await tx.queue.findMany({
         where: {
           branchId,
