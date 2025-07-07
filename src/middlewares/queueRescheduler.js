@@ -3,6 +3,15 @@ const cron = require("node-cron");
 const sendExpoNotification = require("../helpers/sendExpoNotification");
 const { wibToUTC } = require("../helpers/dateHelper");
 
+function getNextWorkingDayWIB(date) {
+  let next = new Date(date);
+  do {
+    next.setDate(next.getDate() + 1);
+  } while (next.getDay() === 0 || next.getDay() === 6);
+  next.setHours(8, 0, 0, 0);
+  return next;
+}
+
 async function generateTicketNumberForReschedule(branchId, bookingDate, index) {
   const branch = await prisma.branch.findUnique({ where: { id: branchId } });
   if (!branch) throw new Error("Cabang tidak ditemukan");
@@ -30,10 +39,8 @@ const rescheduleWaitingQueues = async () => {
 
   if (waitingQueues.length === 0) return;
 
-  const tomorrowWIB = new Date(now);
-  tomorrowWIB.setDate(tomorrowWIB.getDate() + 1);
-  tomorrowWIB.setHours(8, 0, 0, 0);
-  const tomorrow = wibToUTC(tomorrowWIB);
+  const nextWorkingDayWIB = getNextWorkingDayWIB(now);
+  const tomorrow = wibToUTC(nextWorkingDayWIB);
 
   const branchQueuesMap = {};
   for (const queue of waitingQueues) {
