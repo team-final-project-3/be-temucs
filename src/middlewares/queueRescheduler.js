@@ -121,6 +121,8 @@ const rescheduleWaitingQueues = async () => {
   );
 };
 
-cron.schedule("0 15 * * *", rescheduleWaitingQueues);
+cron.schedule("0 15 * * *", rescheduleWaitingQueues, {
+  timezone: "Asia/Jakarta",
+});
 
 module.exports = rescheduleWaitingQueues;
