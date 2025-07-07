@@ -72,6 +72,47 @@ describe("CS Controller (Integration)", () => {
     await prisma.cS.deleteMany({ where: { id: res.body.cs.id } });
   });
 
+  it("should return 400 if password kurang dari 8 karakter saat add", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const res = await request(app)
+      .post("/api/cs/add")
+      .set("Authorization", adminToken)
+      .send({
+        branchId: branch.id,
+        name: "CS Jest " + unique,
+        username: "csjestshort" + unique,
+        password: "short",
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Password minimal 8 karakter/i);
+  });
+
+  it("should return 400 if password kurang dari 8 karakter saat edit", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const cs = await prisma.cS.create({
+      data: {
+        branchId: branch.id,
+        name: "CS Jest " + unique,
+        username: "csjesteditshort" + unique,
+        passwordHash: await hashPassword("Password123!"),
+        status: true,
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    });
+    const res = await request(app)
+      .put(`/api/cs/${cs.id}`)
+      .set("Authorization", adminToken)
+      .send({
+        name: "CS Jest Edited " + unique,
+        password: "short",
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Password minimal 8 karakter/i);
+
+    await prisma.cS.deleteMany({ where: { id: cs.id } });
+  });
+
   it("should not add CS with duplicate username", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const cs = await prisma.cS.create({

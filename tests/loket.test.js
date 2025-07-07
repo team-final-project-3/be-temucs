@@ -72,6 +72,22 @@ describe("Loket Controller (Integration)", () => {
     await prisma.loket.deleteMany({ where: { id: res.body.loket.id } });
   });
 
+  it("should return 400 if addLoket with password less than 8 chars", async () => {
+    const unique = Date.now() + Math.floor(Math.random() * 10000);
+    const res = await request(app)
+      .post("/api/loket/add")
+      .set("Authorization", adminToken)
+      .send({
+        branchId: branch.id,
+        name: "Loket Jest ShortPW " + unique,
+        username: "loketjestshortpw" + unique,
+        password: "short",
+        status: true,
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message.toLowerCase()).toContain("minimal 8 karakter");
+  });
+
   it("should not add loket with duplicate username", async () => {
     const unique = Date.now() + Math.floor(Math.random() * 10000);
     const loket = await prisma.loket.create({
