@@ -24,6 +24,12 @@ const addLoket = async (req, res, next) => {
       });
     }
 
+    if (password && password.length < 8) {
+      throw Object.assign(new Error("Password minimal 8 karakter"), {
+        status: 400,
+      });
+    }
+
     const passwordHash = await hashPassword(password);
     const loket = await prisma.loket.create({
       data: {
@@ -58,14 +64,12 @@ const editLoket = async (req, res, next) => {
       throw Object.assign(new Error("Loket tidak ditemukan"), { status: 404 });
     }
 
-    // Tambahkan validasi ini:
     if (!name && !password) {
       throw Object.assign(new Error("Field yang diubah tidak boleh kosong"), {
         status: 400,
       });
     }
 
-    // Validasi password minimal 8 karakter jika ada
     if (password && password.length < 8) {
       throw Object.assign(new Error("Password minimal 8 karakter"), {
         status: 400,

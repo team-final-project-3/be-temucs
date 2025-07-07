@@ -20,6 +20,12 @@ const addCS = async (req, res, next) => {
       throw Object.assign(new Error("CS sudah terdaftar"), { status: 400 });
     }
 
+    if (password && password.length < 8) {
+      throw Object.assign(new Error("Password minimal 8 karakter"), {
+        status: 400,
+      });
+    }
+
     const passwordHash = await hashPassword(password);
     const cs = await prisma.cS.create({
       data: {
@@ -55,6 +61,12 @@ const editCS = async (req, res, next) => {
       name,
       updatedBy: username,
     };
+
+    if (password && password.length < 8) {
+      throw Object.assign(new Error("Password minimal 8 karakter"), {
+        status: 400,
+      });
+    }
 
     if (password) {
       const passwordHash = await hashPassword(password);
