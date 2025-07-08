@@ -3,6 +3,7 @@ const router = express.Router();
 const csController = require("../controllers/cs.controller");
 const { verifyCSToken } = require("../auth/cs.auth");
 const { allowRoles } = require("../middlewares/auth");
+const { verifyUserToken } = require("../auth/user.auth");
 
 /**
  * @swagger
@@ -40,7 +41,12 @@ const { allowRoles } = require("../middlewares/auth");
  *       401:
  *         description: Unauthorized
  */
-router.post("/cs/add", allowRoles("admin"), csController.addCS);
+router.post(
+  "/cs/add",
+  allowRoles("admin"),
+  verifyUserToken,
+  csController.addCS
+);
 
 /**
  * @swagger
@@ -73,17 +79,22 @@ router.post("/cs/add", allowRoles("admin"), csController.addCS);
  *       200:
  *         description: CS updated
  *       404:
- *         description: CS not found
+ *         description: CS tidak ditemukan
  *       500:
  *         description: Internal server error
  */
-router.put("/cs/:id", allowRoles("admin"), csController.editCS);
+router.put(
+  "/cs/:id",
+  allowRoles("admin"),
+  verifyUserToken,
+  csController.editCS
+);
 
 /**
  * @swagger
- * /api/cs/{id}:
- *   delete:
- *     summary: Delete CS
+ * /api/cs/{id}/status:
+ *   put:
+ *     summary: Update CS status (activate or deactivate)
  *     tags: [CS]
  *     parameters:
  *       - in: path
@@ -91,15 +102,21 @@ router.put("/cs/:id", allowRoles("admin"), csController.editCS);
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID CS yang ingin diaktifkan/nonaktifkan
  *     responses:
  *       200:
- *         description: CS deleted
+ *         description: Status CS berhasil diperbarui
  *       404:
- *         description: CS not found
+ *         description: CS tidak ditemukan
  *       500:
- *         description: Internal server error
+ *         description: Kesalahan server
  */
-router.delete("/cs/:id", allowRoles("admin"), csController.deleteCS);
+router.put(
+  "/cs/:id/status",
+  allowRoles("admin"),
+  verifyUserToken,
+  csController.updateCSStatus
+);
 
 /**
  * @swagger
@@ -172,7 +189,7 @@ router.post("/cs/login", csController.login);
  *                     createdAt: { type: string, format: date-time }
  *                     updatedAt: { type: string, format: date-time }
  *       404:
- *         description: CS not found
+ *         description: CS tidak ditemukan
  *       500:
  *         description: Internal server error
  */

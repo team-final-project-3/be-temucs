@@ -1,21 +1,41 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const secret = process.env.JWT_SECRET || "secret_key";
+const prisma = require("../../prisma/client");
 
-const verifyCSToken = (req, res, next) => {
+const verifyCSToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader)
-    return res.status(401).json({ message: "No token provided" });
+  if (!authHeader) throw Object.assign(new Error(), { status: 401 });
 
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, secret);
     if (decoded.role !== "cs")
-      return res.status(403).json({ message: "Forbidden" });
+      throw Object.assign(new Error(), { status: 403 });
+
     req.cs = decoded;
+
+    if (!decoded.csId) return next();
+
+    const cs = await prisma.cS.findUnique({ where: { id: decoded.csId } });
+    if (!cs)
+      throw Object.assign(new Error("CS tidak ditemukan"), { status: 401 });
+
+    const branch = await prisma.branch.findUnique({
+      where: { id: cs.branchId },
+    });
+    if (!branch || branch.status === false) {
+      throw Object.assign(
+        new Error(
+          "Branch tidak aktif, CS tidak dapat login atau mengakses layanan"
+        ),
+        { status: 403 }
+      );
+    }
+
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+    next(error);
   }
 };
 

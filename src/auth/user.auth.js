@@ -4,8 +4,7 @@ const secret = process.env.JWT_SECRET || "secret_key";
 
 const verifyUserToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader)
-    return res.status(401).json({ message: "No token provided" });
+  if (!authHeader) throw Object.assign(new Error(), { status: 401 });
 
   const token = authHeader.split(" ")[1];
 
@@ -14,32 +13,27 @@ const verifyUserToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+    throw Object.assign(new Error(), { status: 401 });
   }
 };
 
-// Untuk proteksi endpoint khusus admin: verifyRole(['admin'])
-// Untuk proteksi endpoint khusus nasabah: verifyRole(['nasabah'])
 const verifyRole =
   (roles = []) =>
   (req, res, next) => {
     const authHeader = req.headers.authorization;
-    if (!authHeader)
-      return res.status(401).json({ message: "No token provided" });
+    if (!authHeader) throw Object.assign(new Error(), { status: 401 });
 
     const token = authHeader.split(" ")[1];
 
     try {
       const decoded = jwt.verify(token, secret);
       if (!roles.includes(decoded.role)) {
-        return res
-          .status(403)
-          .json({ message: "Forbidden: Insufficient role" });
+        throw Object.assign(new Error(), { status: 403 });
       }
       req.user = decoded;
       next();
     } catch (error) {
-      return res.status(401).json({ message: "Invalid token" });
+      next(error);
     }
   };
 
