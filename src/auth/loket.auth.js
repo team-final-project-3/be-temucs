@@ -1,21 +1,42 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const secret = process.env.JWT_SECRET || "secret_key";
+const prisma = require("../../prisma/client");
 
-const verifyLoketToken = (req, res, next) => {
+const verifyLoketToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader)
-    return res.status(401).json({ message: "No token provided" });
+  if (!authHeader) throw Object.assign(new Error(), { status: 401 });
 
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, secret);
     if (decoded.role !== "loket")
-      return res.status(403).json({ message: "Forbidden" });
+      throw Object.assign(new Error(), { status: 403 });
+
     req.loket = decoded;
+
+    if (!decoded.loketId) return next();
+
+    const loket = await prisma.loket.findUnique({
+      where: { id: decoded.loketId },
+    });
+    if (!loket)
+      throw Object.assign(new Error("Loket tidak ditemukan"), { status: 401 });
+
+    const branch = await prisma.branch.findUnique({
+      where: { id: loket.branchId },
+    });
+    if (!branch || branch.status === false) {
+      throw Object.assign(
+        new Error(
+          "Branch tidak aktif, loket tidak dapat login atau mengakses layanan"
+        ),
+        { status: 403 }
+      );
+    }
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+    next(error);
   }
 };
 

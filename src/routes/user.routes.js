@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user.controller");
+const { allowRoles } = require("../middlewares/auth");
+const { verifyUserToken } = require("../auth/user.auth");
 
 /**
  * @swagger
@@ -74,7 +76,7 @@ router.post("/users/register", userController.register);
  *       400:
  *         description: Invalid OTP or already verified
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/verify-otp", userController.verifyOtp);
 
@@ -101,7 +103,7 @@ router.post("/users/verify-otp", userController.verifyOtp);
  *       400:
  *         description: User already verified
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/resend-otp", userController.resendOtp);
 
@@ -154,7 +156,7 @@ router.post("/users/login", userController.login);
  *       200:
  *         description: OTP sent to email for password reset.
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/forgot-password", userController.forgotPassword);
 
@@ -182,7 +184,7 @@ router.post("/users/forgot-password", userController.forgotPassword);
  *       200:
  *         description: Password reset successful.
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/reset-password", userController.resetPassword);
 
@@ -208,11 +210,11 @@ router.post("/users/reset-password", userController.resetPassword);
  *                 type: string
  *     responses:
  *       200:
- *         description: OTP verified. You can now reset your password.
+ *         description: OTP verified. Sekarang bisa reset password.
  *       400:
- *         description: Invalid OTP or OTP expired
+ *         description: Invalid OTP atau OTP expired
  *       404:
- *         description: User not found
+ *         description: User tidak ditemukan
  */
 router.post("/users/verify-otp-forgot", userController.verifyOtpForgotPassword);
 
@@ -285,12 +287,124 @@ router.get("/users/profile", userController.getProfile);
  *                 description: Password baru user
  *     responses:
  *       200:
- *         description: Password changed successfully.
+ *         description: Password berhasil diubah.
  *       400:
- *         description: Validation error or old password incorrect
+ *         description: Validation error atau password lama salah
  *       401:
  *         description: Unauthorized
  */
 router.post("/users/change-password", userController.changePassword);
+
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Get all users (paginated, admin only)
+ *     tags: [Users]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (default 1)
+ *       - in: query
+ *         name: size
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           enum: [5, 10, 15, 20]
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: A list of all user (paginated)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       fullname:
+ *                         type: string
+ *                       username:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       phoneNumber:
+ *                         type: string
+ *                       role:
+ *                         type: string
+ *                       isVerified:
+ *                         type: boolean
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     size:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 42
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/users", allowRoles("admin"), userController.getAllUsers);
+
+/**
+ * @swagger
+ * /api/users/expo-token:
+ *   post:
+ *     summary: Simpan atau update Expo Push Token user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - expoPushToken
+ *             properties:
+ *               expoPushToken:
+ *                 type: string
+ *                 description: Expo push token dari device user
+ *     responses:
+ *       200:
+ *         description: Token berhasil disimpan
+ *       400:
+ *         description: Token tidak valid
+ *       401:
+ *         description: Unauthorized
+ */
+router.post(
+  "/users/expo-token",
+  allowRoles("nasabah"),
+  verifyUserToken,
+  userController.saveExpoToken
+);
 
 module.exports = router;

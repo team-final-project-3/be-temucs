@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../../prisma/client");
 
 const createQueueService = async (req, res, next) => {
   try {
@@ -7,9 +6,9 @@ const createQueueService = async (req, res, next) => {
     const { queueId, serviceIds } = req.body;
 
     if (!queueId || !Array.isArray(serviceIds)) {
-      const error = new Error("queueId and serviceIds are required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(new Error("queueId dan serviceIds wajib diisi"), {
+        status: 400,
+      });
     }
 
     const dataToInsert = serviceIds.map((serviceId) => ({
@@ -42,9 +41,9 @@ const getDocumentsByQueueId = async (req, res, next) => {
     const serviceIds = queueServices.map((q) => q.serviceId);
 
     if (serviceIds.length === 0) {
-      const error = new Error("No services found for this queue");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error("Tidak ada layanan pada antrian ini"), {
+        status: 404,
+      });
     }
 
     const documents = await prisma.document.findMany({
@@ -64,12 +63,12 @@ const getDocumentsByQueueId = async (req, res, next) => {
   }
 };
 
-const getQueueServicesByQueueId = async (req, res) => {
+const getQueueServicesByQueueId = async (req, res, next) => {
   try {
     const { queueId } = req.params;
 
-    if (!queueId) {
-      return res.status(400).json({ message: "queueId is required" });
+    if (!queueId || isNaN(Number(queueId))) {
+      throw Object.assign(new Error("queueId wajib diisi"), { status: 400 });
     }
 
     const queueServices = await prisma.queueService.findMany({
@@ -81,8 +80,7 @@ const getQueueServicesByQueueId = async (req, res) => {
 
     res.status(200).json(queueServices);
   } catch (error) {
-    console.error("Get Queue Services Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 

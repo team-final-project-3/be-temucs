@@ -1,14 +1,14 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../../prisma/client");
 
 const addHoliday = async (req, res, next) => {
   try {
     const username = req.user.username;
     const { holidayName, date } = req.body;
     if (!holidayName || !date) {
-      const error = new Error("holidayName and date are required");
-      error.status = 400;
-      throw error;
+      throw Object.assign(
+        new Error("Nama hari libur atau tanggal wajib diisi"),
+        { status: 400 }
+      );
     }
     const holiday = await prisma.holiday.create({
       data: {
@@ -29,6 +29,27 @@ const editHoliday = async (req, res, next) => {
     const username = req.user.username;
     const id = parseInt(req.params.id, 10);
     const { holidayName, date } = req.body;
+
+    if (isNaN(id)) {
+      throw Object.assign(new Error("ID hari libur tidak valid"), {
+        status: 400,
+      });
+    }
+
+    if (!holidayName && !date) {
+      throw Object.assign(
+        new Error("Nama hari libur dan tanggal wajib diisi"),
+        { status: 400 }
+      );
+    }
+
+    const holidayExist = await prisma.holiday.findUnique({ where: { id } });
+    if (!holidayExist) {
+      throw Object.assign(new Error("Holiday tidak ditemukan"), {
+        status: 404,
+      });
+    }
+
     const holiday = await prisma.holiday.update({
       where: { id },
       data: {
@@ -43,11 +64,33 @@ const editHoliday = async (req, res, next) => {
   }
 };
 
-const deleteHoliday = async (req, res, next) => {
+const updateHolidayStatus = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    await prisma.holiday.delete({ where: { id } });
-    res.json({ message: "Holiday deleted" });
+    const username = req.user.username;
+
+    const holiday = await prisma.holiday.findUnique({ where: { id } });
+
+    if (!holiday) {
+      throw Object.assign(new Error("Holiday tidak ditemukan"), {
+        status: 404,
+      });
+    }
+
+    const status = !holiday.status;
+
+    const updatedHoliday = await prisma.holiday.update({
+      where: { id },
+      data: {
+        status: status,
+        updatedBy: username,
+      },
+    });
+
+    res.status(200).json({
+      message: `Holiday ${status ? "activated" : "deactivated"} successfully`,
+      holiday: updatedHoliday,
+    });
   } catch (error) {
     next(error);
   }
@@ -56,11 +99,16 @@ const deleteHoliday = async (req, res, next) => {
 const getHoliday = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      throw Object.assign(new Error("ID hari libur tidak valid"), {
+        status: 400,
+      });
+    }
     const holiday = await prisma.holiday.findUnique({ where: { id } });
     if (!holiday) {
-      const error = new Error("Holiday not found");
-      error.status = 404;
-      throw error;
+      throw Object.assign(new Error("Holiday tidak ditemukan"), {
+        status: 404,
+      });
     }
     res.json({ holiday });
   } catch (error) {
@@ -82,7 +130,7 @@ const getAllHoliday = async (req, res, next) => {
 module.exports = {
   addHoliday,
   editHoliday,
-  deleteHoliday,
+  updateHolidayStatus,
   getHoliday,
   getAllHoliday,
 };

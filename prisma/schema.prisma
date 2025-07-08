@@ -15,18 +15,19 @@ model CoreBanking {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  fullname     String
-  username     String    @unique
-  passwordHash String
-  role         String
-  email        String    @unique
-  phoneNumber  String    @unique
-  otp          String?
-  otpExpiresAt DateTime?
-  isVerified   Boolean   @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id            Int       @id @default(autoincrement())
+  fullname      String
+  username      String    @unique
+  passwordHash  String
+  role          String
+  email         String    @unique
+  phoneNumber   String    @unique
+  otp           String?
+  otpExpiresAt  DateTime?
+  isVerified    Boolean   @default(false)
+  expoPushToken String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   queues Queue[]
 }
@@ -73,6 +74,7 @@ model CS {
   name         String
   username     String   @unique
   passwordHash String
+  status       Boolean  @default(true)
   createdAt    DateTime @default(now())
   createdBy    String
   updatedAt    DateTime @updatedAt
@@ -83,8 +85,8 @@ model CS {
 
 model Queue {
   id            Int       @id @default(autoincrement())
-  user          User      @relation(fields: [userId], references: [id])
-  userId        Int
+  user          User?     @relation(fields: [userId], references: [id])
+  userId        Int?
   branch        Branch    @relation(fields: [branchId], references: [id])
   branchId      Int
   cs            CS?       @relation(fields: [csId], references: [id])
@@ -94,8 +96,8 @@ model Queue {
   bookingDate   DateTime
   ticketNumber  String
   name          String
-  email         String
-  phoneNumber   String
+  email         String?
+  phoneNumber   String?
   estimatedTime DateTime?
   calledAt      DateTime?
   status        String
@@ -124,6 +126,7 @@ model Holiday {
   id          Int      @id @default(autoincrement())
   holidayName String
   date        DateTime @db.Date
+  status      Boolean  @default(true)
   createdAt   DateTime @default(now())
   createdBy   String
   updatedAt   DateTime @updatedAt
@@ -134,7 +137,7 @@ model Service {
   id            Int      @id @default(autoincrement())
   serviceName   String
   estimatedTime Int?
-  status        Boolean
+  status        Boolean  @default(true)
   createdAt     DateTime @default(now())
   createdBy     String
   updatedAt     DateTime @updatedAt
@@ -147,6 +150,7 @@ model Service {
 model Document {
   id           Int      @id @default(autoincrement())
   documentName String
+  status       Boolean  @default(true)
   createdAt    DateTime @default(now())
   createdBy    String
   updatedAt    DateTime @updatedAt
@@ -161,6 +165,7 @@ model ServiceDocument {
   serviceId  Int
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   documentId Int
+  quantity   Int      @default(1)
   createdAt  DateTime @default(now())
   createdBy  String
   updatedAt  DateTime @updatedAt
