@@ -281,13 +281,29 @@ router.get(
  * @swagger
  * /api/branch/loket:
  *   get:
- *     summary: Get all branches (for Loket)
+ *     summary: Get all branches (for Loket, paginated)
  *     tags: [Branch]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (default 1)
+ *       - in: query
+ *         name: size
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           enum: [5, 10, 15, 20]
+ *           default: 10
+ *         description: Page size (default 10)
  *     responses:
  *       200:
- *         description: List of branches with waitingQueueCount
+ *         description: List of branches with waitingQueueCount (paginated)
  *         content:
  *           application/json:
  *             schema:
@@ -331,6 +347,21 @@ router.get(
  *                       activeQueueCount:
  *                         type: integer
  *                         example: 5
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     size:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 42
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
  *       401:
  *         description: Unauthorized – Token tidak valid atau bukan Loket
  *       500:
